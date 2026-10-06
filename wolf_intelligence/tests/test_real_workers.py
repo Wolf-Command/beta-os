@@ -99,7 +99,7 @@ class BillingSeparationTests(unittest.TestCase):
         status = json.dumps({"loggedIn": True, "authMethod": "claude.ai", "subscriptionType": "pro", "email": "e"})
         reply = json.dumps({"result": "OK", "modelUsage": {"m": {}}, "is_error": False})
 
-        def fake_run(argv, *, env, cwd, timeout, stdin=None):
+        def fake_run(argv, *, env, cwd, timeout, stdin=None, worker_id=None):
             seen.append((argv, env))
             return (0, status if "auth" in argv else reply, "", 1.0, None)
 
@@ -117,7 +117,7 @@ class BillingSeparationTests(unittest.TestCase):
         a = ADAPTER_REGISTRY["codex_sub"]
         seen = []
 
-        def fake_run(argv, *, env, cwd, timeout, stdin=None):
+        def fake_run(argv, *, env, cwd, timeout, stdin=None, worker_id=None):
             seen.append((argv, env))
             if "exec" in argv:
                 Path(argv[argv.index("-o") + 1]).write_text("OK")

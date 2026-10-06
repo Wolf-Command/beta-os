@@ -3,9 +3,28 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tempfile
+from pathlib import Path
 
 from .paths import ensure_dirs
+
+TEST_CLOCK_ENV = "WOLF_INTELLIGENCE_GOVERNANCE_TEST_CLOCK"
+
+
+def _qa_isolated_state() -> bool:
+    root = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
+    if not root:
+        return False
+    p = Path(root).resolve()
+    text = str(p)
+    if "/.tmp/" in text or "/qa-" in text or p.name.startswith("qa-"):
+        return True
+    try:
+        return p.is_relative_to(Path(tempfile.gettempdir()).resolve())
+    except (ValueError, OSError):
+        return False
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -45,12 +64,16 @@ def main(argv: list[str] | None = None) -> int:
     gov_sub.add_parser("status")
     g_reset = gov_sub.add_parser("reset-penalty")
     g_reset.add_argument("--actor", required=True)
+    g_reset.add_argument("--reason", default=None)
     g_dec = gov_sub.add_parser("decide")
     g_dec.add_argument("--task-class", required=True)
     g_dec.add_argument("--id", default=None)
+    g_dec.add_argument("--requested-worker", default=None)
     g_dec.add_argument("--grok-reason", default=None)
     g_dec.add_argument("--justification", default=None)
     g_dec.add_argument("--now", default=None)
+    g_scope = gov_sub.add_parser("scope-check")
+    g_scope.add_argument("argv", nargs=argparse.REMAINDER)
 
     args = p.parse_args(argv)
 
@@ -180,23 +203,50 @@ def main(argv: list[str] | None = None) -> int:
             }, indent=2))
             return 0
         if args.gov_cmd == "reset-penalty":
-            from .allocation import reset_penalty
+            from .allocation import ResetPenaltyError, reset_penalty
             from .governance import load_policy
             pl = load_policy()
-            result = reset_penalty(args.actor, pl.policy)
+            try:
+                result = reset_penalty(args.actor, pl.policy, reason=args.reason)
+            except ResetPenaltyError as exc:
+                print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+                return 1
             print(json.dumps(result, indent=2))
             return 0
         if args.gov_cmd == "decide":
             from .allocation import decide_and_record
+            test_clock = (
+                os.environ.get(TEST_CLOCK_ENV) == "1"
+                or (args.now and _qa_isolated_state())
+            )
+            if args.now and not test_clock:
+                print(json.dumps({
+                    "ok": False,
+                    "error": "test_clock_refused",
+                    "hint": "set WOLF_INTELLIGENCE_GOVERNANCE_TEST_CLOCK=1 to inject --now for capacity only",
+                }, indent=2))
+                return 2
             wi = {
                 "id": args.id or "cli-decide",
                 "task_class": args.task_class,
                 "grok_reason_code": args.grok_reason,
                 "grok_justification": args.justification,
             }
-            dec = decide_and_record(wi, now=args.now)
-            print(json.dumps(dec.to_dict(), indent=2))
+            if args.requested_worker:
+                wi["requested_worker"] = args.requested_worker
+            dec, meta = decide_and_record(wi, now=args.now if test_clock else None)
+            out = dec.to_dict()
+            out.update({"clock": "test"} if test_clock and args.now else {"clock": "server"})
+            print(json.dumps(out, indent=2))
             return 0
+        if args.gov_cmd == "scope-check":
+            from .scope_guard import scope_check_json
+            argv = list(args.argv)
+            if argv and argv[0] == "--":
+                argv = argv[1:]
+            payload = scope_check_json(argv, os.getcwd(), dict(os.environ))
+            print(json.dumps(payload, indent=2))
+            return 0 if payload["ok"] else 1
     return 2
 
 

@@ -1,6 +1,7 @@
 """Per-provider capacity model — observations, decay, velocity, state."""
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from datetime import datetime, timedelta
@@ -60,22 +61,54 @@ def _load_seed() -> list[dict[str, Any]]:
     return list(data.get("observations") or [])
 
 
-def _load_persisted() -> list[dict[str, Any]]:
+def _load_persisted() -> tuple[list[dict[str, Any]], bool]:
     path = GOVERNANCE_CAPACITY_OBSERVATIONS_PATH
     if not path.exists():
-        return []
+        return [], False
     out: list[dict[str, Any]] = []
+    corrupt = False
     try:
-        for line in path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line:
-                continue
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return [], False
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
             rec = json.loads(line)
-            if isinstance(rec, dict):
-                out.append(rec)
-    except (OSError, json.JSONDecodeError):
-        pass
-    return out
+        except json.JSONDecodeError:
+            corrupt = True
+            append_audit_event(
+                "CAPACITY_OBSERVATIONS_CORRUPT",
+                {"path": str(path), "error": "json_decode", "line_prefix": line[:80]},
+            )
+            continue
+        if not isinstance(rec, dict):
+            corrupt = True
+            append_audit_event(
+                "CAPACITY_OBSERVATIONS_CORRUPT",
+                {"path": str(path), "error": "not_object"},
+            )
+            continue
+        out.append(rec)
+    return out, corrupt
+
+
+_REJECTED_OBS_HASHES: set[str] = set()
+
+
+def _observation_record_hash(rec: dict[str, Any]) -> str:
+    blob = json.dumps(rec, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _audit_observation_rejected(rec: dict[str, Any], detail: dict[str, Any]) -> None:
+    key = _observation_record_hash(rec)
+    if key in _REJECTED_OBS_HASHES:
+        return
+    _REJECTED_OBS_HASHES.add(key)
+    append_audit_event("CAPACITY_OBSERVATION_REJECTED", detail)
 
 
 def _validate_observation_record(
@@ -109,8 +142,8 @@ def _merge_pool_observations(
             continue
         ok, reason = _validate_observation_record(rec, now)
         if not ok:
-            append_audit_event(
-                "CAPACITY_OBSERVATION_REJECTED",
+            _audit_observation_rejected(
+                rec,
                 {"worker_id": wid, "reason": reason, "observed_at": rec.get("observed_at")},
             )
             continue
@@ -123,8 +156,8 @@ def _merge_pool_observations(
         worker_pools = merged.setdefault(wid, {})
         for pool, pct in pct_map.items():
             if not _is_valid_pct(pct):
-                append_audit_event(
-                    "CAPACITY_OBSERVATION_REJECTED",
+                _audit_observation_rejected(
+                    rec,
                     {
                         "worker_id": wid,
                         "pool": pool,
@@ -184,10 +217,11 @@ def _build_worker_obs(
     }
 
 
-def merge_observations(now: datetime | None = None) -> dict[str, dict[str, Any]]:
+def merge_observations(now: datetime | None = None) -> tuple[dict[str, dict[str, Any]], bool]:
     """Merge seed + persisted; newest observed_at per worker/pool wins."""
     now_dt = now or datetime.now(TZ)
-    records = _load_seed() + _load_persisted()
+    persisted, corrupt = _load_persisted()
+    records = _load_seed() + persisted
     pool_merged = _merge_pool_observations(records, now_dt)
     policy = fail_closed_policy()
     merged: dict[str, dict[str, Any]] = {}
@@ -200,7 +234,7 @@ def merge_observations(now: datetime | None = None) -> dict[str, dict[str, Any]]
         obs = _build_worker_obs(wid, pool_merged.get(wid, {}), policy)
         if obs is not None:
             merged[wid] = obs
-    return merged
+    return merged, corrupt
 
 
 def record_observation(
@@ -282,7 +316,8 @@ def _dispatch_counts(worker_id: str, now: datetime) -> dict[str, int]:
 
 def _velocity(worker_id: str, pool: str | None, now: datetime) -> dict[str, Any]:
     """pct_per_day only when two observations of the same pool exist."""
-    obs_list = [r for r in _load_persisted() + _load_seed() if r.get("worker_id") == worker_id]
+    persisted, _ = _load_persisted()
+    obs_list = [r for r in persisted + _load_seed() if r.get("worker_id") == worker_id]
     if pool:
         pairs = []
         for rec in obs_list:
@@ -393,6 +428,23 @@ def worker_capacity_record(
     grok_avail = grok_available is True
 
     if obs is None:
+        if worker_id == "ollama_local" and pool is None:
+            return {
+                "worker_id": worker_id,
+                "plan": "local",
+                "included_usage_pct": {},
+                "remaining": None,
+                "reset_at": None,
+                "velocity": _velocity(worker_id, pool, now),
+                "projected_exhaustion_before_reset": None,
+                "on_demand": "UNKNOWN",
+                "source": "local",
+                "observed_at": None,
+                "effective_pct": None,
+                "primary_pool": pool,
+                "state": "NORMAL",
+                "grok_available": grok_avail,
+            }
         unk = _unknown_state(worker_id, policy)
         return {
             "worker_id": worker_id,
@@ -424,6 +476,23 @@ def worker_capacity_record(
     elif pool and pool in pool_data:
         observed_pct = float(pool_data[pool]["pct"])
         observed_at = pool_data[pool]["observed_at"]
+    elif pool is None and worker_id == "ollama_local":
+        return {
+            "worker_id": worker_id,
+            "plan": obs.get("plan") or "local",
+            "included_usage_pct": pct_map,
+            "remaining": obs.get("remaining"),
+            "reset_at": obs.get("reset_at"),
+            "velocity": _velocity(worker_id, pool, now),
+            "projected_exhaustion_before_reset": None,
+            "on_demand": obs.get("on_demand", "UNKNOWN"),
+            "source": obs.get("source") or "local",
+            "observed_at": obs.get("observed_at"),
+            "effective_pct": None,
+            "primary_pool": pool,
+            "state": "NORMAL",
+            "grok_available": grok_avail,
+        }
     else:
         unk = _unknown_state(worker_id, policy)
         return {
@@ -498,11 +567,12 @@ def capacity_snapshot(
     else:
         now_dt = now
 
-    merged = merge_observations(now_dt)
+    merged, observations_corrupt = merge_observations(now_dt)
 
-    ids = worker_ids or list(merged.keys()) or [
-        "cursor_sub", "grok_bot_sub", "claude_pro_sub", "codex_sub", "ollama_local", "gemini_free"
+    default_ids = [
+        "cursor_sub", "grok_bot_sub", "claude_pro_sub", "codex_sub", "ollama_local", "gemini_free",
     ]
+    ids = worker_ids or sorted(set(default_ids) | set(merged.keys()))
     workers = {}
     for wid in ids:
         raw_obs = merged.get(wid)
@@ -513,12 +583,20 @@ def capacity_snapshot(
         workers[wid] = worker_capacity_record(
             wid, obs_for_rec, effective_policy, now_dt, grok_available=grok_available
         )
+    if observations_corrupt:
+        grok_id = effective_policy.get("grok_worker_id", GROK_WORKER_ID)
+        for wid, rec in workers.items():
+            rec["state"] = _max_state(rec.get("state", "NORMAL"), "CONSERVE")
+            if wid == grok_id:
+                rec["state"] = _max_state(rec["state"], "RESERVE")
+        workers[grok_id]["state"] = _max_state(workers.get(grok_id, {}).get("state", "CONSERVE"), "RESERVE")
     grok_id = effective_policy.get("grok_worker_id", GROK_WORKER_ID)
     return {
         "at": now_dt.isoformat(timespec="seconds"),
         "grok_state": workers.get(grok_id, {}).get("state", "UNKNOWN"),
         "grok_available": grok_available is True,
         "workers": workers,
+        "observations_corrupt": observations_corrupt,
     }
 
 

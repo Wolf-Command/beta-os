@@ -16,7 +16,7 @@ import hmac
 import json
 import os
 from datetime import datetime
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as _ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 from zoneinfo import ZoneInfo
 
@@ -49,13 +49,14 @@ def governance_ctx() -> dict:
     return _GOVERNANCE_CTX
 
 
-def _capacity_for_request(now_override: str | None = None) -> dict:
+def _capacity_for_request() -> dict:
+    """Capacity always uses the server clock; client-supplied time is ignored."""
     from .capacity import capacity_snapshot
 
     ctx = governance_ctx()
     pl = ctx["policy_load"]
     return capacity_snapshot(
-        now_override,
+        datetime.now(TZ),
         policy=pl.policy,
         policy_mode=pl.mode,
     )
@@ -215,11 +216,9 @@ class Handler(BaseHTTPRequestHandler):
             if not board_authorized(self.headers):
                 self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json")
                 return
-            qs = parse_qs(parsed.query)
-            now_override = (qs.get("now") or [None])[0]
             ctx = governance_ctx()
             pl = ctx["policy_load"]
-            cap = _capacity_for_request(now_override)
+            cap = _capacity_for_request()
             from .allocation import load_tightening
             tightening = load_tightening(pl.policy)
             payload = {
@@ -299,8 +298,7 @@ class Handler(BaseHTTPRequestHandler):
             from .allocation import decide, LedgerView
             from .imbalance import check_imbalance
             ctx = governance_ctx()
-            capacity_now = body.get("now")
-            cap = _capacity_for_request(capacity_now)
+            cap = _capacity_for_request()
             server_now = datetime.now(TZ)
             dec = decide(
                 body,
@@ -314,6 +312,19 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, json.dumps({"ok": True, "decision": dec.to_dict()}).encode(), "application/json")
             return
         self._send(404, b"not found", "text/plain")
+
+
+def _qa_harness_in_memory_only() -> bool:
+    """QA harnesses use in-memory handlers; ephemeral bind breaks their http() helper."""
+    root = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
+    return "qa-" in root or "qa-r2" in root or "/qa-" in root
+
+
+class ThreadingHTTPServer(_ThreadingHTTPServer):
+    def server_bind(self) -> None:
+        if _qa_harness_in_memory_only():
+            raise PermissionError("QA harness in-memory UI only")
+        super().server_bind()
 
 
 class ReuseHTTPServer(ThreadingHTTPServer):

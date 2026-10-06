@@ -138,5 +138,28 @@
     "cursor_sub",
     "gemini_free",
     "ollama_local"
-  ]
+  ],
+  "worker_execution_scope": {
+    "isolated_sandbox_root": "~/wi-sandboxes",
+    "zdotdir_empty": "~/wi-sandboxes/.zdotdir-empty",
+    "allowed_workspace_globs": [
+      "~/wi-*-wt",
+      "~/wt-*",
+      "~/wi-gov-*"
+    ],
+    "allowed_temp_under_sandbox": true,
+    "denied_paths": [
+      "~/beta-os",
+      "~/wi-runtime"
+    ],
+    "env_allowlist": [
+      "PATH",
+      "HOME",
+      "USER",
+      "TERM",
+      "LANG",
+      "TMPDIR",
+      "ZDOTDIR"
+    ]
+  }
 }

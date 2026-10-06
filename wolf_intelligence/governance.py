@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+# Path used in fail_closed_policy defaults and structure bounds.
+
 from .paths import CONFIG_DIR, GOVERNANCE_AUDIT_PATH, GOVERNANCE_DIR, ensure_dirs
 
 GOVERNANCE_CONFIG_DIR = CONFIG_DIR / "governance"
@@ -73,6 +75,11 @@ HARDCODED_BENCHMARK_CLASS_MAP: dict[str, str] = {
 
 MIN_JUSTIFICATION_LENGTH = 20
 MAX_OBSERVATION_AGE_HOURS = 72
+MAX_POLICY_BYTES = 256 * 1024
+MAX_POLICY_DEPTH = 32
+MAX_POLICY_ARRAY_LEN = 1000
+MAX_POLICY_NODES = 50_000
+MAX_VALIDATOR_ERRORS = 50
 
 
 @dataclass
@@ -439,12 +446,38 @@ def validate_policy_invariants(policy: dict[str, Any]) -> list[str]:
     return errors
 
 
-def append_audit_event(event_type: str, payload: dict[str, Any]) -> None:
+def append_audit_event(event_type: str, payload: dict[str, Any], *, fsync: bool = False) -> None:
     ensure_dirs()
     GOVERNANCE_DIR.mkdir(parents=True, exist_ok=True)
     rec = {"event": event_type, **payload}
     with GOVERNANCE_AUDIT_PATH.open("a", encoding="utf-8") as f:
         f.write(json.dumps(rec, ensure_ascii=False, sort_keys=True) + "\n")
+        if fsync:
+            f.flush()
+            os.fsync(f.fileno())
+
+
+def _policy_structure_bounds(data: Any, *, depth: int = 0, nodes: list[int] | None = None) -> list[str]:
+    """Reject pathological policy JSON before schema validation."""
+    if nodes is None:
+        nodes = [0]
+    errors: list[str] = []
+    nodes[0] += 1
+    if nodes[0] > MAX_POLICY_NODES:
+        errors.append(f"policy exceeds max node count {MAX_POLICY_NODES}")
+        return errors
+    if depth > MAX_POLICY_DEPTH:
+        errors.append(f"policy exceeds max depth {MAX_POLICY_DEPTH}")
+        return errors
+    if isinstance(data, list):
+        if len(data) > MAX_POLICY_ARRAY_LEN:
+            errors.append(f"array length {len(data)} exceeds max {MAX_POLICY_ARRAY_LEN}")
+        for item in data:
+            errors.extend(_policy_structure_bounds(item, depth=depth + 1, nodes=nodes))
+    elif isinstance(data, dict):
+        for value in data.values():
+            errors.extend(_policy_structure_bounds(value, depth=depth + 1, nodes=nodes))
+    return errors
 
 
 def load_policy(path: Path | str | None = None) -> PolicyLoad:
@@ -456,10 +489,20 @@ def load_policy(path: Path | str | None = None) -> PolicyLoad:
         pl = PolicyLoad(ok=False, mode="FAIL_CLOSED", policy=None, sha256="", errors=[f"unreadable: {exc}"])
         append_audit_event("GOVERNANCE_POLICY_FAIL_CLOSED", {"path": str(p), "errors": pl.errors})
         return pl
+    if len(raw) > MAX_POLICY_BYTES:
+        pl = PolicyLoad(
+            ok=False,
+            mode="FAIL_CLOSED",
+            policy=None,
+            sha256=_sha256_bytes(raw),
+            errors=[f"policy exceeds max bytes {MAX_POLICY_BYTES}"],
+        )
+        append_audit_event("GOVERNANCE_POLICY_FAIL_CLOSED", {"path": str(p), "sha256": pl.sha256, "errors": pl.errors})
+        return pl
     sha = _sha256_bytes(raw)
     try:
         policy = json.loads(raw.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys)
-    except (json.JSONDecodeError, UnicodeError, ValueError) as exc:
+    except (json.JSONDecodeError, UnicodeError, ValueError, RecursionError) as exc:
         pl = PolicyLoad(ok=False, mode="FAIL_CLOSED", policy=None, sha256=sha, errors=[f"invalid JSON: {exc}"])
         append_audit_event("GOVERNANCE_POLICY_FAIL_CLOSED", {"path": str(p), "sha256": sha, "errors": pl.errors})
         return pl
@@ -468,7 +511,11 @@ def load_policy(path: Path | str | None = None) -> PolicyLoad:
         append_audit_event("GOVERNANCE_POLICY_FAIL_CLOSED", {"path": str(p), "sha256": sha, "errors": pl.errors})
         return pl
     try:
-        errors = validate_policy_schema(policy) + validate_policy_invariants(policy)
+        errors = _policy_structure_bounds(policy)
+        if not errors:
+            errors = validate_policy_schema(policy) + validate_policy_invariants(policy)
+        if len(errors) > MAX_VALIDATOR_ERRORS:
+            errors = errors[:MAX_VALIDATOR_ERRORS] + [f"truncated after {MAX_VALIDATOR_ERRORS} errors"]
     except Exception as exc:
         errors = [f"validation exception: {exc}"]
     if errors:
@@ -547,4 +594,15 @@ def fail_closed_policy() -> dict[str, Any]:
         "grok_justification_min_length": MIN_JUSTIFICATION_LENGTH,
         "tie_band_quality_delta": 0.05,
         "fail_closed_conservative_order": list(HARDCODED_FAIL_CLOSED_ORDER),
+        "worker_execution_scope": {
+            "isolated_sandbox_root": str(Path.home() / "wi-sandboxes"),
+            "zdotdir_empty": str(Path.home() / "wi-sandboxes" / ".zdotdir-empty"),
+            "allowed_workspace_globs": ["~/wi-*-wt", "~/wt-*", "~/wi-gov-*"],
+            "allowed_temp_under_sandbox": True,
+            "denied_paths": [
+                str(Path.home() / "beta-os"),
+                str(Path.home() / "wi-runtime"),
+            ],
+            "env_allowlist": ["PATH", "HOME", "USER", "TERM", "LANG", "TMPDIR", "ZDOTDIR"],
+        },
     }

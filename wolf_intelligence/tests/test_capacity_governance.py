@@ -388,6 +388,7 @@ class TestCapacityGovernance(unittest.TestCase):
         env = os.environ.copy()
         env["WOLF_INTELLIGENCE_STATE_ROOT"] = state_root
         env["WOLF_INTELLIGENCE_REAL_EVIDENCE_ROOT"] = _REAL_TMP
+        env["WOLF_INTELLIGENCE_GOVERNANCE_TEST_CLOCK"] = "1"
         cmd = [
             sys.executable, "-m", "wolf_intelligence", "governance", "decide",
             "--task-class", "coding", "--id", "fresh-session-wi", "--now", NOW,
@@ -508,6 +509,20 @@ class TestCapacityGovernance(unittest.TestCase):
         save_tightening({"grok_routing_penalty": 0.0}, policy)
         paths.GOVERNANCE_DISPATCH_LEDGER_PATH.write_text("", encoding="utf-8")
         _set_grok_pct(96.0)
+        min_samples = int((policy.get("imbalance") or {}).get("min_samples", 5))
+        for i in range(min_samples):
+            decide(
+                {
+                    "id": f"raw-cap-non-grok-{i}",
+                    "task_class": "coding",
+                    "requested_worker": "cursor_sub",
+                },
+                policy_load=pl,
+                capacity=capacity_snapshot(NOW, policy=policy, policy_mode=pl.mode),
+                ledger_view=LedgerView(),
+                now=NOW,
+                record=True,
+            )
         r_capacity = check_imbalance(pl, LedgerView(), now=NOW)
         self.assertFalse(r_capacity.get("triggered"))
 
@@ -696,7 +711,7 @@ class TestCapacityGovernance(unittest.TestCase):
         self.assertEqual(grok["on_demand"], "UNKNOWN")
 
     def test_capacity_remaining_null_unless_exposed(self) -> None:
-        merged = merge_observations()
+        merged, _ = merge_observations()
         for wid, rec in merged.items():
             self.assertIsNone(rec.get("remaining"))
 
@@ -717,21 +732,22 @@ class TestCapacityGovernance(unittest.TestCase):
     def test_capacity_velocity_from_ledger(self) -> None:
         t0 = "2026-10-05T12:00:00+08:00"
         t1 = "2026-10-06T12:00:00+08:00"
-        record_observation(worker_id="codex_sub", included_usage_pct={"week": 1.0}, observed_at=t0)
-        record_observation(worker_id="codex_sub", included_usage_pct={"week": 3.0}, observed_at=t1)
-        for i in range(3):
-            rec = {
-                "decision": "DISPATCH",
-                "selected_worker": "codex_sub",
-                "recorded_at": t1,
-            }
-            with paths.GOVERNANCE_DISPATCH_LEDGER_PATH.open("a") as f:
-                f.write(json.dumps(rec) + "\n")
-        snap = capacity_snapshot(t1)
-        vel = snap["workers"]["codex_sub"]["velocity"]
-        self.assertIsNotNone(vel.get("pct_per_day"))
-        self.assertEqual(vel.get("dispatch_24h"), 3)
-        self.assertEqual(vel.get("dispatch_7d"), 3)
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            record_observation(worker_id="codex_sub", included_usage_pct={"week": 1.0}, observed_at=t0)
+            record_observation(worker_id="codex_sub", included_usage_pct={"week": 3.0}, observed_at=t1)
+            for i in range(3):
+                rec = {
+                    "decision": "DISPATCH",
+                    "selected_worker": "codex_sub",
+                    "recorded_at": t1,
+                }
+                with paths.GOVERNANCE_DISPATCH_LEDGER_PATH.open("a") as f:
+                    f.write(json.dumps(rec) + "\n")
+            snap = capacity_snapshot(t1)
+            vel = snap["workers"]["codex_sub"]["velocity"]
+            self.assertEqual(vel.get("pct_per_day"), 2.0)
+            self.assertEqual(vel.get("dispatch_24h"), 3)
+            self.assertEqual(vel.get("dispatch_7d"), 3)
 
     def test_capacity_projection_true_false_null(self) -> None:
         pl = load_policy()

@@ -36,6 +36,7 @@ from .live_gate import (GEMINI_STATE, env_enabled, execute_requested, gemini_spe
 
 HOME = Path.home()
 BETA = Path("/Users/wolfterminal/beta-os")
+SANDBOX_ROOT = HOME / "wi-sandboxes"
 
 # Variables that would move a CLI off its subscription login onto metered API billing.
 CLAUDE_METERED_ENV = (
@@ -76,7 +77,9 @@ def _which(name: str, *fallbacks: Path) -> str | None:
 def safe_workspace(path: str | None, prefix: str) -> tuple[str, bool]:
     """Return (workspace, created). Refuses $HOME, its parents and the live beta tree."""
     if not path:
-        return tempfile.mkdtemp(prefix=prefix), True
+        sandbox_tmp = SANDBOX_ROOT / ".workspace-tmp"
+        sandbox_tmp.mkdir(parents=True, exist_ok=True)
+        return tempfile.mkdtemp(prefix=prefix, dir=str(sandbox_tmp)), True
     p = Path(path).expanduser().resolve()
     home = HOME.resolve()
     if p == home or p in home.parents or p == Path("/") or p == BETA or BETA in p.parents:
@@ -95,12 +98,38 @@ def _stage_files(workspace: str, files: list[str] | None) -> list[str]:
     return staged
 
 
-def _run(argv: list[str], *, env: dict[str, str], cwd: str, timeout: float, stdin: str | None = None) -> tuple[int | None, str, str, float, str | None]:
+def _enforce_scope(worker_id: str, argv: list[str], cwd: str, env: dict[str, str]) -> AdapterResult | None:
+    from ..scope_guard import check_invocation
+
+    ok, reasons = check_invocation(worker_id, argv, cwd, env)
+    if ok:
+        return None
+    return AdapterResult(
+        False,
+        "GATED",
+        "scope refused: " + ",".join(reasons),
+        {"provider_called": False, "scope_reasons": reasons},
+    )
+
+
+def _run(
+    argv: list[str],
+    *,
+    env: dict[str, str],
+    cwd: str,
+    timeout: float,
+    stdin: str | None = None,
+    worker_id: str | None = None,
+) -> tuple[int | None, str, str, float, str | None]:
     """Run a CLI in its own session and reap the whole process group afterwards.
 
     cursor-agent leaves node workers behind after --print returns (seen 2026-10-06); killing the group
     on exit/timeout prevents orphaned workers holding a deleted temp workspace.
     """
+    if worker_id:
+        blocked = _enforce_scope(worker_id, argv, cwd, env)
+        if blocked is not None:
+            return None, "", blocked.message, 0.0, "SCOPE_REFUSED"
     started = time.perf_counter()
     try:
         proc = subprocess.Popen(argv, stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
@@ -215,8 +244,12 @@ class ClaudeProSubAdapter(_CliSubAdapter):
                     "--permission-mode", "dontAsk", "--tools", "Read" if staged else ""]
             if job.get("model"):
                 argv += ["--model", str(job["model"])]
-            rc, out, err_txt, ms, err = _run(argv, env=self.env(), cwd=workspace,
-                                             timeout=float(job.get("timeout_s") or 300), stdin=prompt)
+            env = self.env()
+            rc, out, err_txt, ms, err = _run(argv, env=env, cwd=workspace,
+                                             timeout=float(job.get("timeout_s") or 300), stdin=prompt,
+                                             worker_id=self.worker_id)
+            if err == "SCOPE_REFUSED":
+                return AdapterResult(False, "GATED", err_txt or "scope refused", {"provider_called": False})
             data: dict[str, Any] = {"latency_ms": ms, "exit_code": rc, "provider_called": True,
                                     "execution_path": "claude -p (ANTHROPIC_API_KEY & co removed from child env)",
                                     "workspace_scoped": True}
@@ -296,8 +329,12 @@ class CodexSubAdapter(_CliSubAdapter):
             if job.get("model"):
                 argv += ["-m", str(job["model"])]
             argv.append("-")
-            rc, out, err_txt, ms, err = _run(argv, env=self.env(), cwd=workspace,
-                                             timeout=float(job.get("timeout_s") or 300), stdin=str(job.get("prompt") or ""))
+            env = self.env()
+            rc, out, err_txt, ms, err = _run(argv, env=env, cwd=workspace,
+                                             timeout=float(job.get("timeout_s") or 300), stdin=str(job.get("prompt") or ""),
+                                             worker_id=self.worker_id)
+            if err == "SCOPE_REFUSED":
+                return AdapterResult(False, "GATED", err_txt or "scope refused", {"provider_called": False})
             text = last.read_text(encoding="utf-8") if last.exists() else ""
             usage = None
             model = None
@@ -364,7 +401,11 @@ class CursorSubAdapter(_CliSubAdapter):
             model = str(job.get("model") or "composer-2.5")
             argv = [b, "--print", "--output-format", "json", "--mode", "ask", "--sandbox", "enabled", "--trust",
                     "--workspace", workspace, "--model", model, prompt]
-            rc, out, err_txt, ms, err = _run(argv, env=self.env(), cwd=workspace, timeout=float(job.get("timeout_s") or 300))
+            env = self.env()
+            rc, out, err_txt, ms, err = _run(argv, env=env, cwd=workspace, timeout=float(job.get("timeout_s") or 300),
+                                             worker_id=self.worker_id)
+            if err == "SCOPE_REFUSED":
+                return AdapterResult(False, "GATED", err_txt or "scope refused", {"provider_called": False})
             text = ""
             j: dict[str, Any] = {}
             try:

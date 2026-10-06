@@ -55,7 +55,7 @@ def check_imbalance(
     cutoff = now_dt - timedelta(hours=window_h)
 
     relevant: list[dict[str, Any]] = []
-    for rec in reversed(lv.decisions()):
+    for rec in reversed(lv.decisions(now=now_dt)):
         if rec.get("decision") != "DISPATCH":
             continue
         if rec.get("protected"):

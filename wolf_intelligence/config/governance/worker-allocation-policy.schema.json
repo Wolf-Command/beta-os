@@ -111,7 +111,18 @@
     },
     "grok_routing_penalty_default": {"type": "number", "minimum": 0, "maximum": 10},
     "grok_routing_penalty_step": {"type": "number", "minimum": 0, "maximum": 1},
-    "grok_routing_penalty_max": {"type": "number", "minimum": 0, "maximum": 10}
+    "grok_routing_penalty_max": {"type": "number", "minimum": 0, "maximum": 10},
+    "worker_execution_scope": {
+      "type": "object",
+      "properties": {
+        "isolated_sandbox_root": {"type": "string", "minLength": 1},
+        "zdotdir_empty": {"type": "string", "minLength": 1},
+        "allowed_workspace_globs": {"type": "array", "items": {"type": "string"}},
+        "allowed_temp_under_sandbox": {"type": "boolean"},
+        "denied_paths": {"type": "array", "items": {"type": "string"}},
+        "env_allowlist": {"type": "array", "items": {"type": "string"}}
+      }
+    }
   },
   "$defs": {
     "thresholds": {
