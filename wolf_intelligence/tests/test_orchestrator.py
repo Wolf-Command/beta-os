@@ -451,6 +451,54 @@ class OrchestratorTestCase(unittest.TestCase):
         self.assertTrue(all(r == "blocked" for r in results))
         self.assertEqual(orch.load_dispatch_ledger()["wi-race-b:1"]["status"], "completed")
 
+    def test_stale_dispatch_completion_cannot_close_newer_attempt(self) -> None:
+        self._submit_build(reviewer_gate=False, max_attempts=2)
+        dispatch_item, lease_key = orch.claim("wi-build-1", now="2026-10-06T12:00:01+08:00")
+        self.assertIsNotNone(dispatch_item)
+        items = orch.load_items()
+        running = dict(items["wi-build-1"])
+        running["status"] = "RUNNING"
+        running["version"] = int(running.get("version") or 0) + 1
+        running["updated_at"] = "2026-10-06T12:00:02+08:00"
+        items["wi-build-1"] = running
+        orch.save_items(items)
+        leases = orch.load_leases()
+        leases[lease_key]["expires_at"] = "2026-10-06T11:00:00+08:00"
+        orch.save_leases(leases)
+        reclaimed = orch.reclaim_stale_leases(now="2026-10-06T12:00:03+08:00")
+        self.assertIn(lease_key, reclaimed)
+        self.assertEqual(orch.show("wi-build-1")["status"], "QUEUED")
+        claimed2, _ = orch.claim("wi-build-1", now="2026-10-06T12:00:04+08:00")
+        self.assertIsNotNone(claimed2)
+        self.assertEqual(claimed2["attempt"], 2)
+        self.assertEqual(orch.show("wi-build-1")["status"], "CLAIMED")
+        orch._dispatch_ledger_entry(
+            "wi-build-1",
+            1,
+            status="in_flight",
+            worker="cursor_sub",
+            now="2026-10-06T12:00:02+08:00",
+        )
+        out = orch._finish_dispatch(
+            running,
+            "cursor_sub",
+            status="COMPLETED",
+            summary="stale worker",
+            exceptions=[],
+            exit_code=0,
+            now="2026-10-06T12:00:05+08:00",
+            argv=["cursor_sub"],
+            using_override=True,
+        )
+        self.assertFalse(out["ok"])
+        self.assertEqual(out["error"], "attempt_mismatch")
+        current = orch.show("wi-build-1")
+        self.assertEqual(current["status"], "CLAIMED")
+        self.assertEqual(current["attempt"], 2)
+        ledger = orch.load_dispatch_ledger()
+        self.assertEqual(ledger["wi-build-1:1"]["status"], "in_flight")
+        self.assertNotIn("wi-build-1:2", ledger)
+
     def test_closed_item_cannot_be_claimed(self) -> None:
         self._submit_build(reviewer_gate=False, max_attempts=1)
         orch.run_once(now="2026-10-06T12:00:01+08:00")

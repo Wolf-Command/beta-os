@@ -1293,10 +1293,27 @@ def _finish_dispatch(
     using_override: bool = False,
 ) -> dict[str, Any]:
     item_id = item["id"]
+    attempt = int(item.get("attempt") or 1)
+    expected_version = _item_version(item)
     snapshot = load_items().get(item_id, item)
-    attempt = int(snapshot.get("attempt") or 1)
-    expected_version = _item_version(snapshot)
-    owner_action = str((payload or {}).get("owner_action_required") or snapshot.get("owner_action_required") or "")
+    owner_action = str(
+        (payload or {}).get("owner_action_required")
+        or snapshot.get("owner_action_required")
+        or item.get("owner_action_required")
+        or ""
+    )
+    if snapshot and int(snapshot.get("attempt") or 0) != attempt:
+        return {
+            "ok": False,
+            "status": status,
+            "error": "attempt_mismatch",
+            "completion": None,
+            "review_enqueued": None,
+            "elapsed_ms": elapsed_ms,
+            "exit_code": exit_code,
+            "pid": pid,
+            "worker": worker_id,
+        }
 
     if argv is None:
         cfg = load_config()
