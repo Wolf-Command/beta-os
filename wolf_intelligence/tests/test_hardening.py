@@ -13,6 +13,8 @@ import tempfile as _tempfile
 if not _os.environ.get("WI_TEST_STATE_ISOLATED"):
     if "wolf_intelligence.paths" in _sys.modules:
         raise RuntimeError("wolf_intelligence.paths imported before test state isolation")
+    # Remember the configured (live) root so the guard can refuse it even if it moves out of beta-os.
+    _os.environ["WI_TEST_CONFIGURED_STATE_ROOT"] = _os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
     _TEST_STATE_ROOT = _tempfile.mkdtemp(prefix="wi-test-state-")
     _os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = _TEST_STATE_ROOT
     _os.environ["WI_TEST_STATE_ISOLATED"] = _TEST_STATE_ROOT
@@ -43,9 +45,46 @@ from wolf_intelligence.adapters.live_gate import (
     model_price,
 )
 
-_LIVE_BETA_PREFIX = "/Users/wolfterminal/beta-os"
-if paths.STATE_ROOT == paths.LIVE_STATE_ROOT or str(paths.STATE_ROOT).startswith(_LIVE_BETA_PREFIX):
-    raise RuntimeError("refusing to run tests against live Wolf Intelligence state")
+def _live_state_roots() -> list[Path]:
+    """Live roots derived from configuration, not a hardcoded path: the package's
+    LIVE_STATE_ROOT plus any WOLF_INTELLIGENCE_STATE_ROOT configured before isolation."""
+    roots = [Path(paths.LIVE_STATE_ROOT).resolve()]
+    configured = os.environ.get("WI_TEST_CONFIGURED_STATE_ROOT", "").strip()
+    if configured:
+        roots.append(Path(configured).expanduser().resolve())
+    return roots
+
+
+def _related(a: Path, b: Path) -> bool:
+    return a == b or a.is_relative_to(b) or b.is_relative_to(a)
+
+
+def assert_test_state_root_is_safe(root: Path) -> None:
+    root = Path(root).resolve()
+    for live in _live_state_roots():
+        if _related(root, live):
+            raise RuntimeError("refusing to run tests against live Wolf Intelligence state")
+    if not root.is_relative_to(Path(tempfile.gettempdir()).resolve()):
+        raise RuntimeError("refusing to run tests outside the system temp dir")
+
+
+assert_test_state_root_is_safe(paths.STATE_ROOT)
+
+
+def _verified_price_table(tmpdir: str) -> Path:
+    """A copy of the shipped price table with every entry marked verified (tests only)."""
+    from wolf_intelligence.adapters import live_gate
+    data = json.loads(live_gate.PRICE_CEILINGS_PATH.read_text(encoding="utf-8"))
+    for entry in data["models"].values():
+        entry["verified"] = True
+    out = Path(tmpdir) / "price-ceilings.verified.json"
+    out.write_text(json.dumps(data), encoding="utf-8")
+    return out
+
+
+def _owner_caps(per_call: str = "1.0", daily: str = "1.0") -> None:
+    os.environ[MAX_COST_ENV] = per_call
+    os.environ["WOLF_INTELLIGENCE_MAX_DAILY_COST_USD"] = daily
 
 
 class StateIsolationTests(unittest.TestCase):
@@ -54,7 +93,8 @@ class StateIsolationTests(unittest.TestCase):
         root = Path(os.environ["WOLF_INTELLIGENCE_STATE_ROOT"]).resolve()
         self.assertEqual(paths.STATE_ROOT, root)
         self.assertNotEqual(paths.STATE_ROOT, paths.LIVE_STATE_ROOT)
-        self.assertFalse(str(root).startswith(_LIVE_BETA_PREFIX))
+        for live in _live_state_roots():
+            self.assertFalse(_related(root, live), str(live))
         for p in (
             paths.WORK_ITEMS_DIR, paths.EVENTS_PATH, paths.AUDIT_DIR, paths.LEDGER_DIR,
             paths.LEARNING_DIR, paths.SHADOW_DIR, paths.WORKERS_DIR, paths.SQLITE_PATH,
@@ -216,6 +256,7 @@ class AdapterGateTests(unittest.TestCase):
         os.environ.pop("OPENAI_API_KEY", None)
         os.environ.pop("ANTHROPIC_API_KEY", None)
         os.environ.pop("GEMINI_API_KEY", None)
+        os.environ.pop("WOLF_INTELLIGENCE_MAX_DAILY_COST_USD", None)
 
     def tearDown(self) -> None:
         os.environ.clear()
@@ -324,7 +365,9 @@ class AdapterGateTests(unittest.TestCase):
             def __exit__(self, *args):
                 return False
 
-        with mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen", return_value=_Resp()):
+        _owner_caps()
+        with mock.patch("wolf_intelligence.adapters.live_gate.PRICE_CEILINGS_PATH", _verified_price_table(self.tmp.name)), \
+             mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen", return_value=_Resp()):
             result = OpenAIAPIAdapter().submit({"execute": True, "max_cost_usd": 0.02, "prompt": "tiny"})
         blob = json.dumps(result.data)
         self.assertNotIn("unit-test-openai-key", blob)
@@ -351,7 +394,9 @@ class AdapterGateTests(unittest.TestCase):
         os.environ["OPENAI_API_KEY"] = "unit-test-openai-key"
         os.environ["ANTHROPIC_API_KEY"] = "unit-test-anthropic-key"
         os.environ["GEMINI_API_KEY"] = "unit-test-gemini-key"
-        with mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen") as opened:
+        _owner_caps()
+        with mock.patch("wolf_intelligence.adapters.live_gate.PRICE_CEILINGS_PATH", _verified_price_table(self.tmp.name)), \
+             mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen") as opened:
             tiny_cap = OpenAIAPIAdapter().submit({"execute": True, "max_cost_usd": 0.0000001, "prompt": "tiny"})
             self.assertEqual(tiny_cap.status, "GATED")
             self.assertIn("exceeds", tiny_cap.message)
@@ -395,7 +440,9 @@ class AdapterGateTests(unittest.TestCase):
             def __exit__(self, *args):
                 return False
 
-        with mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen", return_value=_Resp()) as opened:
+        _owner_caps()
+        with mock.patch("wolf_intelligence.adapters.live_gate.PRICE_CEILINGS_PATH", _verified_price_table(self.tmp.name)), \
+             mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen", return_value=_Resp()) as opened:
             result = AnthropicAPIAdapter().submit({"execute": True, "max_cost_usd": 0.01, "prompt": "tiny"})
         self.assertTrue(opened.called)
         self.assertEqual(result.status, "LIVE_OK")
