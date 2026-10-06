@@ -73,7 +73,12 @@ _guard()
 
 def _ctx(now: str | None = None, grok_available: bool = True) -> dict:
     pl = load_policy()
-    cap = capacity_snapshot(now or NOW, policy=pl.policy, grok_available=grok_available)
+    cap = capacity_snapshot(
+        now or NOW,
+        policy=pl.policy,
+        policy_mode=pl.mode,
+        grok_available=grok_available,
+    )
     return {"policy_load": pl, "capacity": cap}
 
 
@@ -268,6 +273,22 @@ class TestCapacityGovernance(unittest.TestCase):
         env["WOLF_INTELLIGENCE_UI_TOKEN"] = token
         env["WOLF_INTELLIGENCE_UI_PORT"] = str(port)
 
+        gov_dir = Path(state_root) / "governance"
+        gov_dir.mkdir(parents=True, exist_ok=True)
+        obs_path = gov_dir / "capacity-observations.jsonl"
+        tighten_path = gov_dir / "tightening.json"
+        ledger_path = gov_dir / "dispatch-ledger.jsonl"
+        obs_body = {
+            "worker_id": "grok_bot_sub",
+            "included_usage_pct": {"weekly": 35.0},
+            "observed_at": NOW,
+        }
+        with obs_path.open("a") as f:
+            f.write(json.dumps(obs_body) + "\n")
+        tighten_path.write_text(
+            json.dumps({"grok_routing_penalty": 0.15}) + "\n",
+            encoding="utf-8",
+        )
         proc = subprocess.Popen(
             [sys.executable, "-m", "wolf_intelligence.owner_ui_server"],
             env=env,
@@ -276,9 +297,12 @@ class TestCapacityGovernance(unittest.TestCase):
         )
         try:
             self._wait_health(port, timeout=8)
-            wi = {"id": "restart-wi-1", "task_class": "coding"}
+            wi = {"id": "restart-wi-1", "task_class": "coding", "now": NOW}
             dec1 = self._api_decide(port, token, wi)
-            status1 = self._api_status(port, token)
+            status1 = self._api_status(port, token, now=NOW)
+            ledger_before = ledger_path.read_text() if ledger_path.exists() else ""
+            obs_before = obs_path.read_text()
+            tighten_before = tighten_path.read_text()
             proc.terminate()
             proc.wait(timeout=5)
             proc2 = subprocess.Popen(
@@ -289,8 +313,12 @@ class TestCapacityGovernance(unittest.TestCase):
             )
             try:
                 self._wait_health(port, timeout=8)
-                status2 = self._api_status(port, token)
+                status2 = self._api_status(port, token, now=NOW)
                 self.assertEqual(status1["policy_sha256"], status2["policy_sha256"])
+                self.assertEqual(
+                    status1["grok_routing_penalty"],
+                    status2["grok_routing_penalty"],
+                )
                 cap_states1 = {
                     w: rec.get("state")
                     for w, rec in status1["capacity"]["workers"].items()
@@ -300,6 +328,12 @@ class TestCapacityGovernance(unittest.TestCase):
                     for w, rec in status2["capacity"]["workers"].items()
                 }
                 self.assertEqual(cap_states1, cap_states2)
+                self.assertEqual(
+                    ledger_path.read_text() if ledger_path.exists() else "",
+                    ledger_before,
+                )
+                self.assertEqual(obs_path.read_text(), obs_before)
+                self.assertEqual(tighten_path.read_text(), tighten_before)
                 dec2 = self._api_decide(port, token, wi)
                 self.assertEqual(dec1["decision_hash"], dec2["decision_hash"])
                 self.assertEqual(dec1["decision"], dec2["decision"])
@@ -326,9 +360,12 @@ class TestCapacityGovernance(unittest.TestCase):
             time.sleep(0.2)
         self.fail("server did not become healthy")
 
-    def _api_status(self, port: int, token: str) -> dict:
+    def _api_status(self, port: int, token: str, now: str | None = None) -> dict:
         conn = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
-        conn.request("GET", "/api/governance/status", headers={"Authorization": f"Bearer {token}"})
+        path = "/api/governance/status"
+        if now:
+            path += f"?now={now}"
+        conn.request("GET", path, headers={"Authorization": f"Bearer {token}"})
         resp = conn.getresponse()
         self.assertEqual(resp.status, 200)
         return json.loads(resp.read().decode())
@@ -381,19 +418,37 @@ class TestCapacityGovernance(unittest.TestCase):
                 )
 
     def test_h_paid_spend_off_every_capacity_state(self) -> None:
+        from itertools import product
+        from wolf_intelligence.worker_registry import is_metered
+
         env_before = {k: os.environ.get(k) for k in (live_gate.MAX_COST_ENV, live_gate.DAILY_COST_ENV)}
-        for pct in (0, 30, 60, 95, 100):
-            _set_grok_pct(float(pct))
+        state_pcts = {
+            "NORMAL": {"cursor_sub": 10, "claude_pro_sub": 10, "codex_sub": 10, "grok_bot_sub": 10},
+            "CONSERVE": {"cursor_sub": 75, "claude_pro_sub": 75, "codex_sub": 75, "grok_bot_sub": 40},
+            "RESERVE": {"cursor_sub": 90, "claude_pro_sub": 90, "codex_sub": 90, "grok_bot_sub": 65},
+            "EXHAUSTED": {"cursor_sub": 100, "claude_pro_sub": 100, "codex_sub": 100, "grok_bot_sub": 96},
+        }
+        pools = {
+            "cursor_sub": "cursor_models",
+            "claude_pro_sub": "week_all_models",
+            "codex_sub": "week",
+            "grok_bot_sub": "weekly",
+        }
+        workers = list(state_pcts["NORMAL"].keys())
+        states = list(state_pcts.keys())
+        for combo in product(states, repeat=len(workers)):
+            if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+                paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+            for wid, st in zip(workers, combo):
+                _set_worker_pct(wid, pools[wid], float(state_pcts[st][wid]))
+            env_after = {k: os.environ.get(k) for k in (live_gate.MAX_COST_ENV, live_gate.DAILY_COST_ENV)}
+            self.assertEqual(env_before, env_after)
             self.assertFalse(metered_permitted())
             self.assertFalse(metered_permitted_with_gate())
-            d = _decide("coding", id=f"spend-{pct}")
+            self.assertIsNone(live_gate.cost_cap({}))
+            d = _decide("coding", id=f"spend-{'-'.join(combo)}")
             if d.selected_worker:
-                from wolf_intelligence.worker_registry import is_metered
                 self.assertFalse(is_metered(d.selected_worker))
-            refusal, cap, est = live_gate.enforce_cost_cap(
-                {}, model_id="gpt-4", prompt="hi", max_output_tokens=100
-            )
-            self.assertIsNotNone(refusal)
         for k, v in env_before.items():
             if v is None:
                 os.environ.pop(k, None)
@@ -406,7 +461,7 @@ class TestCapacityGovernance(unittest.TestCase):
         hard_block = float((policy.get("imbalance") or {}).get("penalty_hard_block_at", 0.6))
         save_tightening({"grok_routing_penalty": 0.0}, policy)
         just = "x" * 25
-        # Before alarm: Grok substantive with valid code is selected when requested
+        _set_grok_pct(10.0)
         d_before = _decide(
             "coding",
             id="imbalance-before",
@@ -415,40 +470,47 @@ class TestCapacityGovernance(unittest.TestCase):
             justification=just,
         )
         self.assertEqual(d_before.selected_worker, "grok_bot_sub")
+        self.assertEqual(d_before.grok_reason_verdict, "ACCEPTED")
 
         grok = "grok_bot_sub"
         for i in range(8):
-            rec = {
-                "decision": "DISPATCH",
-                "selected_worker": grok,
-                "delegatable": True,
-                "protected": False,
-                "alternatives_available": True,
-                "recorded_at": NOW,
+            wi = {
+                "id": f"imbalance-dispatch-{i}",
+                "task_class": "coding",
+                "requested_worker": grok,
+                "grok_reason_code": "EXPLICIT_JUSTIFIED",
+                "grok_justification": just,
             }
-            with paths.GOVERNANCE_DISPATCH_LEDGER_PATH.open("a") as f:
-                f.write(json.dumps(rec) + "\n")
-        result = check_imbalance(pl, LedgerView(), now=NOW)
-        self.assertTrue(result.get("triggered"))
+            decide(
+                wi,
+                policy_load=pl,
+                capacity=capacity_snapshot(NOW, policy=policy, policy_mode=pl.mode),
+                ledger_view=LedgerView(),
+                now=NOW,
+                record=True,
+            )
+            check_imbalance(pl, LedgerView(), now=NOW)
         t = load_tightening(policy)
-        self.assertGreater(float(t.get("grok_routing_penalty", 0)), 0.0)
+        self.assertGreaterEqual(float(t.get("grok_routing_penalty", 0)), hard_block)
         audit = paths.GOVERNANCE_AUDIT_PATH.read_text()
         self.assertIn("ROUTING_IMBALANCE", audit)
 
-        # Raise penalty to hard-block: next decision shifts away from Grok
-        save_tightening({"grok_routing_penalty": hard_block}, policy)
         d_after = _decide(
             "coding",
             id="imbalance-after",
+            requested_worker="grok_bot_sub",
             grok_reason="EXPLICIT_JUSTIFIED",
             justification=just,
         )
         self.assertNotEqual(d_after.selected_worker, "grok_bot_sub")
-        self.assertEqual(d_after.decision, "DISPATCH")
-        self.assertIn(d_after.selected_worker, ("cursor_sub", "claude_pro_sub", "codex_sub"))
+        self.assertEqual(d_after.grok_reason_verdict, "REJECTED")
 
-        # Protected work must not trigger imbalance
         save_tightening({"grok_routing_penalty": 0.0}, policy)
+        paths.GOVERNANCE_DISPATCH_LEDGER_PATH.write_text("", encoding="utf-8")
+        _set_grok_pct(96.0)
+        r_capacity = check_imbalance(pl, LedgerView(), now=NOW)
+        self.assertFalse(r_capacity.get("triggered"))
+
         prot_rec = {
             "decision": "DISPATCH",
             "selected_worker": grok,
@@ -491,6 +553,24 @@ class TestCapacityGovernance(unittest.TestCase):
         flip_reserve_data["grok_reserve"]["allowed_reason_codes_by_state"]["RESERVE"] = ["EXPLICIT_JUSTIFIED"]
         flip_reserve.write_text(json.dumps(flip_reserve_data), encoding="utf-8")
         flip_neg_pen = _flip(good, grok_routing_penalty_default=-0.5)
+        flip_paid_on = _flip(good, paid_spend="ON")
+        flip_extra_code = _flip(good)
+        flip_extra_code_data = json.loads(flip_extra_code.read_text())
+        flip_extra_code_data["grok_reason_codes"] = list(good["grok_reason_codes"]) + ["peaches_can_do_it"]
+        flip_extra_code.write_text(json.dumps(flip_extra_code_data), encoding="utf-8")
+        flip_dup_keys = Path(tmp) / "dup-keys.json"
+        flip_dup_keys.write_text(
+            json.dumps(good)[:-1] + ',"grok_justification_min_length":1}',
+            encoding="utf-8",
+        )
+        flip_nan_floor = _flip(good)
+        flip_nan_data = json.loads(flip_nan_floor.read_text())
+        flip_nan_data["quality_floors"]["default"] = float("nan")
+        flip_nan_floor.write_text(json.dumps(flip_nan_data), encoding="utf-8")
+        missing_schema_dir = Path(tmp) / "no-schema"
+        missing_schema_dir.mkdir(exist_ok=True)
+        good_policy_copy = missing_schema_dir / "policy.json"
+        good_policy_copy.write_text(json.dumps(good), encoding="utf-8")
 
         for label, path in [
             ("missing", Path("/nonexistent/wi-policy-missing.json")),
@@ -501,11 +581,22 @@ class TestCapacityGovernance(unittest.TestCase):
             ("invariant_flip_conserve_loosened", flip_conserve),
             ("invariant_flip_reserve_nonempty", flip_reserve),
             ("invariant_flip_negative_penalty", flip_neg_pen),
+            ("invariant_flip_paid_on", flip_paid_on),
+            ("invariant_flip_extra_reason_code", flip_extra_code),
+            ("duplicate_keys", flip_dup_keys),
+            ("nan_quality_floor", flip_nan_floor),
+            ("missing_schema_file", good_policy_copy),
         ]:
-            pl = load_policy(path)
+            if paths.GOVERNANCE_AUDIT_PATH.exists():
+                paths.GOVERNANCE_AUDIT_PATH.unlink()
+            if label == "missing_schema_file":
+                with mock.patch.object(governance, "SCHEMA_PATH", missing_schema_dir / "missing.schema.json"):
+                    pl = load_policy(path)
+            else:
+                pl = load_policy(path)
             self.assertEqual(pl.mode, "FAIL_CLOSED")
             self.assertFalse(pl.ok)
-            cap = capacity_snapshot(NOW, policy=pl.policy or {})
+            cap = capacity_snapshot(NOW, policy=pl.policy, policy_mode=pl.mode)
             d_sub = decide(
                 {
                     "id": f"fc-sub-{label}",
@@ -519,16 +610,22 @@ class TestCapacityGovernance(unittest.TestCase):
                 record=False,
             )
             self.assertNotEqual(d_sub.selected_worker, "grok_bot_sub")
+            self.assertIn(d_sub.decision, ("QUEUE", "DENY"))
             self.assertTrue(d_sub.owner_action_required)
             self.assertEqual(d_sub.owner_action_code, "OWNER_ACTION_REQUIRED")
+            self.assertFalse(metered_permitted(pl))
+            self.assertFalse(metered_permitted_with_gate(pl))
+            audit_text = paths.GOVERNANCE_AUDIT_PATH.read_text() if paths.GOVERNANCE_AUDIT_PATH.exists() else ""
+            self.assertIn("GOVERNANCE_POLICY_FAIL_CLOSED", audit_text)
             d_prot = decide(
                 {"id": f"fc-prot-{label}", "task_class": "owner_conversation"},
                 policy_load=pl,
                 capacity=cap,
                 record=False,
             )
-            self.assertEqual(d_prot.decision, "DISPATCH")
-            self.assertEqual(d_prot.selected_worker, "grok_bot_sub")
+            if label not in ("missing_schema_file",):
+                self.assertEqual(d_prot.decision, "DISPATCH")
+                self.assertEqual(d_prot.selected_worker, "grok_bot_sub")
             self.assertTrue(d_prot.owner_action_required)
 
     def test_k_invalid_grok_justification_rejected(self) -> None:
@@ -622,17 +719,25 @@ class TestCapacityGovernance(unittest.TestCase):
         t1 = "2026-10-06T12:00:00+08:00"
         record_observation(worker_id="codex_sub", included_usage_pct={"week": 1.0}, observed_at=t0)
         record_observation(worker_id="codex_sub", included_usage_pct={"week": 3.0}, observed_at=t1)
+        for i in range(3):
+            rec = {
+                "decision": "DISPATCH",
+                "selected_worker": "codex_sub",
+                "recorded_at": t1,
+            }
+            with paths.GOVERNANCE_DISPATCH_LEDGER_PATH.open("a") as f:
+                f.write(json.dumps(rec) + "\n")
         snap = capacity_snapshot(t1)
         vel = snap["workers"]["codex_sub"]["velocity"]
         self.assertIsNotNone(vel.get("pct_per_day"))
+        self.assertEqual(vel.get("dispatch_24h"), 3)
+        self.assertEqual(vel.get("dispatch_7d"), 3)
 
     def test_capacity_projection_true_false_null(self) -> None:
         pl = load_policy()
         policy = pl.policy or {}
-        # null when unknown reset
-        snap = capacity_snapshot(NOW, policy=policy)
+        snap = capacity_snapshot(NOW, policy=policy, policy_mode=pl.mode)
         self.assertIsNone(snap["workers"]["cursor_sub"]["projected_exhaustion_before_reset"])
-        # true when velocity + reset known
         record_observation(
             worker_id="codex_sub",
             included_usage_pct={"week": 80},
@@ -645,9 +750,53 @@ class TestCapacityGovernance(unittest.TestCase):
             reset_at="2026-10-07T12:00:00+08:00",
             observed_at="2026-10-06T11:00:00+08:00",
         )
-        snap2 = capacity_snapshot("2026-10-06T12:00:00+08:00", policy=policy)
-        proj = snap2["workers"]["codex_sub"]["projected_exhaustion_before_reset"]
-        self.assertIn(proj, (True, False, None))
+        snap2 = capacity_snapshot("2026-10-06T12:00:00+08:00", policy=policy, policy_mode=pl.mode)
+        self.assertIs(snap2["workers"]["codex_sub"]["projected_exhaustion_before_reset"], True)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        record_observation(
+            worker_id="codex_sub",
+            included_usage_pct={"week": 80},
+            reset_at="2026-10-07T12:00:00+08:00",
+            observed_at="2026-10-06T10:00:00+08:00",
+        )
+        record_observation(
+            worker_id="codex_sub",
+            included_usage_pct={"week": 80},
+            reset_at="2026-10-07T12:00:00+08:00",
+            observed_at="2026-10-06T11:00:00+08:00",
+        )
+        snap3 = capacity_snapshot("2026-10-06T12:00:00+08:00", policy=policy, policy_mode=pl.mode)
+        self.assertIs(snap3["workers"]["codex_sub"]["projected_exhaustion_before_reset"], False)
+
+    def test_quality_tie_band_reasoning_share(self) -> None:
+        claude_wins = 0
+        codex_wins = 0
+        for i in range(40):
+            d = _decide("ux_product", id=f"ux-tie-{i}")
+            self.assertEqual(d.decision, "DISPATCH")
+            if d.selected_worker == "claude_pro_sub":
+                claude_wins += 1
+            elif d.selected_worker == "codex_sub":
+                codex_wins += 1
+        self.assertGreater(claude_wins, 0)
+        self.assertGreater(codex_wins, 0)
+        import hashlib as _hashlib
+        pl = load_policy()
+        prefer = (pl.policy or {})["specialisation"]["reasoning_review"]["prefer_workers"]
+        cap_reorder_id = "ux-tie-cap-reorder"
+        for i in range(256):
+            candidate = f"ux-tie-cap-{i}"
+            h = int(_hashlib.sha256(candidate.encode()).hexdigest(), 16)
+            rotation = h % len(prefer)
+            rotated = prefer[rotation:] + prefer[:rotation]
+            if rotated[0] == "codex_sub":
+                cap_reorder_id = candidate
+                break
+        _set_worker_pct("claude_pro_sub", "week_all_models", 90.0)
+        _set_worker_pct("codex_sub", "week", 10.0)
+        d_cap = _decide("ux_product", id=cap_reorder_id)
+        self.assertEqual(d_cap.selected_worker, "codex_sub")
 
 
 if __name__ == "__main__":

@@ -71,7 +71,7 @@
     },
     "capacity_thresholds": {
       "type": "object",
-      "required": ["default"],
+      "required": ["default", "grok_bot_sub"],
       "properties": {
         "default": {"$ref": "#/$defs/thresholds"},
         "grok_bot_sub": {"$ref": "#/$defs/thresholds"}

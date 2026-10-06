@@ -43,6 +43,8 @@ def main(argv: list[str] | None = None) -> int:
     gov = sub.add_parser("governance")
     gov_sub = gov.add_subparsers(dest="gov_cmd", required=True)
     gov_sub.add_parser("status")
+    g_reset = gov_sub.add_parser("reset-penalty")
+    g_reset.add_argument("--actor", required=True)
     g_dec = gov_sub.add_parser("decide")
     g_dec.add_argument("--task-class", required=True)
     g_dec.add_argument("--id", default=None)
@@ -163,18 +165,26 @@ def main(argv: list[str] | None = None) -> int:
         return owner_ui_server.main()
     if args.cmd == "governance":
         if args.gov_cmd == "status":
-            from .allocation import new_orchestrator_session
+            from .allocation import load_tightening, new_orchestrator_session
             ctx = new_orchestrator_session()
             pl = ctx["policy_load"]
+            tightening = load_tightening(pl.policy)
             print(json.dumps({
                 "policy_mode": pl.mode,
                 "policy_sha256": pl.sha256,
                 "policy_sha256_prefix": pl.sha256[:12] if pl.sha256 else "",
                 "policy_id": (pl.policy or {}).get("policy_id"),
                 "capacity": ctx["capacity"],
-                "grok_routing_penalty": ctx["tightening"].get("grok_routing_penalty", 0.0),
+                "grok_routing_penalty": tightening.get("grok_routing_penalty", 0.0),
                 "errors": pl.errors,
             }, indent=2))
+            return 0
+        if args.gov_cmd == "reset-penalty":
+            from .allocation import reset_penalty
+            from .governance import load_policy
+            pl = load_policy()
+            result = reset_penalty(args.actor, pl.policy)
+            print(json.dumps(result, indent=2))
             return 0
         if args.gov_cmd == "decide":
             from .allocation import decide_and_record

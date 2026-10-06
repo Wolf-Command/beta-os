@@ -17,9 +17,12 @@ def _parse_dt(iso: str | None) -> datetime | None:
     if not iso:
         return None
     try:
-        return datetime.fromisoformat(iso)
+        dt = datetime.fromisoformat(iso)
     except ValueError:
         return None
+    if dt.tzinfo is None:
+        return None
+    return dt
 
 
 def check_imbalance(
@@ -62,7 +65,7 @@ def check_imbalance(
         if not rec.get("alternatives_available"):
             continue
         ts = _parse_dt(rec.get("recorded_at"))
-        if ts and ts < cutoff:
+        if ts is None or ts > now_dt or ts < cutoff:
             continue
         relevant.append(rec)
         if len(relevant) >= window_n:
@@ -77,7 +80,7 @@ def check_imbalance(
     if share <= max_share:
         return {"triggered": False, "grok_share": share, "samples": len(relevant)}
 
-    tightening = load_tightening()
+    tightening = load_tightening(policy)
     current = float(tightening.get("grok_routing_penalty", 0.0))
     new_penalty = min(current + step, max_pen)
     tightening["grok_routing_penalty"] = new_penalty

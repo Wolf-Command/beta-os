@@ -15,21 +15,31 @@ from __future__ import annotations
 import hmac
 import json
 import os
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
+from zoneinfo import ZoneInfo
 
 from . import work_items
 from . import stats_store
 from .paths import OWNER_UI_HOST, UI_DIR, UI_TOKEN_ENV, WORKER_STATUS_PATH, ensure_dirs, AUDIT_DIR, owner_ui_port
 
-# Governance context loaded once at process startup.
+TZ = ZoneInfo("Asia/Makassar")
+
+# Governance context: policy loaded once at startup; capacity refreshed per request.
 _GOVERNANCE_CTX: dict | None = None
 
 
 def load_governance_startup() -> dict:
-    """Load policy + capacity at startup; recorded for status/decide endpoints."""
-    from .allocation import load_tightening, new_orchestrator_session
-    return new_orchestrator_session()
+    """Load policy once at startup (read-only). Capacity is refreshed per request."""
+    from .allocation import load_tightening
+    from .governance import load_policy
+
+    pl = load_policy()
+    return {
+        "policy_load": pl,
+        "tightening": load_tightening(pl.policy),
+    }
 
 
 def governance_ctx() -> dict:
@@ -37,6 +47,18 @@ def governance_ctx() -> dict:
     if _GOVERNANCE_CTX is None:
         _GOVERNANCE_CTX = load_governance_startup()
     return _GOVERNANCE_CTX
+
+
+def _capacity_for_request(now_override: str | None = None) -> dict:
+    from .capacity import capacity_snapshot
+
+    ctx = governance_ctx()
+    pl = ctx["policy_load"]
+    return capacity_snapshot(
+        now_override,
+        policy=pl.policy,
+        policy_mode=pl.mode,
+    )
 
 HTML = UI_DIR / "owner.html"
 _SESSION_COOKIE = "wolf_intelligence_session"
@@ -144,7 +166,8 @@ class Handler(BaseHTTPRequestHandler):
         if not self._request_scope_ok():
             return
         ensure_dirs()
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         if path in ("/", "/owner", "/wolf-intelligence", "/owner/intelligence"):
             body = HTML.read_bytes()
             self._send(200, body, "text/html; charset=utf-8")
@@ -192,9 +215,13 @@ class Handler(BaseHTTPRequestHandler):
             if not board_authorized(self.headers):
                 self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json")
                 return
+            qs = parse_qs(parsed.query)
+            now_override = (qs.get("now") or [None])[0]
             ctx = governance_ctx()
             pl = ctx["policy_load"]
-            tightening = ctx["tightening"]
+            cap = _capacity_for_request(now_override)
+            from .allocation import load_tightening
+            tightening = load_tightening(pl.policy)
             payload = {
                 "ok": True,
                 "policy_mode": pl.mode,
@@ -202,7 +229,7 @@ class Handler(BaseHTTPRequestHandler):
                 "policy_sha256_prefix": pl.sha256[:12] if pl.sha256 else "",
                 "policy_version": (pl.policy or {}).get("version"),
                 "policy_id": (pl.policy or {}).get("policy_id"),
-                "capacity": ctx["capacity"],
+                "capacity": cap,
                 "grok_routing_penalty": tightening.get("grok_routing_penalty", 0.0),
             }
             self._send(200, json.dumps(payload).encode(), "application/json")
@@ -272,15 +299,18 @@ class Handler(BaseHTTPRequestHandler):
             from .allocation import decide, LedgerView
             from .imbalance import check_imbalance
             ctx = governance_ctx()
+            capacity_now = body.get("now")
+            cap = _capacity_for_request(capacity_now)
+            server_now = datetime.now(TZ)
             dec = decide(
                 body,
                 policy_load=ctx["policy_load"],
-                capacity=ctx["capacity"],
+                capacity=cap,
                 ledger_view=LedgerView(),
-                now=body.get("now"),
+                now=server_now,
                 record=True,
             )
-            check_imbalance(ctx["policy_load"], LedgerView(), now=body.get("now"))
+            check_imbalance(ctx["policy_load"], LedgerView(), now=server_now)
             self._send(200, json.dumps({"ok": True, "decision": dec.to_dict()}).encode(), "application/json")
             return
         self._send(404, b"not found", "text/plain")
@@ -291,6 +321,7 @@ class ReuseHTTPServer(ThreadingHTTPServer):
 
 
 def main() -> int:
+    global _GOVERNANCE_CTX
     if OWNER_UI_HOST != "127.0.0.1":
         print("OWNER_UI refusing non-loopback bind", flush=True)
         return 2
@@ -301,9 +332,9 @@ def main() -> int:
         return 2
     ensure_dirs()
     AUDIT_DIR.mkdir(parents=True, exist_ok=True)
-    ctx = load_governance_startup()
-    pl = ctx["policy_load"]
-    cap = ctx["capacity"]
+    _GOVERNANCE_CTX = load_governance_startup()
+    pl = _GOVERNANCE_CTX["policy_load"]
+    cap = _capacity_for_request()
     sha_prefix = pl.sha256[:12] if pl.sha256 else "none"
     grok_state = cap.get("grok_state", "UNKNOWN")
     print(

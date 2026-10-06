@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -13,6 +14,7 @@ from . import worker_registry
 from .adapters import live_gate
 from .governance import (
     HARDCODED_FAIL_CLOSED_ORDER,
+    GROK_WORKER_ID,
     PolicyLoad,
     append_audit_event,
     benchmark_class_for,
@@ -22,7 +24,13 @@ from .governance import (
     metered_permitted,
     task_family,
 )
-from .paths import CONFIG_DIR, GOVERNANCE_DISPATCH_LEDGER_PATH, GOVERNANCE_TIGHTENING_PATH, ensure_dirs
+from .paths import (
+    CONFIG_DIR,
+    GOVERNANCE_AUDIT_PATH,
+    GOVERNANCE_DISPATCH_LEDGER_PATH,
+    GOVERNANCE_TIGHTENING_PATH,
+    ensure_dirs,
+)
 
 TZ = ZoneInfo("Asia/Makassar")
 ROUTING_POLICY_PATH = CONFIG_DIR / "routing-policy-real.json"
@@ -53,6 +61,7 @@ class Decision:
     task_class: str
     exclusion_notes: list[str] = field(default_factory=list)
     quality_floor_waived_reason: str | None = None
+    routing_policy_sha256: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -76,7 +85,16 @@ class Decision:
             "task_class": self.task_class,
             "exclusion_notes": self.exclusion_notes,
             "quality_floor_waived_reason": self.quality_floor_waived_reason,
+            "routing_policy_sha256": self.routing_policy_sha256,
         }
+
+
+def _routing_policy_sha256() -> str:
+    try:
+        raw = ROUTING_POLICY_PATH.read_bytes()
+        return hashlib.sha256(raw).hexdigest()
+    except OSError:
+        return ""
 
 
 def _load_routing_policy() -> dict[str, Any]:
@@ -94,41 +112,101 @@ def _penalty_bounds(policy: dict[str, Any] | None) -> tuple[float, float]:
     return default_pen, max_pen
 
 
+def _penalty_high_water_mark() -> float:
+    """Highest audited penalty since the last owner reset."""
+    hwm = 0.0
+    if not GOVERNANCE_AUDIT_PATH.exists():
+        return hwm
+    try:
+        for line in GOVERNANCE_AUDIT_PATH.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            event = rec.get("event")
+            if event == "TIGHTENING_RESET":
+                val = rec.get("grok_routing_penalty")
+                if isinstance(val, (int, float)) and not isinstance(val, bool) and math.isfinite(val):
+                    hwm = float(val)
+                else:
+                    hwm = 0.0
+                continue
+            if event in ("TIGHTENING_PENALTY", "ROUTING_IMBALANCE", "TIGHTENING_CORRUPT"):
+                for key in ("penalty_after", "clamped", "grok_routing_penalty"):
+                    val = rec.get(key)
+                    if isinstance(val, (int, float)) and not isinstance(val, bool) and math.isfinite(val):
+                        hwm = max(hwm, float(val))
+    except OSError:
+        pass
+    return hwm
+
+
 def load_tightening(policy: dict[str, Any] | None = None) -> dict[str, Any]:
     ensure_dirs()
     default_pen, max_pen = _penalty_bounds(policy)
+    hwm = _penalty_high_water_mark()
+
+    def _finalize(pen: float, reason: str, raw: Any = None) -> dict[str, Any]:
+        clamped = max(default_pen, min(pen, max_pen))
+        effective = max(clamped, hwm)
+        if effective != pen or (raw is not None and raw != effective):
+            append_audit_event(
+                "TIGHTENING_PENALTY",
+                {
+                    "reason": reason,
+                    "raw": raw if raw is not None else pen,
+                    "clamped": clamped,
+                    "high_water_mark": hwm,
+                    "grok_routing_penalty": effective,
+                },
+            )
+        return {"grok_routing_penalty": effective}
+
     if not GOVERNANCE_TIGHTENING_PATH.exists():
-        return {"grok_routing_penalty": default_pen}
+        return _finalize(default_pen, "default_missing")
+
     try:
-        raw = GOVERNANCE_TIGHTENING_PATH.read_text(encoding="utf-8")
-        data = json.loads(raw)
+        raw_text = GOVERNANCE_TIGHTENING_PATH.read_text(encoding="utf-8")
+        data = json.loads(raw_text)
     except (OSError, json.JSONDecodeError) as exc:
         append_audit_event(
             "TIGHTENING_CORRUPT",
             {"path": str(GOVERNANCE_TIGHTENING_PATH), "error": str(exc), "action": "use_penalty_max"},
         )
-        return {"grok_routing_penalty": max_pen}
+        return _finalize(max_pen, "corrupt_json", raw_text)
+
     if not isinstance(data, dict):
         append_audit_event(
             "TIGHTENING_CORRUPT",
             {"path": str(GOVERNANCE_TIGHTENING_PATH), "error": "not_object", "action": "use_penalty_max"},
         )
-        return {"grok_routing_penalty": max_pen}
-    try:
-        pen = float(data.get("grok_routing_penalty", default_pen))
-    except (TypeError, ValueError):
+        return _finalize(max_pen, "not_object")
+
+    raw_pen = data.get("grok_routing_penalty", default_pen)
+    if not isinstance(raw_pen, (int, float)) or isinstance(raw_pen, bool) or not math.isfinite(raw_pen):
         append_audit_event(
             "TIGHTENING_CORRUPT",
-            {"path": str(GOVERNANCE_TIGHTENING_PATH), "error": "invalid_penalty", "action": "use_penalty_max"},
+            {
+                "path": str(GOVERNANCE_TIGHTENING_PATH),
+                "error": "invalid_penalty",
+                "raw": raw_pen,
+                "action": "use_penalty_max",
+            },
         )
-        return {"grok_routing_penalty": max_pen}
-    clamped = max(default_pen, min(pen, max_pen))
-    if clamped != pen:
+        return _finalize(max_pen, "invalid_penalty", raw_pen)
+
+    pen = float(raw_pen)
+    if pen < 0:
         append_audit_event(
-            "TIGHTENING_CLAMPED",
-            {"path": str(GOVERNANCE_TIGHTENING_PATH), "raw": pen, "clamped": clamped},
+            "TIGHTENING_CORRUPT",
+            {"path": str(GOVERNANCE_TIGHTENING_PATH), "error": "negative_penalty", "raw": pen},
         )
-    data["grok_routing_penalty"] = clamped
+        return _finalize(max_pen, "negative_penalty", pen)
+
+    result = _finalize(pen, "loaded")
+    data["grok_routing_penalty"] = result["grok_routing_penalty"]
     return data
 
 
@@ -136,12 +214,42 @@ def save_tightening(data: dict[str, Any], policy: dict[str, Any] | None = None) 
     ensure_dirs()
     default_pen, max_pen = _penalty_bounds(policy)
     out = dict(data)
-    try:
-        pen = float(out.get("grok_routing_penalty", default_pen))
-    except (TypeError, ValueError):
+    raw_pen = out.get("grok_routing_penalty", default_pen)
+    if not isinstance(raw_pen, (int, float)) or isinstance(raw_pen, bool) or not math.isfinite(raw_pen):
         pen = max_pen
-    out["grok_routing_penalty"] = max(default_pen, min(pen, max_pen))
+    else:
+        pen = float(raw_pen)
+    pen = max(default_pen, min(pen, max_pen))
+    hwm = _penalty_high_water_mark()
+    effective = max(pen, hwm)
+    if effective != out.get("grok_routing_penalty"):
+        append_audit_event(
+            "TIGHTENING_PENALTY",
+            {
+                "reason": "save",
+                "raw": out.get("grok_routing_penalty"),
+                "grok_routing_penalty": effective,
+                "high_water_mark": hwm,
+            },
+        )
+    out["grok_routing_penalty"] = effective
     GOVERNANCE_TIGHTENING_PATH.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
+
+
+def reset_penalty(actor: str, policy: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Owner reset of grok routing penalty to default."""
+    default_pen, _ = _penalty_bounds(policy)
+    data = {"grok_routing_penalty": default_pen}
+    GOVERNANCE_TIGHTENING_PATH.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    append_audit_event(
+        "TIGHTENING_RESET",
+        {"actor": actor, "grok_routing_penalty": default_pen},
+    )
+    append_audit_event(
+        "TIGHTENING_PENALTY",
+        {"reason": "owner_reset", "grok_routing_penalty": default_pen, "actor": actor},
+    )
+    return data
 
 
 def _quality_for(worker: str, bench_class: str, routing: dict[str, Any]) -> float | None:
@@ -233,6 +341,21 @@ def _is_eligible_base(
     return True, ""
 
 
+def _resolve_task_class(work_item: dict[str, Any]) -> tuple[str | None, str | None]:
+    """Return (task_class, exclusion_note). Exact match only; no silent normalization."""
+    task_class = work_item.get("task_class")
+    kind = work_item.get("kind")
+    if task_class is not None and kind is not None and task_class != kind:
+        return None, "unclassified"
+    if task_class is None:
+        return None, "unclassified"
+    if not isinstance(task_class, str):
+        return None, "unclassified"
+    if task_class != task_class.strip() or not task_class:
+        return None, "unclassified"
+    return task_class, None
+
+
 def _verify_grok_reason(
     code: str | None,
     justification: str | None,
@@ -272,7 +395,7 @@ def _verify_grok_reason(
         return "ACCEPTED", ""
 
     if code in ("REQUIRES_GROK_ENVIRONMENT", "EXPLICIT_JUSTIFIED"):
-        text = (justification or "").strip()
+        text = justification.strip() if isinstance(justification, str) else ""
         if len(text) < min_len:
             return "REJECTED", "GROK_JUSTIFICATION_INVALID:justification_too_short"
         return "ACCEPTED", ""
@@ -283,6 +406,23 @@ def _verify_grok_reason(
 def _canonical_hash(payload: dict[str, Any]) -> str:
     blob = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _audit_grok_rejection(
+    work_item_id: str,
+    task_class: str,
+    code: str | None,
+    detail: str,
+) -> None:
+    append_audit_event(
+        "GROK_JUSTIFICATION_INVALID",
+        {
+            "work_item_id": work_item_id,
+            "task_class": task_class,
+            "grok_reason_code": code,
+            "detail": detail,
+        },
+    )
 
 
 def decide(
@@ -296,10 +436,11 @@ def decide(
 ) -> Decision:
     """Pure allocation decision. Optionally records to dispatch ledger."""
     wi_id = work_item.get("id") or work_item.get("work_item_id") or "anonymous"
-    raw_class = work_item.get("task_class") or work_item.get("kind")
+    task_class, class_note = _resolve_task_class(work_item)
     requested = work_item.get("requested_worker")
     grok_code = work_item.get("grok_reason_code")
     grok_just = work_item.get("grok_justification")
+    routing_sha = _routing_policy_sha256()
 
     policy = policy_load.policy or {}
     effective_policy = policy if policy_load.mode == "ENFORCED" else None
@@ -310,15 +451,16 @@ def decide(
     imb = policy.get("imbalance") or {}
     hard_block_at = float(imb.get("penalty_hard_block_at", 0.6))
 
-    # Unclassified task class -> QUEUE, never Grok
-    if not raw_class or task_family(raw_class, effective_policy) == "unknown":
-        task_class = raw_class or ""
-        bench_class = None
+    if task_class is None or task_family(task_class, effective_policy) == "unknown":
+        note = class_note or "unclassified"
         family = "unknown"
         protected = False
         delegatable = False
         owner_action = policy_load.mode == "FAIL_CLOSED"
         owner_code = "OWNER_ACTION_REQUIRED" if owner_action else None
+        grok_verdict = "REJECTED" if grok_code or requested == grok_worker_id(effective_policy) else None
+        if grok_verdict == "REJECTED" and grok_code:
+            _audit_grok_rejection(wi_id, task_class or "", grok_code, note)
         dec = Decision(
             decision="QUEUE",
             selected_worker=None,
@@ -327,7 +469,7 @@ def decide(
             delegatable=delegatable,
             protected=protected,
             grok_reason_code=grok_code,
-            grok_reason_verdict=None,
+            grok_reason_verdict=grok_verdict,
             capacity_states={},
             policy_sha256=policy_load.sha256,
             policy_mode=policy_load.mode,
@@ -337,22 +479,22 @@ def decide(
             owner_action_code=owner_code,
             decision_hash=_canonical_hash({
                 "work_item_id": wi_id,
-                "task_class": task_class,
+                "task_class": task_class or "",
                 "decision": "QUEUE",
                 "selected_worker": None,
                 "policy_sha256": policy_load.sha256,
                 "policy_mode": policy_load.mode,
-                "exclusion_notes": ["unclassified"],
+                "exclusion_notes": [note],
             }),
             work_item_id=wi_id,
-            task_class=task_class,
-            exclusion_notes=["unclassified"],
+            task_class=task_class or "",
+            exclusion_notes=[note],
+            routing_policy_sha256=routing_sha,
         )
         if record:
             record_decision(dec, now=now)
         return dec
 
-    task_class = raw_class
     bench_class = benchmark_class_for(task_class, effective_policy)
     if bench_class is None:
         bench_class = task_class
@@ -365,7 +507,7 @@ def decide(
     capacity_states = {w: (workers_cap.get(w) or {}).get("state", "UNKNOWN") for w in workers_cap}
     grok_rec = workers_cap.get(grok_id) or {}
     grok_state = grok_rec.get("state", "CONSERVE")
-    grok_avail = grok_rec.get("grok_available", capacity.get("grok_available", True))
+    grok_avail = grok_rec.get("grok_available") is True
 
     reserve_cfg = policy.get("grok_reserve") or {}
     allowed_by_state = reserve_cfg.get("allowed_reason_codes_by_state") or {}
@@ -381,7 +523,8 @@ def decide(
     }
     candidates_scored: list[dict[str, Any]] = []
 
-    eligible_non_grok: list[str] = []
+    # Pass 1: base eligibility for all workers (non-Grok alternatives computed first).
+    base_eligible: dict[str, bool] = {}
     for worker in sorted(all_workers):
         cap_rec = workers_cap.get(worker) or {"state": "CONSERVE", "worker_id": worker}
         ok, reason = _is_eligible_base(
@@ -396,19 +539,37 @@ def decide(
             "quality": raw_q,
             "benchmark_class": bench_class,
         }
-        if ok and worker != grok_id:
-            eligible_non_grok.append(worker)
+        base_eligible[worker] = ok
         if not ok:
             candidates_scored.append(scored)
+
+    eligible_non_grok = [
+        w for w in sorted(all_workers)
+        if w != grok_id and base_eligible.get(w)
+    ]
+
+    # Pass 2: Grok-specific gates and remaining workers.
+    for worker in sorted(all_workers):
+        if not base_eligible.get(worker):
             continue
+        cap_rec = workers_cap.get(worker) or {"state": "CONSERVE", "worker_id": worker}
+        raw_q = _quality_for(worker, bench_class, routing)
+        scored = next((c for c in candidates_scored if c["worker"] == worker), None)
+        if scored is None:
+            scored = {
+                "worker": worker,
+                "eligible": True,
+                "exclusion_reason": None,
+                "capacity_state": cap_rec.get("state"),
+                "quality": raw_q,
+                "benchmark_class": bench_class,
+            }
 
         if worker == grok_id:
             if not grok_avail:
                 scored["eligible"] = False
                 scored["exclusion_reason"] = "grok_unavailable"
-                candidates_scored.append(scored)
-                continue
-            if protected:
+            elif protected:
                 if grok_state == "EXHAUSTED":
                     scored["eligible"] = False
                     scored["exclusion_reason"] = "grok_exhausted_protected_queue"
@@ -416,39 +577,34 @@ def decide(
                     scored["eligible"] = True
                     if raw_q is None:
                         quality_floor_waived_reason = "protected_class_no_benchmark"
-                candidates_scored.append(scored)
-                continue
-            if policy_load.mode == "FAIL_CLOSED":
+            elif policy_load.mode == "FAIL_CLOSED":
                 scored["eligible"] = False
                 scored["exclusion_reason"] = "policy_fail_closed"
-                candidates_scored.append(scored)
-                continue
-            if grok_state == "EXHAUSTED":
+            elif grok_state == "EXHAUSTED":
                 scored["eligible"] = False
                 scored["exclusion_reason"] = "grok_exhausted"
-                candidates_scored.append(scored)
-                continue
-            if grok_state == "RESERVE":
+            elif grok_state == "RESERVE":
                 scored["eligible"] = False
                 scored["exclusion_reason"] = "grok_reserve_substantive_blocked"
-                candidates_scored.append(scored)
-                continue
-            verdict, detail = _verify_grok_reason(
-                grok_code, grok_just, bench_class, policy, routing,
-                eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,
-            )
-            if verdict == "REJECTED":
-                scored["eligible"] = False
-                scored["exclusion_reason"] = detail
-                candidates_scored.append(scored)
-                continue
-            if raw_q is None:
-                quality_floor_waived_reason = f"grok_substantive:{grok_code}"
-
-        candidates_scored.append(scored)
+            else:
+                verdict, detail = _verify_grok_reason(
+                    grok_code, grok_just, bench_class, policy, routing,
+                    eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,
+                )
+                if verdict == "REJECTED":
+                    scored["eligible"] = False
+                    scored["exclusion_reason"] = detail
+                    _audit_grok_rejection(wi_id, task_class, grok_code, detail)
+                else:
+                    if raw_q is None:
+                        quality_floor_waived_reason = f"grok_substantive:{grok_code}"
+        if scored not in candidates_scored:
+            candidates_scored.append(scored)
 
     ranked_eligible = [c for c in candidates_scored if c.get("eligible")]
     alternatives = any(c["worker"] != grok_id for c in ranked_eligible)
+
+    delta = float((policy if effective_policy else {}).get("tie_band_quality_delta", 0.05))
 
     def effective_quality(c: dict[str, Any]) -> float:
         w = c["worker"]
@@ -458,15 +614,23 @@ def decide(
             return base - penalty
         return base
 
+    top_q = max((effective_quality(c) for c in ranked_eligible), default=0.0)
+
+    def quality_band(c: dict[str, Any]) -> int:
+        eq = effective_quality(c)
+        if delta <= 0:
+            return 0
+        return int((top_q - eq) / delta + 1e-12)
+
     def sort_key(c: dict[str, Any]) -> tuple:
         w = c["worker"]
         cap_rec = workers_cap.get(w) or {}
-        eq = effective_quality(c)
+        band = quality_band(c)
         spec = _specialisation_rank(w, family, policy if effective_policy else {}, wi_id, cap_rec)
         cap_rank = STATE_RANK.get(cap_rec.get("state", "CONSERVE"), 1)
         lat = _latency_for(w, bench_class, routing)
         cost = _marginal_cost_rank(w, policy if effective_policy else {})
-        return (-eq, spec, cap_rank, lat, cost, w)
+        return (band, spec, cap_rank, lat, cost, w)
 
     ranked_eligible.sort(key=sort_key)
 
@@ -481,6 +645,11 @@ def decide(
     selected = None
     decision_type = "QUEUE"
     grok_verdict = None
+
+    substantive_grok_requested = (
+        not protected
+        and (requested == grok_id or grok_code)
+    )
 
     if protected:
         grok_eligible = next(
@@ -504,17 +673,26 @@ def decide(
 
     if protected:
         grok_verdict = "NOT_APPLICABLE"
-    elif grok_code:
-        grok_verdict, _ = _verify_grok_reason(
+    elif grok_code or requested == grok_id:
+        grok_verdict, detail = _verify_grok_reason(
             grok_code, grok_just, bench_class, policy, routing,
             eligible_non_grok, grok_state, allowed_codes, penalty, hard_block_at,
         )
+        if grok_verdict == "REJECTED" and detail and "GROK_JUSTIFICATION_INVALID" in detail:
+            pass  # already audited in pass 2 when substantive
+        elif grok_verdict == "REJECTED":
+            _audit_grok_rejection(wi_id, task_class, grok_code, detail)
+    elif requested == grok_id and not grok_code:
+        grok_verdict = "REJECTED"
+        _audit_grok_rejection(wi_id, task_class, None, "GROK_JUSTIFICATION_INVALID:missing_code")
 
-    if policy_load.mode == "FAIL_CLOSED" and selected == grok_id and not protected:
+    if policy_load.mode == "FAIL_CLOSED" and substantive_grok_requested:
         selected = None
-        decision_type = "QUEUE"
+        decision_type = "DENY"
         owner_action = True
         owner_code = "OWNER_ACTION_REQUIRED"
+        if grok_verdict is None:
+            grok_verdict = "REJECTED"
 
     if selected and worker_registry.is_metered(selected):
         selected = None
@@ -528,6 +706,7 @@ def decide(
         c["scores"] = {
             "quality": c.get("quality"),
             "effective_quality": effective_quality(c),
+            "quality_band": quality_band(c),
             "specialisation": _specialisation_rank(
                 c["worker"], family, policy if effective_policy else {},
                 wi_id, workers_cap.get(c["worker"]) or {}
@@ -573,6 +752,7 @@ def decide(
         task_class=task_class,
         exclusion_notes=exclusions,
         quality_floor_waived_reason=quality_floor_waived_reason,
+        routing_policy_sha256=routing_sha,
     )
 
     if record:
@@ -595,17 +775,6 @@ def record_decision(decision: Decision, now: datetime | str | None = None) -> di
     return rec
 
 
-def metered_permitted_with_gate(policy_load: PolicyLoad | None = None) -> bool:
-    """Consult governance paid_spend and live_gate — always False in this build."""
-    if not metered_permitted(policy_load):
-        return False
-    try:
-        cap = live_gate.cost_cap({})
-        return cap is not None and cap > 0
-    except Exception:
-        return False
-
-
 class LedgerView:
     """Read-only view of dispatch ledger for imbalance checks."""
 
@@ -615,31 +784,50 @@ class LedgerView:
     def decisions(self) -> list[dict[str, Any]]:
         if not self.path.exists():
             return []
-        out = []
+        out: list[dict[str, Any]] = []
         try:
             for line in self.path.read_text(encoding="utf-8").splitlines():
-                if line.strip():
+                if not line.strip():
+                    continue
+                try:
                     out.append(json.loads(line))
-        except (OSError, json.JSONDecodeError):
+                except json.JSONDecodeError:
+                    append_audit_event("LEDGER_CORRUPT", {"path": str(self.path), "error": "json_decode"})
+                    continue
+        except OSError:
             pass
         return out
 
 
+def metered_permitted_with_gate(policy_load: PolicyLoad | None = None) -> bool:
+    """Consult governance paid_spend and live_gate."""
+    if not metered_permitted(policy_load):
+        return False
+    try:
+        cap = live_gate.cost_cap({})
+        return cap is not None and cap > 0
+    except Exception:
+        return False
+
+
 def new_orchestrator_session(now: datetime | str | None = None) -> dict[str, Any]:
-    """Fresh orchestrator context built purely from files — no prior memory."""
+    """Fresh orchestrator context built purely from files — read-only, no tightening writes."""
     from .capacity import capacity_snapshot
-    from .imbalance import check_imbalance
 
     pl = load_policy()
-    cap = capacity_snapshot(now)
+    cap = capacity_snapshot(
+        now,
+        policy=pl.policy,
+        policy_mode=pl.mode,
+    )
     tightening = load_tightening(pl.policy)
     return {
         "policy_load": pl,
         "capacity": cap,
         "tightening": tightening,
         "routing_policy_path": str(ROUTING_POLICY_PATH),
+        "routing_policy_sha256": _routing_policy_sha256(),
         "now": cap.get("at"),
-        "imbalance_checked": check_imbalance(pl, LedgerView(), now=now),
     }
 
 
@@ -648,13 +836,17 @@ def decide_and_record(
     now: datetime | str | None = None,
 ) -> Decision:
     from .capacity import capacity_snapshot
+    from .imbalance import check_imbalance
 
-    ctx = new_orchestrator_session(now)
-    return decide(
+    pl = load_policy()
+    cap = capacity_snapshot(now, policy=pl.policy, policy_mode=pl.mode)
+    dec = decide(
         work_item,
-        policy_load=ctx["policy_load"],
-        capacity=ctx["capacity"],
+        policy_load=pl,
+        capacity=cap,
         ledger_view=LedgerView(),
         now=now,
         record=True,
     )
+    check_imbalance(pl, LedgerView(), now=datetime.now(TZ))
+    return dec

@@ -52,7 +52,7 @@ def owner_ui_port() -> int:
     try:
         port = int(raw)
     except ValueError:
-        port = 8799
+        raise ValueError(f"invalid {UI_PORT_ENV}: {raw!r}")
     if port in FORBIDDEN_UI_PORTS:
         raise ValueError(f"refusing forbidden Owner UI port {port}")
     return port
