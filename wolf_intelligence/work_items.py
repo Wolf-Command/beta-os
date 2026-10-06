@@ -391,6 +391,47 @@ def transition(wid: str, new_state: str, *, reason: str = "", extra: dict[str, A
     return item
 
 
+def transition_if(wid: str, expected: str, new_state: str, *, reason: str = "") -> dict[str, Any] | None:
+    """Compare-and-set transition: one direct legal step, applied only if the item is still `expected`.
+
+    Runs inside BEGIN IMMEDIATE so no other writer can move the item between the check and the write.
+    Returns the updated item, or None (nothing written) if the item is no longer in `expected`.
+    Used by the Grok bridge so a worker result can never walk an item through, or out of, an Owner gate.
+    """
+    if new_state not in TRANSITIONS.get(expected, frozenset()):
+        raise ValueError(f"illegal transition {expected} -> {new_state}")
+    with _lock:
+        conn = _connect()
+        try:
+            _init_schema(conn)
+            conn.isolation_level = None
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = conn.execute("SELECT * FROM work_items WHERE id=?", (wid,)).fetchone()
+                if not row:
+                    raise KeyError(wid)
+                item = _row_to_item(row)
+                if item["state"] != expected:
+                    conn.execute("ROLLBACK")
+                    return None
+                item["state"] = new_state
+                item["updated_at"] = now_iso()
+                item.setdefault("history", []).append({"at": item["updated_at"], "state": new_state,
+                                                       "reason": reason or ""})
+                _save(conn, item)
+                conn.execute("COMMIT")
+            except BaseException:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
+        finally:
+            conn.close()
+    events.emit("work_item.state_changed", {"from": expected, "to": new_state, "reason": reason}, work_item_id=wid)
+    if new_state == "EXCEPTION":
+        events.emit("exception.raised", {"reason": reason}, work_item_id=wid)
+    return item
+
+
 def update_fields(wid: str, **fields: Any) -> dict[str, Any]:
     with _lock:
         conn = _connect()
