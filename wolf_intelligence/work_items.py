@@ -360,24 +360,32 @@ def transition(wid: str, new_state: str, *, reason: str = "", extra: dict[str, A
         conn = _connect()
         try:
             _init_schema(conn)
-            row = conn.execute("SELECT * FROM work_items WHERE id=?", (wid,)).fetchone()
-            if not row:
-                raise KeyError(wid)
-            item = _row_to_item(row)
-            cur = item["state"]
-            allowed = TRANSITIONS.get(cur, frozenset())
-            if new_state not in allowed:
-                raise ValueError(f"illegal transition {cur} → {new_state}")
-            item["state"] = new_state
-            item["updated_at"] = now_iso()
-            hist = {"at": item["updated_at"], "state": new_state, "reason": reason or ""}
-            if extra:
-                hist["extra_keys"] = sorted(extra.keys())
-                for k, v in extra.items():
-                    if k in ("recommendation", "scores", "dispatch", "result", "usage"):
-                        item[k] = v
-            item.setdefault("history", []).append(hist)
-            _save(conn, item)
+            conn.isolation_level = None
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = conn.execute("SELECT * FROM work_items WHERE id=?", (wid,)).fetchone()
+                if not row:
+                    raise KeyError(wid)
+                item = _row_to_item(row)
+                cur = item["state"]
+                allowed = TRANSITIONS.get(cur, frozenset())
+                if new_state not in allowed:
+                    raise ValueError(f"illegal transition {cur} → {new_state}")
+                item["state"] = new_state
+                item["updated_at"] = now_iso()
+                hist = {"at": item["updated_at"], "state": new_state, "reason": reason or ""}
+                if extra:
+                    hist["extra_keys"] = sorted(extra.keys())
+                    for k, v in extra.items():
+                        if k in ("recommendation", "scores", "dispatch", "result", "usage"):
+                            item[k] = v
+                item.setdefault("history", []).append(hist)
+                _persist(conn, item, commit=False)
+                conn.execute("COMMIT")
+            except BaseException:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
         finally:
             conn.close()
     events.emit(
@@ -437,23 +445,68 @@ def transition_if(wid: str, expected: str, new_state: str, *, reason: str = "") 
     return item
 
 
+_UPDATE_FIELD_COLS: dict[str, str] = {
+    "title": "title",
+    "kind": "kind",
+    "isolated_safe": "isolated_safe",
+    "allow_expensive": "allow_expensive",
+    "payload": "payload_json",
+    "tags": "tags_json",
+    "recommendation": "recommendation_json",
+    "scores": "scores_json",
+    "dispatch": "dispatch_json",
+    "result": "result_json",
+    "usage": "usage_json",
+    "outcomes": "outcomes_json",
+}
+
+
 def update_fields(wid: str, **fields: Any) -> dict[str, Any]:
+    """Column-scoped UPDATE inside BEGIN IMMEDIATE. Never writes state or history."""
     with _lock:
         conn = _connect()
         try:
             _init_schema(conn)
-            row = conn.execute("SELECT * FROM work_items WHERE id=?", (wid,)).fetchone()
-            if not row:
-                raise KeyError(wid)
-            item = _row_to_item(row)
-            for k, v in fields.items():
-                if k in ("id", "created_at", "state"):
-                    continue
-                item[k] = v
-            item["updated_at"] = now_iso()
-            _save(conn, item)
+            conn.isolation_level = None
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = conn.execute("SELECT * FROM work_items WHERE id=?", (wid,)).fetchone()
+                if not row:
+                    raise KeyError(wid)
+                item = _row_to_item(row)
+                sets: list[str] = []
+                vals: list[Any] = []
+                ts = now_iso()
+                for k, v in fields.items():
+                    if k in ("id", "created_at", "state", "history", "updated_at"):
+                        continue
+                    col = _UPDATE_FIELD_COLS.get(k)
+                    if col is None:
+                        continue
+                    if k in ("isolated_safe", "allow_expensive"):
+                        vals.append(1 if v else 0)
+                    elif k in ("payload", "tags", "outcomes", "scores"):
+                        vals.append(json.dumps(v or []))
+                    elif k in ("recommendation", "dispatch", "result", "usage"):
+                        vals.append(json.dumps(v) if v is not None else None)
+                    else:
+                        vals.append(v)
+                    sets.append(f"{col}=?")
+                    item[k] = v
+                if sets:
+                    sets.append("updated_at=?")
+                    vals.append(ts)
+                    vals.append(wid)
+                    item["updated_at"] = ts
+                    conn.execute(f"UPDATE work_items SET {', '.join(sets)} WHERE id=?", vals)
+                conn.execute("COMMIT")
+            except BaseException:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
         finally:
             conn.close()
+        _mirror_json(item)
     return item
 
 

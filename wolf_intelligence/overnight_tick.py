@@ -47,8 +47,12 @@ def _grok_audit_verify() -> dict:
 
 def run() -> dict:
     ensure_dirs()
-    grok_recovery = _grok_lease_recovery()
     grok_audit_chain = _grok_audit_verify()
+    if grok_audit_chain.get("ok"):
+        grok_recovery = _grok_lease_recovery()
+    else:
+        grok_recovery = {"ok": False, "code": "RECOVERY_SKIPPED", "skipped_due_to_audit_failure": True,
+                         "audit": grok_audit_chain}
     grok_doorbell_enabled = _grok_doorbell_enabled()
     # 3 fresh shadow samples
     ids = []

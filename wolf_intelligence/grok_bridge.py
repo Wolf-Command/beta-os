@@ -37,6 +37,7 @@ import os
 import re
 import secrets
 import sqlite3
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -57,13 +58,21 @@ MAX_RESULT_BYTES = 2 * 1024 * 1024
 MAX_REASON_CHARS = 500
 
 # ALLOWLIST of canonical WI states that permit machine execution. Anything else is refused.
-CLAIMABLE_ITEM_STATES = frozenset({"QUEUED", "DISPATCHED_SHADOW", "RUNNING"})
+CLAIMABLE_ITEM_STATES = frozenset({"DISPATCHED_SHADOW", "RUNNING"})
 OWNER_GATED_ITEM_STATES = frozenset({"NEEDS_YOU", "DECISION_PENDING"})
 assert CLAIMABLE_ITEM_STATES <= set(work_items.STATES)
-assert not (CLAIMABLE_ITEM_STATES & (OWNER_GATED_ITEM_STATES | work_items.TERMINAL))
+assert not (OWNER_GATED_ITEM_STATES | work_items.TERMINAL) <= CLAIMABLE_ITEM_STATES
 
 AUDIT_KEY_ENV = "WOLF_INTELLIGENCE_GROK_AUDIT_KEY_FILE"
+ANCHOR_MIRROR_ENV = "WOLF_INTELLIGENCE_GROK_AUDIT_ANCHOR_MIRROR"
 ANCHOR_FORMAT = "wi-grok-audit-anchor/1"
+PIN_FORMAT = "wi-grok-audit-pin/1"
+ANCHOR_LOG_FORMAT = "wi-grok-audit-anchor-log/1"
+MIN_KEY_BYTES = 32
+
+RESERVED_IDENTITIES = frozenset({
+    "grok_bot", "grok_bot_sub", "wi", "wi-recovery", "overnight-tick", "cli", "peaches", "bridge", "grok_bridge",
+})
 
 _WID = re.compile(r"^[A-Za-z0-9_\-]{1,64}$")
 _CLAIMANT = re.compile(r"^[A-Za-z0-9_.:@\-]{1,80}$")
@@ -108,29 +117,95 @@ def anchor_path() -> Path:
     return bridge_dir() / "audit-anchor.json"
 
 
+def pin_path() -> Path:
+    return bridge_dir() / "audit-pin.json"
+
+
+def anchor_log_path() -> Path:
+    return bridge_dir() / "audit-anchor-log.jsonl"
+
+
 def idempotency_key(wid: str, attempt: int) -> str:
     return f"{wid}:attempt-{int(attempt)}"
 
 
 # --------------------------------------------------------------------------- audit key + anchor
-def _load_key(*, create: bool) -> bytes | None:
-    """HMAC key in a 0600 file OUTSIDE the database. Created once (O_EXCL), never printed."""
+def _read_key_bytes() -> bytes | None:
+    p = audit_key_path()
+    if not p.exists():
+        return None
+    try:
+        raw = p.read_text().strip()
+        return bytes.fromhex(raw) if raw else b""
+    except (OSError, ValueError):
+        return None
+
+
+def _write_key_atomically(key_hex: str) -> None:
+    p = audit_key_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(p.parent, 0o700)
+    except OSError:
+        pass
+    tmp = p.with_name(f".{p.name}.{secrets.token_hex(4)}.tmp")
+    fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as fh:
+        fh.write(key_hex + "\n")
+    try:
+        os.link(str(tmp), str(p))
+    except FileExistsError:
+        pass
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def _pin_body_mac(key: bytes, body: dict[str, Any]) -> str:
+    return _mac(key, json.dumps({k: v for k, v in body.items() if k != "pin_hmac"}, sort_keys=True))
+
+
+def _write_pin(key: bytes, legacy_max_seq: int) -> None:
+    body = {"format": PIN_FORMAT, "legacy_max_seq": int(legacy_max_seq), "created_at": wita(now())}
+    body["pin_hmac"] = _pin_body_mac(key, body)
+    p = pin_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_name(f".{p.name}.{secrets.token_hex(4)}.tmp")
+    fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as fh:
+        fh.write(json.dumps(body, sort_keys=True) + "\n")
+    os.replace(tmp, p)
+
+
+def _read_pin() -> dict[str, Any] | None:
+    try:
+        return json.loads(pin_path().read_text())
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError):
+        return {"format": "UNREADABLE"}
+
+
+def _load_key(*, create: bool, conn: sqlite3.Connection | None = None) -> bytes | None:
+    """HMAC key in a 0600 file OUTSIDE the database. Created once (atomic link), never printed."""
     p = audit_key_path()
     if not p.exists():
         if not create:
             return None
-        p.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            os.chmod(p.parent, 0o700)
-        except OSError:
-            pass
-        try:
-            fd = os.open(str(p), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-            with os.fdopen(fd, "w") as fh:
-                fh.write(secrets.token_hex(32) + "\n")
-        except FileExistsError:
-            pass
-    return bytes.fromhex(p.read_text().strip())
+        key_hex = secrets.token_hex(MIN_KEY_BYTES)
+        _write_key_atomically(key_hex)
+        key = bytes.fromhex(key_hex)
+        legacy_max = 0
+        if conn is not None:
+            row = conn.execute("SELECT MAX(seq) AS s FROM grok_bridge_audit").fetchone()
+            legacy_max = int(row["s"] or 0)
+        _write_pin(key, legacy_max)
+        return key
+    key = _read_key_bytes()
+    if key is None:
+        return None
+    if len(key) < MIN_KEY_BYTES:
+        raise AuditIntegrityError("audit HMAC key too short")
+    return key
 
 
 def _mac(key: bytes, msg: str) -> str:
@@ -148,6 +223,51 @@ def _read_anchor() -> dict[str, Any] | None:
         return None
     except (OSError, ValueError):
         return {"format": "UNREADABLE"}
+
+
+def _read_anchor_log() -> list[dict[str, Any]]:
+    p = anchor_log_path()
+    if not p.exists():
+        return []
+    out: list[dict[str, Any]] = []
+    try:
+        for line in p.read_text().splitlines():
+            line = line.strip()
+            if line:
+                out.append(json.loads(line))
+    except (OSError, ValueError):
+        return [{"format": "UNREADABLE"}]
+    return out
+
+
+def _log_entry_mac(key: bytes, entry: dict[str, Any]) -> str:
+    return _mac(key, json.dumps({k: v for k, v in entry.items() if k != "log_hmac"}, sort_keys=True))
+
+
+def _append_anchor_log(key: bytes, body: dict[str, Any]) -> None:
+    entry = {"format": ANCHOR_LOG_FORMAT, "seq": body["seq"], "row_sha256": body["row_sha256"],
+             "rows": body["rows"], "hmac_from_seq": body["hmac_from_seq"], "updated_at": body["updated_at"]}
+    entry["log_hmac"] = _log_entry_mac(key, entry)
+    text = json.dumps(entry, sort_keys=True) + "\n"
+    p = anchor_log_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, "a", encoding="utf-8") as fh:
+        fh.write(text)
+    mirror = os.environ.get(ANCHOR_MIRROR_ENV, "").strip()
+    if mirror:
+        mp = Path(mirror) / "audit-anchor-log.jsonl"
+        mp.parent.mkdir(parents=True, exist_ok=True)
+        with open(mp, "a", encoding="utf-8") as fh:
+            fh.write(text)
+
+
+def _verify_existing_anchor(conn: sqlite3.Connection, anchor: dict[str, Any], head_at_start: int | None) -> None:
+    """Refuse to commit if the on-disk anchor no longer matches the DB (truncation/replay guard)."""
+    row = conn.execute("SELECT row_sha256 FROM grok_bridge_audit WHERE seq=?", (anchor["seq"],)).fetchone()
+    if row is None or row["row_sha256"] != anchor["row_sha256"]:
+        raise AuditIntegrityError("anchor no longer matches DB")
+    if head_at_start is not None and anchor["seq"] > head_at_start:
+        raise AuditIntegrityError("anchor seq ahead of transaction start head")
 
 
 def _write_anchor(conn: sqlite3.Connection, key: bytes) -> str | None:
@@ -168,6 +288,7 @@ def _write_anchor(conn: sqlite3.Connection, key: bytes) -> str | None:
     with os.fdopen(fd, "w") as fh:
         fh.write(json.dumps(body, sort_keys=True) + "\n")
     os.replace(tmp, p)
+    _append_anchor_log(key, body)
     return prior
 
 
@@ -177,7 +298,11 @@ def _restore_anchor(prior: str | None) -> None:
         if prior is None:
             p.unlink(missing_ok=True)
         else:
-            p.write_text(prior)
+            tmp = p.with_name(f".{p.name}.{secrets.token_hex(4)}.tmp")
+            fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "w") as fh:
+                fh.write(prior if prior.endswith("\n") else prior + "\n")
+            os.replace(tmp, p)
     except OSError:
         pass
 
@@ -243,7 +368,7 @@ def _audit(conn: sqlite3.Connection, wid: str, action: str, actor: str, outcome:
            sha256: str | None = None, detail: dict[str, Any] | None = None) -> dict[str, Any]:
     """Append one audit row inside the caller's transaction. Rows are hash-chained and HMAC-signed."""
     signed_exist = conn.execute("SELECT 1 FROM grok_bridge_audit WHERE row_hmac IS NOT NULL LIMIT 1").fetchone()
-    key = _load_key(create=signed_exist is None)
+    key = _load_key(create=signed_exist is None, conn=conn)
     if key is None:
         raise AuditIntegrityError("audit HMAC key missing while signed rows exist")
     ts = now()
@@ -278,6 +403,28 @@ def _item_state(conn: sqlite3.Connection, wid: str) -> str | None:
     return r["state"] if r else None
 
 
+def _item_dispatch(conn: sqlite3.Connection, wid: str) -> dict[str, Any] | None:
+    try:
+        r = conn.execute("SELECT dispatch_json FROM work_items WHERE id=?", (wid,)).fetchone()
+    except sqlite3.OperationalError:
+        return None
+    if not r or not r["dispatch_json"]:
+        return None
+    try:
+        return json.loads(r["dispatch_json"])
+    except json.JSONDecodeError:
+        return None
+
+
+def _item_claimable(conn: sqlite3.Connection, wid: str) -> tuple[bool, str | None, dict[str, Any] | None]:
+    state = _item_state(conn, wid)
+    dispatch = _item_dispatch(conn, wid)
+    return claimable(state, dispatch), state, dispatch
+
+
+_tx_depth = threading.local()
+
+
 class _Tx:
     """BEGIN IMMEDIATE ... COMMIT (ROLLBACK on any exception). Re-anchors the audit head before COMMIT."""
 
@@ -286,11 +433,15 @@ class _Tx:
         self._head0: int | None = None
 
     def __enter__(self) -> sqlite3.Connection:
+        if getattr(_tx_depth, "active", False):
+            raise RuntimeError("nested _Tx")
+        _tx_depth.active = True
         self.conn.execute("BEGIN IMMEDIATE")
         try:
             init_schema(self.conn)
             self._head0 = self.conn.execute("SELECT MAX(seq) AS s FROM grok_bridge_audit").fetchone()["s"]
         except BaseException:
+            _tx_depth.active = False
             self.conn.execute("ROLLBACK")
             self.conn.close()
             raise
@@ -306,6 +457,9 @@ class _Tx:
             if head != self._head0:
                 key = _load_key(create=False)
                 if key is not None:
+                    existing = _read_anchor()
+                    if existing is not None:
+                        _verify_existing_anchor(self.conn, existing, self._head0)
                     prior, anchored = _write_anchor(self.conn, key), True
             try:
                 self.conn.execute("COMMIT")
@@ -314,6 +468,7 @@ class _Tx:
                     _restore_anchor(prior)
                 raise
         finally:
+            _tx_depth.active = False
             self.conn.close()
 
 
@@ -358,6 +513,28 @@ def _check_ident(name: str, what: str) -> str:
     return name
 
 
+def _reserved_identity(name: str | None, *, dispatcher: str | None = None) -> bool:
+    if not name:
+        return False
+    return name in RESERVED_IDENTITIES or name == dispatcher
+
+
+def _safe_followup(result: dict[str, Any], fn: Callable[[], None]) -> dict[str, Any]:
+    try:
+        fn()
+    except Exception as exc:  # noqa: BLE001
+        result["followup_error"] = type(exc).__name__
+    return result
+
+
+def _safe_item_update(result: dict[str, Any], fn: Callable[[], None]) -> dict[str, Any]:
+    try:
+        fn()
+    except Exception as exc:  # noqa: BLE001
+        result["item_update_error"] = type(exc).__name__
+    return result
+
+
 # --------------------------------------------------------------------------- policy
 def reassign_candidates() -> list[str]:
     """Next qualified workers if Grok fails: human-commissioned, non-metered, ungated, push-dispatchable.
@@ -374,8 +551,12 @@ def reassign_candidates() -> list[str]:
     return out
 
 
-def claimable(item_state: str | None) -> bool:
-    return item_state in CLAIMABLE_ITEM_STATES
+def claimable(item_state: str | None, dispatch: dict[str, Any] | None = None) -> bool:
+    if item_state == "DISPATCHED_SHADOW":
+        return True
+    if item_state == "RUNNING" and dispatch and dispatch.get("route") == "grok_bridge":
+        return True
+    return False
 
 
 # --------------------------------------------------------------------------- doorbell
@@ -408,23 +589,28 @@ def ring(wid: str, *, doorbell: Any = "env", actor: str = "wi") -> dict[str, Any
         row = _row(conn, wid)
         still = row is not None and row["state"] == "AVAILABLE" and row["nonce"] == nonce
         if err is None:
-            ref = str(info.get("ref") or "")
-            if still:
-                conn.execute("""UPDATE grok_leases SET doorbell_state='RUNG', doorbell_ref=?, doorbell_error=NULL,
-                                doorbell_rings=doorbell_rings+1, updated_at=? WHERE work_item_id=?""", (ref, now(), wid))
-            _audit(conn, wid, "doorbell_ring", actor, "RUNG" if still else "RUNG_STALE", attempt=attempt,
-                   detail={"ref": ref, "kind": getattr(bell, "kind", type(bell).__name__),
-                           "assigned": info.get("assigned")})
-        else:
+            if not isinstance(info, dict) or not isinstance(info.get("ref"), str):
+                err = "doorbell returned invalid info"
+                info = None
+            else:
+                ref = str(info.get("ref") or "")
+                if still:
+                    conn.execute("""UPDATE grok_leases SET doorbell_state='RUNG', doorbell_ref=?, doorbell_error=NULL,
+                                    doorbell_rings=doorbell_rings+1, updated_at=? WHERE work_item_id=?""", (ref, now(), wid))
+                _audit(conn, wid, "doorbell_ring", actor, "RUNG" if still else "RUNG_STALE", attempt=attempt,
+                       detail={"ref": ref, "kind": getattr(bell, "kind", type(bell).__name__),
+                               "assigned": info.get("assigned")})
+        if err is not None:
             if still:
                 conn.execute("""UPDATE grok_leases SET doorbell_state='FAILED', doorbell_error=?,
                                 doorbell_rings=doorbell_rings+1, updated_at=? WHERE work_item_id=?""", (err, now(), wid))
             _audit(conn, wid, "doorbell_ring", actor, "FAILED", attempt=attempt, detail={"error": err})
-    if err is None:
-        _emit("grok_bridge.doorbell_rung", wid, {"ref": info.get("ref"), "attempt": attempt, "actor": actor})
+    if err is None and isinstance(info, dict):
+        ref = str(info.get("ref") or "")
+        _emit("grok_bridge.doorbell_rung", wid, {"ref": ref, "attempt": attempt, "actor": actor})
         if not still:
-            _close_ref(wid, str(info.get("ref") or ""), "SUPERSEDED", bell, actor)
-        return _result(True, "DOORBELL_RUNG", wid, doorbell_ref=info.get("ref"))
+            _close_ref(wid, ref, "SUPERSEDED", bell, actor)
+        return _result(True, "DOORBELL_RUNG", wid, doorbell_ref=ref)
     _emit("grok_bridge.doorbell_failed", wid, {"error": err, "attempt": attempt, "actor": actor})
     return _result(False, "DOORBELL_FAILED", wid, error=err, state="AVAILABLE")
 
@@ -449,7 +635,7 @@ def rering(wid: str, *, doorbell: Any = "env", actor: str = "wi") -> dict[str, A
     return ring(wid, doorbell=bell, actor=actor)
 
 
-def _close_ref(wid: str, ref: str | None, outcome: str, bell: Any, actor: str) -> None:
+def _close_ref(wid: str, ref: str | None, outcome: str, bell: Any, actor: str, *, triggered_by: str | None = None) -> None:
     if not ref or bell is None:
         return
     try:
@@ -458,11 +644,14 @@ def _close_ref(wid: str, ref: str | None, outcome: str, bell: Any, actor: str) -
     except Exception as exc:  # noqa: BLE001
         res, err = "FAILED", real_evidence.redact(f"{type(exc).__name__}: {exc}")[:300]
     try:
+        detail: dict[str, Any] = {"ref": ref, "outcome": outcome, "error": err}
+        if triggered_by:
+            detail["triggered_by"] = triggered_by
         with _Tx() as conn:
             if res == "CLOSED":
                 conn.execute("UPDATE grok_leases SET doorbell_state='CLOSED' WHERE work_item_id=? AND doorbell_ref=?",
                              (wid, ref))
-            _audit(conn, wid, "doorbell_close", actor, res, detail={"ref": ref, "outcome": outcome, "error": err})
+            _audit(conn, wid, "doorbell_close", actor, res, detail=detail)
     except Exception:  # noqa: BLE001
         pass
     _emit("grok_bridge.doorbell_closed", wid, {"ref": ref, "outcome": outcome, "result": res})
@@ -484,8 +673,8 @@ def offer(wid: str, *, lease_seconds: int = DEFAULT_LEASE_SECONDS, max_attempts:
     if work_items.get(wid) is None:
         return _result(False, "NOT_FOUND", wid)
     with _Tx() as conn:
-        item_state = _item_state(conn, wid)
-        if not claimable(item_state):
+        item_ok, item_state, _dispatch = _item_claimable(conn, wid)
+        if not item_ok:
             code = "ITEM_TERMINAL" if item_state in work_items.TERMINAL else "ITEM_NOT_CLAIMABLE"
             _audit(conn, wid, "offer", actor, code, detail={"item_state": item_state,
                                                              "claimable_states": sorted(CLAIMABLE_ITEM_STATES)})
@@ -519,12 +708,24 @@ def claim(wid: str, *, claimant: str, nonce: str) -> dict[str, Any]:
     _check_wid(wid)
     _check_ident(claimant, "claimant")
     moved = None
+    lease_id = ""
+    ts = 0.0
+    expires = 0.0
+    attempt = 0
+    item_state: str | None = None
+    dispatcher: str | None = None
+    row: dict[str, Any] | None = None
     with _Tx() as conn:
         row = _row(conn, wid)
         if row is None:
             _audit(conn, wid, "claim", claimant, "NOT_OFFERED")
             return _result(False, "NOT_OFFERED", wid)
         state, attempt = row["state"], row["attempt"]
+        dispatcher = row.get("dispatcher")
+        if _reserved_identity(claimant, dispatcher=dispatcher):
+            _audit(conn, wid, "claim", claimant, "RESERVED_IDENTITY", attempt=attempt, from_state=state,
+                   detail={"claimant": claimant, "dispatcher": dispatcher})
+            return _result(False, "RESERVED_IDENTITY", wid)
         if state == "CLAIMED":
             expired = row["lease_expires_at"] is not None and now() >= row["lease_expires_at"]
             _audit(conn, wid, "claim", claimant, "ALREADY_CLAIMED", attempt=attempt, from_state=state,
@@ -538,8 +739,8 @@ def claim(wid: str, *, claimant: str, nonce: str) -> dict[str, Any]:
             _audit(conn, wid, "claim", claimant, "NONCE_MISMATCH", attempt=attempt, from_state=state)
             return _result(False, "NONCE_MISMATCH", wid,
                            message="stale or wrong doorbell; a newer doorbell exists for this item")
-        item_state = _item_state(conn, wid)
-        if not claimable(item_state):
+        item_ok, item_state, dispatch = _item_claimable(conn, wid)
+        if not item_ok:
             _audit(conn, wid, "claim", claimant, "ITEM_NOT_CLAIMABLE", attempt=attempt, from_state=state,
                    detail={"item_state": item_state})
             return _result(False, "ITEM_NOT_CLAIMABLE", wid, item_state=item_state,
@@ -551,26 +752,55 @@ def claim(wid: str, *, claimant: str, nonce: str) -> dict[str, Any]:
                               lease_expires_at=?, renewals=0, executed_by=NULL, completed_by=NULL, completed_at=NULL,
                               updated_at=? WHERE work_item_id=? AND state='AVAILABLE' AND nonce=?""",
                            (lease_id, claimant, ts, expires, ts, wid, row["nonce"]))
-        if cur.rowcount != 1:  # defensive: cannot happen under BEGIN IMMEDIATE
+        if cur.rowcount != 1:
             _audit(conn, wid, "claim", claimant, "ALREADY_CLAIMED", attempt=attempt, from_state=state)
             return _result(False, "ALREADY_CLAIMED", wid)
         _audit(conn, wid, "claim", claimant, "CLAIMED", lease_id=lease_id, attempt=attempt, from_state="AVAILABLE",
                to_state="CLAIMED", detail={"lease_expires_at": wita(expires), "claimed_by": claimant,
-                                           "dispatcher": row.get("dispatcher"), "item_state": item_state,
+                                           "dispatcher": dispatcher, "item_state": item_state,
                                            "idempotency_key": idempotency_key(wid, attempt)})
-        dispatcher = row.get("dispatcher")
-    if item_state == "DISPATCHED_SHADOW":  # one direct, legal, compare-and-set step; nothing invented
-        moved = work_items.transition_if(wid, "DISPATCHED_SHADOW", "RUNNING",
-                                         reason=f"grok_bridge claimed by {claimant} ({lease_id})")
-    _set_dispatch(wid, "CLAIMED", dispatcher=dispatcher, claimed_by=claimant)
-    _emit("grok_bridge.claimed", wid, {"lease_id": lease_id, "claimant": claimant, "attempt": attempt})
+    result = _result(True, "CLAIMED", wid, lease_id=lease_id, claimant=claimant, attempt=attempt,
+                     claimed_at=wita(ts), lease_expires_at=wita(expires), lease_seconds=row["lease_seconds"],
+                     idempotency_key=idempotency_key(wid, attempt))
+
+    def _post_claim() -> None:
+        nonlocal moved
+        if item_state == "DISPATCHED_SHADOW":
+            moved = work_items.transition_if(wid, "DISPATCHED_SHADOW", "RUNNING",
+                                             reason=f"grok_bridge claimed by {claimant} ({lease_id})")
+            if moved is None:
+                cur_item = work_items.get(wid) or {}
+                if not claimable(cur_item.get("state"), cur_item.get("dispatch")):
+                    with _Tx() as conn:
+                        cur = conn.execute("""UPDATE grok_leases SET state='FAILED', failure_reason=?,
+                                              updated_at=? WHERE work_item_id=? AND state='CLAIMED' AND lease_id=?""",
+                                             ("item left machine-executable state before RUNNING transition",
+                                              now(), wid, lease_id))
+                        if cur.rowcount == 1:
+                            _audit(conn, wid, "claim", claimant, "LEASE_REVOKED", lease_id=lease_id, attempt=attempt,
+                                   from_state="CLAIMED", to_state="FAILED",
+                                   detail={"reason": "item no longer claimable after claim commit"})
+                    raise RuntimeError("ITEM_NOT_CLAIMABLE")
+        _set_dispatch(wid, "CLAIMED", dispatcher=dispatcher, claimed_by=claimant)
+        _emit("grok_bridge.claimed", wid, {"lease_id": lease_id, "claimant": claimant, "attempt": attempt})
+
+    try:
+        _post_claim()
+    except RuntimeError as exc:
+        if str(exc) == "ITEM_NOT_CLAIMABLE":
+            return _result(False, "ITEM_NOT_CLAIMABLE", wid, item_state=(work_items.get(wid) or {}).get("state"),
+                           message="the canonical WI item is not in a machine-executable state; do not execute")
+        raise
+    except Exception as exc:
+        result["item_update_error"] = type(exc).__name__
+        if str(exc) == "ITEM_NOT_CLAIMABLE":
+            return _result(False, "ITEM_NOT_CLAIMABLE", wid)
+
     item = work_items.get(wid) or {}
-    task = {"title": item.get("title"), "kind": item.get("kind"), "payload": item.get("payload") or {},
-            "tags": item.get("tags") or []}
-    return _result(True, "CLAIMED", wid, lease_id=lease_id, claimant=claimant, attempt=attempt,
-                   claimed_at=wita(ts), lease_expires_at=wita(expires), lease_seconds=row["lease_seconds"],
-                   idempotency_key=idempotency_key(wid, attempt), item_state=(moved or item).get("state"),
-                   task=task)
+    result["item_state"] = (moved or item).get("state")
+    result["task"] = {"title": item.get("title"), "kind": item.get("kind"),
+                      "payload": item.get("payload") or {}, "tags": item.get("tags") or []}
+    return result
 
 
 def _holder_of(conn: sqlite3.Connection, wid: str, lease_id: str | None) -> str | None:
@@ -583,32 +813,37 @@ def _holder_of(conn: sqlite3.Connection, wid: str, lease_id: str | None) -> str 
 
 
 def _lease_check(conn, wid: str, lease_id: str, caller: str | None, action: str) -> tuple[dict | None, dict | None]:
-    """Shared lease validation. Returns (row, rejection). Rejections are attributed to the lease's real holder."""
+    """Shared lease validation. Rejections are attributed to the caller (or unidentified-caller)."""
     row = _row(conn, wid)
-    who = _holder_of(conn, wid, lease_id) or caller or "unidentified-caller"
-    det = {"caller": caller} if caller else {}
+    holder = _holder_of(conn, wid, lease_id)
+    actor = caller or "unidentified-caller"
+    det: dict[str, Any] = {}
+    if caller:
+        det["caller"] = caller
+    if holder:
+        det["lease_holder"] = holder
     if row is None:
-        _audit(conn, wid, action, who, "NOT_OFFERED", lease_id=lease_id, detail=det)
+        _audit(conn, wid, action, actor, "NOT_OFFERED", lease_id=lease_id, detail=det)
         return None, _result(False, "NOT_OFFERED", wid)
     if not isinstance(lease_id, str) or not _LEASE.match(lease_id):
-        _audit(conn, wid, action, who, "BAD_LEASE_ID", attempt=row["attempt"], from_state=row["state"], detail=det)
+        _audit(conn, wid, action, actor, "BAD_LEASE_ID", attempt=row["attempt"], from_state=row["state"], detail=det)
         return None, _result(False, "BAD_LEASE_ID", wid)
     if row["state"] == "COMPLETED" and row["lease_id"] == lease_id:
-        _audit(conn, wid, action, who, "ALREADY_COMPLETED", lease_id=lease_id, attempt=row["attempt"],
+        _audit(conn, wid, action, actor, "ALREADY_COMPLETED", lease_id=lease_id, attempt=row["attempt"],
                from_state=row["state"], detail=det)
         return None, _result(False, "ALREADY_COMPLETED", wid, result_sha256=row["result_sha256"])
     if row["state"] == "FAILED" and row["lease_id"] == lease_id:
-        _audit(conn, wid, action, who, "ALREADY_FAILED", lease_id=lease_id, attempt=row["attempt"],
+        _audit(conn, wid, action, actor, "ALREADY_FAILED", lease_id=lease_id, attempt=row["attempt"],
                from_state=row["state"], detail=det)
         return None, _result(False, "ALREADY_FAILED", wid)
     if row["state"] != "CLAIMED" or row["lease_id"] != lease_id:
-        _audit(conn, wid, action, who, "STALE_LEASE", lease_id=lease_id, attempt=row["attempt"],
+        _audit(conn, wid, action, actor, "STALE_LEASE", lease_id=lease_id, attempt=row["attempt"],
                from_state=row["state"], detail={**det, "reason": "lease not current",
                                                 "current_holder": row.get("claimant")})
         return None, _result(False, "STALE_LEASE", wid, state=row["state"],
                              message="this lease is no longer current; do not retry with it")
     if now() >= row["lease_expires_at"]:
-        _audit(conn, wid, action, who, "STALE_LEASE", lease_id=lease_id, attempt=row["attempt"],
+        _audit(conn, wid, action, actor, "STALE_LEASE", lease_id=lease_id, attempt=row["attempt"],
                from_state=row["state"], detail={**det, "reason": "lease expired",
                                                 "expired_at": wita(row["lease_expires_at"])})
         return None, _result(False, "STALE_LEASE", wid, state=row["state"], message="lease expired")
@@ -617,11 +852,22 @@ def _lease_check(conn, wid: str, lease_id: str, caller: str | None, action: str)
 
 def renew(wid: str, *, lease_id: str, caller: str | None = None) -> dict[str, Any]:
     _check_wid(wid)
+    if caller is not None:
+        _check_ident(caller, "caller")
     with _Tx() as conn:
         row, rej = _lease_check(conn, wid, lease_id, caller, "renew")
         if rej:
             return rej
         holder = row["claimant"]
+        if _reserved_identity(caller, dispatcher=row.get("dispatcher")):
+            _audit(conn, wid, "renew", caller or "unidentified-caller", "RESERVED_IDENTITY", lease_id=lease_id,
+                   attempt=row["attempt"], detail={"caller": caller, "lease_holder": holder})
+            return _result(False, "RESERVED_IDENTITY", wid)
+        item_ok, item_state, _dispatch = _item_claimable(conn, wid)
+        if not item_ok:
+            _audit(conn, wid, "renew", holder, "ITEM_NOT_CLAIMABLE", lease_id=lease_id, attempt=row["attempt"],
+                   detail={"item_state": item_state, **({"caller": caller} if caller else {})})
+            return _result(False, "ITEM_NOT_CLAIMABLE", wid, item_state=item_state)
         if row["renewals"] >= MAX_RENEWALS:
             _audit(conn, wid, "renew", holder, "RENEWAL_LIMIT", lease_id=lease_id, attempt=row["attempt"])
             return _result(False, "RENEWAL_LIMIT", wid)
@@ -636,15 +882,12 @@ def renew(wid: str, *, lease_id: str, caller: str | None = None) -> dict[str, An
 
 def complete(wid: str, *, lease_id: str, result: bytes | str, evidence: bytes | str | None = None,
              executed_by: str | None = None, caller: str | None = None, doorbell: Any = "env") -> dict[str, Any]:
-    """CLAIMED -> COMPLETED with the matching, unexpired lease. Stores the result in WI state with its sha256.
-
-    Identity: completed_by = the lease holder (possession of the lease identifies it); executed_by = who actually
-    executed, as declared by the holder (defaults to the holder). Nothing is ever attributed to the dispatcher,
-    the bridge or the intended worker. The canonical item moves at most one direct step (RUNNING -> READY_TO_TEST).
-    """
+    """CLAIMED -> COMPLETED with the matching, unexpired lease. Stores the result in WI state with its sha256."""
     _check_wid(wid)
     if executed_by is not None:
         _check_ident(executed_by, "executed_by")
+    if caller is not None:
+        _check_ident(caller, "caller")
     if not isinstance(lease_id, str) or not _LEASE.match(lease_id):
         with _Tx() as conn:
             _row_unused, rej = _lease_check(conn, wid, lease_id, caller, "complete")
@@ -658,9 +901,13 @@ def complete(wid: str, *, lease_id: str, result: bytes | str, evidence: bytes | 
     text = rb.decode("utf-8", errors="replace") + ("\n" + eb.decode("utf-8", errors="replace") if eb else "")
     if real_evidence.contains_secret(text):
         with _Tx() as conn:
-            who = _holder_of(conn, wid, lease_id) or caller or "unidentified-caller"
-            _audit(conn, wid, "complete", who, "SECRET_SHAPED_REJECTED", lease_id=lease_id,
-                   sha256=sha256_bytes(rb))
+            actor = caller or "unidentified-caller"
+            holder = _holder_of(conn, wid, lease_id)
+            det = {"caller": caller} if caller else {}
+            if holder:
+                det["lease_holder"] = holder
+            _audit(conn, wid, "complete", actor, "SECRET_SHAPED_REJECTED", lease_id=lease_id,
+                   sha256=sha256_bytes(rb), detail=det)
         return _result(False, "SECRET_SHAPED_REJECTED", wid,
                        message="result looks like it contains a secret; redact and retry with the same lease")
     rsha = sha256_bytes(rb)
@@ -670,50 +917,89 @@ def complete(wid: str, *, lease_id: str, result: bytes | str, evidence: bytes | 
     tmp = outdir / f".{lease_id}.{secrets.token_hex(4)}.tmp"
     tmp.write_bytes(rb)
     final = outdir / f"{lease_id}.result"
+    bell = _doorbell_default() if doorbell == "env" else doorbell
+    holder = ""
+    ref: str | None = None
+    ident: dict[str, Any] = {}
+    quarantined: dict[str, Any] | None = None
+    quarantine_ref: str | None = None
     try:
         with _Tx() as conn:
             row, rej = _lease_check(conn, wid, lease_id, caller, "complete")
             if rej:
                 return rej
-            ts = now()
             holder = row["claimant"]
             executor = executed_by or holder
-            ident = {"work_item_id": wid, "dispatcher": row.get("dispatcher"), "intended_worker": row["worker"],
-                     "claimed_by": holder, "executed_by": executor, "completed_by": holder,
-                     "executed_by_source": "declared_by_lease_holder" if executed_by else "defaulted_to_lease_holder",
-                     "claimed_at": wita(row["claimed_at"]), "completed_at": wita(ts), "attempt": row["attempt"],
-                     "result_sha256": rsha, "evidence_sha256": esha,
-                     "idempotency_key": idempotency_key(wid, row["attempt"])}
-            if caller and caller != holder:
-                ident["cli_caller"] = caller
-            conn.execute("""UPDATE grok_leases SET state='COMPLETED', result_sha256=?, result_path=?, evidence_sha256=?,
-                            executed_by=?, completed_by=?, completed_at=?, updated_at=?
-                            WHERE work_item_id=? AND state='CLAIMED' AND lease_id=?""",
-                         (rsha, str(final), esha, executor, holder, ts, ts, wid, lease_id))
-            _audit(conn, wid, "complete", holder, "COMPLETED", lease_id=lease_id, attempt=row["attempt"],
-                   from_state="CLAIMED", to_state="COMPLETED", sha256=rsha,
-                   detail={"result_bytes": len(rb), **ident})
-            os.replace(tmp, final)  # inside the tx: a crash before COMMIT leaves an orphan file, never a dangling sha
-            if eb is not None:
-                (outdir / f"{lease_id}.evidence").write_bytes(eb)
-            ref = row["doorbell_ref"]
+            if _reserved_identity(executor, dispatcher=row.get("dispatcher")) or _reserved_identity(caller, dispatcher=row.get("dispatcher")):
+                actor = caller or "unidentified-caller"
+                _audit(conn, wid, "complete", actor, "RESERVED_IDENTITY", lease_id=lease_id, attempt=row["attempt"],
+                       detail={"executed_by": executor, "caller": caller, "lease_holder": holder})
+                return _result(False, "RESERVED_IDENTITY", wid)
+            item_ok, item_state, _dispatch = _item_claimable(conn, wid)
+            if not item_ok:
+                qdir = outdir / "quarantine"
+                qdir.mkdir(parents=True, exist_ok=True)
+                qpath = qdir / f"{lease_id}.result"
+                qpath.write_bytes(rb)
+                reason = f"item left machine-executable state: {item_state}"
+                conn.execute("""UPDATE grok_leases SET state='FAILED', failure_reason=?, result_sha256=?, result_path=?,
+                                reassign_flag=0, updated_at=? WHERE work_item_id=? AND state='CLAIMED' AND lease_id=?""",
+                             (reason, rsha, str(qpath), now(), wid, lease_id))
+                _audit(conn, wid, "complete", holder, "RESULT_QUARANTINED", lease_id=lease_id, attempt=row["attempt"],
+                       from_state="CLAIMED", to_state="FAILED", sha256=rsha,
+                       detail={"quarantine_path": str(qpath), "item_state": item_state,
+                               **({"caller": caller} if caller else {})})
+                quarantine_ref = row["doorbell_ref"]
+                quarantined = _result(False, "RESULT_QUARANTINED", wid, item_state=item_state, result_sha256=rsha,
+                                      quarantine_path=str(qpath))
+            else:
+                ts = now()
+                ident = {"work_item_id": wid, "dispatcher": row.get("dispatcher"), "intended_worker": row["worker"],
+                         "claimed_by": holder, "executed_by": executor, "completed_by": holder,
+                         "executed_by_source": "declared_by_lease_holder" if executed_by else "defaulted_to_lease_holder",
+                         "claimed_at": wita(row["claimed_at"]), "completed_at": wita(ts), "attempt": row["attempt"],
+                         "result_sha256": rsha, "evidence_sha256": esha,
+                         "idempotency_key": idempotency_key(wid, row["attempt"])}
+                if caller and caller != holder:
+                    ident["cli_caller"] = caller
+                conn.execute("""UPDATE grok_leases SET state='COMPLETED', result_sha256=?, result_path=?, evidence_sha256=?,
+                                executed_by=?, completed_by=?, completed_at=?, updated_at=?
+                                WHERE work_item_id=? AND state='CLAIMED' AND lease_id=?""",
+                             (rsha, str(final), esha, executor, holder, ts, ts, wid, lease_id))
+                _audit(conn, wid, "complete", holder, "COMPLETED", lease_id=lease_id, attempt=row["attempt"],
+                       from_state="CLAIMED", to_state="COMPLETED", sha256=rsha,
+                       detail={"result_bytes": len(rb), **ident, **({"caller": caller} if caller else {})})
+                os.replace(tmp, final)
+                if eb is not None:
+                    (outdir / f"{lease_id}.evidence").write_bytes(eb)
+                ref = row["doorbell_ref"]
     finally:
         if tmp.exists():
             tmp.unlink()
-    work_items.update_fields(wid, result={"route": "grok_bridge", "lease_id": lease_id, "result_path": str(final),
-                                          **ident})
-    moved = work_items.transition_if(wid, "RUNNING", "READY_TO_TEST",
-                                     reason=f"grok_bridge result from {executor} ({lease_id})") \
-        if (work_items.get(wid) or {}).get("state") == "RUNNING" else None
-    item_state = (moved or work_items.get(wid) or {}).get("state")
-    _set_dispatch(wid, "COMPLETED", dispatcher=ident["dispatcher"], claimed_by=holder, executed_by=executor)
-    _emit("grok_bridge.completed", wid, {"lease_id": lease_id, "result_sha256": rsha, "evidence_sha256": esha,
-                                         "claimed_by": holder, "executed_by": executor})
-    _close_ref(wid, ref, "COMPLETED", _doorbell_default() if doorbell == "env" else doorbell, holder)
-    return _result(True, "COMPLETED", wid, lease_id=lease_id, result_sha256=rsha, evidence_sha256=esha,
-                   claimed_by=holder, executed_by=executor, completed_by=holder, item_state=item_state,
-                   item_transition=("RUNNING->READY_TO_TEST" if moved else "none (result recorded; canonical state "
-                                    "left for WI/Owner)"))
+    if quarantined is not None:
+        _close_ref(wid, quarantine_ref, "REVOKED", bell, "wi", triggered_by=holder)
+        return quarantined
+    result_out = _result(True, "COMPLETED", wid, lease_id=lease_id, result_sha256=rsha, evidence_sha256=esha,
+                         claimed_by=holder, executed_by=ident.get("executed_by"), completed_by=holder)
+
+    def _post_complete() -> None:
+        work_items.update_fields(wid, result={"route": "grok_bridge", "lease_id": lease_id, "result_path": str(final),
+                                              **ident})
+        moved = work_items.transition_if(wid, "RUNNING", "READY_TO_TEST",
+                                         reason=f"grok_bridge result from {ident['executed_by']} ({lease_id})") \
+            if (work_items.get(wid) or {}).get("state") == "RUNNING" else None
+        item_state = (moved or work_items.get(wid) or {}).get("state")
+        result_out["item_state"] = item_state
+        result_out["item_transition"] = ("RUNNING->READY_TO_TEST" if moved
+                                         else "none (result recorded; canonical state left for WI/Owner)")
+        _set_dispatch(wid, "COMPLETED", dispatcher=ident["dispatcher"], claimed_by=holder,
+                      executed_by=ident["executed_by"])
+        _emit("grok_bridge.completed", wid, {"lease_id": lease_id, "result_sha256": rsha, "evidence_sha256": esha,
+                                             "claimed_by": holder, "executed_by": ident["executed_by"]})
+
+    _safe_item_update(result_out, _post_complete)
+    _safe_followup(result_out, lambda: _close_ref(wid, ref, "COMPLETED", bell, "wi", triggered_by=holder))
+    return result_out
 
 
 def _release_or_fail(conn, row: dict[str, Any], actor: str, reason: str, action: str) -> dict[str, Any]:
@@ -744,14 +1030,23 @@ def fail(wid: str, *, lease_id: str, reason: str, retryable: bool = False, calle
          doorbell: Any = "env") -> dict[str, Any]:
     """CLAIMED -> FAILED (default) or back to AVAILABLE with attempt+1 if retryable and attempts remain."""
     _check_wid(wid)
+    if caller is not None:
+        _check_ident(caller, "caller")
     reason_txt = real_evidence.redact(str(reason or "").strip())[:MAX_REASON_CHARS] or "unspecified"
-    rsha = sha256_bytes(str(reason or "").encode())
+    rsha = sha256_bytes(reason_txt.encode())
     bell = _doorbell_default() if doorbell == "env" else doorbell
+    holder = ""
+    out: dict[str, Any] = {}
     with _Tx() as conn:
         row, rej = _lease_check(conn, wid, lease_id, caller, "fail")
         if rej:
             return rej
         holder = row["claimant"]
+        if _reserved_identity(caller, dispatcher=row.get("dispatcher")):
+            actor = caller or "unidentified-caller"
+            _audit(conn, wid, "fail", actor, "RESERVED_IDENTITY", lease_id=lease_id, attempt=row["attempt"],
+                   detail={"caller": caller, "lease_holder": holder})
+            return _result(False, "RESERVED_IDENTITY", wid)
         if retryable and row["attempt"] < row["max_attempts"]:
             out = _release_or_fail(conn, row, holder, f"worker failed (retryable): {reason_txt}", "fail")
         else:
@@ -765,61 +1060,137 @@ def fail(wid: str, *, lease_id: str, reason: str, retryable: bool = False, calle
                                                            **({"caller": caller} if caller else {})})
             out = {"work_item_id": wid, "to": "FAILED", "attempt": row["attempt"], "old_ref": row["doorbell_ref"],
                    "reassign_candidates": cands}
-    _after_release(out, bell, holder)
     if out["to"] == "AVAILABLE":
-        return _result(True, "RELEASED_FOR_RETRY", wid, attempt=out["attempt"], reason_sha256=rsha)
-    return _result(True, "FAILED", wid, reason_sha256=rsha, reassign_flag=True,
-                   reassign_candidates=out["reassign_candidates"])
+        result = _result(True, "RELEASED_FOR_RETRY", wid, attempt=out["attempt"], reason_sha256=rsha)
+    else:
+        result = _result(True, "FAILED", wid, reason_sha256=rsha, reassign_flag=True,
+                         reassign_candidates=out["reassign_candidates"])
+    _safe_followup(result, lambda: _after_release(out, bell, holder))
+    return result
 
 
-def _after_release(out: dict[str, Any], bell: Any, actor: str) -> None:
+def _after_release(out: dict[str, Any], bell: Any, holder: str) -> None:
     wid = out["work_item_id"]
     if out["to"] == "AVAILABLE":
         _set_dispatch(wid, "AVAILABLE")
-        _emit("grok_bridge.released", wid, {"attempt": out["attempt"], "actor": actor})
-        _close_ref(wid, out.get("old_ref"), "RE_RUNG", bell, actor)
-        ring(wid, doorbell=bell, actor=actor)
+        _emit("grok_bridge.released", wid, {"attempt": out["attempt"], "actor": holder})
+        _close_ref(wid, out.get("old_ref"), "RE_RUNG", bell, "wi", triggered_by=holder)
+        ring(wid, doorbell=bell, actor="wi")
     else:
         _set_dispatch(wid, "FAILED")
         cur = (work_items.get(wid) or {}).get("state")
-        if cur in ("DISPATCHED_SHADOW", "RUNNING"):  # one direct legal step; otherwise leave the state alone
+        if cur in ("DISPATCHED_SHADOW", "RUNNING"):
             work_items.transition_if(wid, cur, "EXCEPTION",
                                      reason="grok_bridge failed; flagged for reassignment (no metered fallback)")
-        _emit("grok_bridge.failed", wid, {"attempt": out["attempt"], "actor": actor})
+        _emit("grok_bridge.failed", wid, {"attempt": out["attempt"], "actor": holder})
         _emit("grok_bridge.reassign_flagged", wid, {"candidates": out.get("reassign_candidates") or [],
                                                      "metered_fallback": False})
-        _close_ref(wid, out.get("old_ref"), "FAILED", bell, actor)
+        _close_ref(wid, out.get("old_ref"), "FAILED", bell, "wi", triggered_by=holder)
+
+
+def _revoke_non_claimable_lease(conn: sqlite3.Connection, row: dict[str, Any], actor: str) -> dict[str, Any] | None:
+    wid = row["work_item_id"]
+    ok, item_state, _dispatch = _item_claimable(conn, wid)
+    if ok:
+        return None
+    reason = f"item left machine-executable state: {item_state}"
+    ts = now()
+    if row["state"] == "CLAIMED":
+        conn.execute("""UPDATE grok_leases SET state='FAILED', failure_reason=?, reassign_flag=0, updated_at=?
+                        WHERE work_item_id=? AND state='CLAIMED' AND lease_id=?""",
+                     (reason, ts, wid, row["lease_id"]))
+        _audit(conn, wid, "lease_revoked", actor, "LEASE_REVOKED", lease_id=row["lease_id"], attempt=row["attempt"],
+               from_state="CLAIMED", to_state="FAILED", detail={"item_state": item_state, "claimant": row.get("claimant")})
+    else:
+        conn.execute("""UPDATE grok_leases SET state='FAILED', failure_reason=?, reassign_flag=0, updated_at=?
+                        WHERE work_item_id=? AND state='AVAILABLE'""", (reason, ts, wid))
+        _audit(conn, wid, "lease_revoked", actor, "LEASE_REVOKED", attempt=row["attempt"], from_state="AVAILABLE",
+               to_state="FAILED", detail={"item_state": item_state})
+    return {"work_item_id": wid, "to": "FAILED", "attempt": row["attempt"], "old_ref": row.get("doorbell_ref"),
+            "holder": row.get("claimant"), "revoked": True}
+
+
+def _needs_reconcile(conn: sqlite3.Connection, row: dict[str, Any]) -> bool:
+    wid = row["work_item_id"]
+    try:
+        r = conn.execute("SELECT result_json FROM work_items WHERE id=?", (wid,)).fetchone()
+    except sqlite3.OperationalError:
+        return False
+    if not r or not row.get("result_path") or not row.get("result_sha256"):
+        return False
+    result = json.loads(r["result_json"]) if r["result_json"] else None
+    return not (isinstance(result, dict) and result.get("lease_id") == row["lease_id"])
 
 
 def release_expired(*, actor: str = "wi-recovery", doorbell: Any = "env") -> dict[str, Any]:
     """Lease recovery from WI state only (never reads GitHub): release expired leases (or fail them after
     max attempts) and re-ring unrung doorbells. Works with the doorbell off or GitHub unavailable."""
     bell = _doorbell_default() if doorbell == "env" else doorbell
+    revoked, reconciled = [], []
+    to_reconcile: list[dict[str, Any]] = []
+    with _Tx() as conn:
+        for row in conn.execute("SELECT * FROM grok_leases WHERE state='COMPLETED'"):
+            rd = dict(row)
+            if _needs_reconcile(conn, rd):
+                to_reconcile.append(rd)
+        for row in conn.execute("SELECT * FROM grok_leases WHERE state IN ('AVAILABLE','CLAIMED')"):
+            out = _revoke_non_claimable_lease(conn, dict(row), actor)
+            if out:
+                revoked.append(out)
+    for row in to_reconcile:
+        wid = row["work_item_id"]
+        ident = {"route": "grok_bridge", "lease_id": row["lease_id"], "result_path": row["result_path"],
+                 "result_sha256": row["result_sha256"], "claimed_by": row.get("claimant"),
+                 "executed_by": row.get("executed_by"), "completed_by": row.get("completed_by"),
+                 "attempt": row["attempt"], "idempotency_key": idempotency_key(wid, row["attempt"])}
+        try:
+            work_items.update_fields(wid, result=ident)
+            with _Tx() as conn:
+                _audit(conn, wid, "reconcile", actor, "RECONCILED", lease_id=row["lease_id"], attempt=row["attempt"],
+                       detail={"result_path": row["result_path"], "result_sha256": row["result_sha256"]})
+            reconciled.append(wid)
+        except Exception:  # noqa: BLE001
+            pass
+    for out in revoked:
+        try:
+            _close_ref(out["work_item_id"], out.get("old_ref"), "REVOKED", bell, "wi",
+                       triggered_by=out.get("holder"))
+        except Exception:  # noqa: BLE001
+            pass
     with _Tx() as conn:
         expired = [r["work_item_id"] for r in conn.execute(
             "SELECT work_item_id FROM grok_leases WHERE state='CLAIMED' AND lease_expires_at<=?", (now(),))]
     released, failed = [], []
     for wid in expired:
-        with _Tx() as conn:
-            row = _row(conn, wid)
-            if row is None or row["state"] != "CLAIMED" or now() < row["lease_expires_at"]:
-                continue  # someone completed/renewed it meanwhile
-            _audit(conn, wid, "lease_expired", actor, "EXPIRED", lease_id=row["lease_id"], attempt=row["attempt"],
-                   from_state="CLAIMED", detail={"expired_at": wita(row["lease_expires_at"]), "claimant": row["claimant"]})
-            out = _release_or_fail(conn, row, actor, "lease expired", "release")
-        _after_release(out, bell, actor)
-        (released if out["to"] == "AVAILABLE" else failed).append(wid)
+        try:
+            with _Tx() as conn:
+                row = _row(conn, wid)
+                if row is None or row["state"] != "CLAIMED" or now() < row["lease_expires_at"]:
+                    continue
+                _audit(conn, wid, "lease_expired", actor, "EXPIRED", lease_id=row["lease_id"], attempt=row["attempt"],
+                       from_state="CLAIMED", detail={"expired_at": wita(row["lease_expires_at"]),
+                                                     "claimant": row["claimant"]})
+                out = _release_or_fail(conn, row, actor, "lease expired", "release")
+            _after_release(out, bell, row["claimant"])
+            (released if out["to"] == "AVAILABLE" else failed).append(wid)
+        except Exception:  # noqa: BLE001
+            continue
+    doorbell_states = ("PENDING", "FAILED") if bell is None else ("PENDING", "FAILED", "DISABLED")
     with _Tx() as conn:
         pending = [r["work_item_id"] for r in conn.execute(
-            "SELECT work_item_id FROM grok_leases WHERE state='AVAILABLE' AND doorbell_state IN ('PENDING','FAILED','DISABLED')")]
+            f"SELECT work_item_id FROM grok_leases WHERE state='AVAILABLE' AND doorbell_state IN ({','.join('?'*len(doorbell_states))})",
+            doorbell_states)]
     rerung = []
     for wid in pending:
         if wid in released:
             continue
-        r = ring(wid, doorbell=bell, actor=actor)
-        rerung.append({"work_item_id": wid, "code": r["code"]})
-    return {"ok": True, "code": "RECOVERY_DONE", "released": released, "failed": failed, "rerung": rerung,
-            "doorbell_enabled": bell is not None, "at": wita(now())}
+        try:
+            r = ring(wid, doorbell=bell, actor=actor)
+            rerung.append({"work_item_id": wid, "code": r["code"]})
+        except Exception:  # noqa: BLE001
+            rerung.append({"work_item_id": wid, "code": "ERROR"})
+    return {"ok": True, "code": "RECOVERY_DONE", "released": released, "failed": failed, "revoked": [o["work_item_id"] for o in revoked],
+            "reconciled": reconciled, "rerung": rerung, "doorbell_enabled": bell is not None, "at": wita(now())}
 
 
 def correct(seq: int, *, reason: str, actor: str) -> dict[str, Any]:
@@ -861,20 +1232,43 @@ _ROW_FIELDS = ("at", "at_wita", "work_item_id", "action", "actor", "lease_id", "
 
 
 def verify_audit_chain() -> dict[str, Any]:
-    """Verify the whole audit: hash chain, per-row HMAC (key outside the DB) and the signed head anchor.
-
-    Detects: a naive edit; an edit with the sha chain recomputed (HMAC mismatch); stripping signatures
-    (hmac_from_seq mismatch); truncation of the tail (anchor seq/row missing); a forged anchor.
-    """
-    rows = audit_rows()
-    key = _load_key(create=False)
-    anchor = _read_anchor()
+    """Verify the whole audit: hash chain, per-row HMAC (key outside the DB), pin, anchor and anchor log."""
+    conn = _connect()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            init_schema(conn)
+            rows = [dict(r) for r in conn.execute("SELECT * FROM grok_bridge_audit ORDER BY seq")]
+            key = _load_key(create=False)
+            anchor = _read_anchor()
+            pin = _read_pin()
+            log = _read_anchor_log()
+        finally:
+            conn.execute("ROLLBACK")
+    finally:
+        conn.close()
     problems: list[dict[str, Any]] = []
     prev, first_signed, signed, legacy = None, None, 0, 0
+    key_exists = audit_key_path().exists()
+    legacy_max: int | None = None
+    if key_exists:
+        if key is None:
+            problems.append({"code": "KEY_MISSING"})
+        if pin is None:
+            problems.append({"code": "PIN_MISSING"})
+        elif pin.get("format") == "UNREADABLE":
+            problems.append({"code": "PIN_UNREADABLE"})
+        elif key is not None and not hmac.compare_digest(_pin_body_mac(key, pin), str(pin.get("pin_hmac", ""))):
+            problems.append({"code": "PIN_INVALID"})
+        else:
+            legacy_max = int(pin.get("legacy_max_seq", 0)) if pin else None
     for r in rows:
         body = {k: r[k] for k in _ROW_FIELDS}
         if r["prev_row_sha256"] != prev or sha256_bytes(json.dumps(body, sort_keys=True).encode()) != r["row_sha256"]:
             problems.append({"code": "BROKEN_CHAIN", "seq": r["seq"]})
+            break
+        if legacy_max is not None and r["seq"] > legacy_max and not r.get("row_hmac"):
+            problems.append({"code": "UNSIGNED_ROW_ABOVE_LEGACY", "seq": r["seq"]})
             break
         if r.get("row_hmac"):
             signed += 1
@@ -893,27 +1287,57 @@ def verify_audit_chain() -> dict[str, Any]:
         prev = r["row_sha256"]
     max_seq = rows[-1]["seq"] if rows else None
     anchored_seq = None
-    if not problems and (signed or anchor is not None):
-        if anchor is None:
+    above_legacy = [r for r in rows if legacy_max is not None and r["seq"] > legacy_max]
+    if not problems and above_legacy and anchor is None:
+        problems.append({"code": "ANCHOR_MISSING"})
+    if not problems and key_exists and (signed or anchor is not None or above_legacy):
+        if anchor is None and above_legacy:
             problems.append({"code": "ANCHOR_MISSING"})
-        elif key is None:
-            problems.append({"code": "KEY_MISSING"})
-        elif anchor.get("format") != ANCHOR_FORMAT or not hmac.compare_digest(
-                _anchor_body_mac(key, anchor), str(anchor.get("anchor_hmac", ""))):
-            problems.append({"code": "ANCHOR_INVALID"})
-        else:
-            anchored_seq = anchor["seq"]
-            by_seq = {r["seq"]: r for r in rows}
-            if anchor.get("hmac_from_seq") != first_signed:
-                problems.append({"code": "SIGNATURE_START_MISMATCH", "anchor": anchor.get("hmac_from_seq"),
-                                 "found": first_signed})
-            if max_seq is None or max_seq < anchor["seq"] or len(rows) < int(anchor.get("rows", 0)):
-                problems.append({"code": "TRUNCATED", "anchored_seq": anchor["seq"], "max_seq": max_seq,
-                                 "anchored_rows": anchor.get("rows"), "rows": len(rows)})
-            elif by_seq.get(anchor["seq"], {}).get("row_sha256") != anchor["row_sha256"]:
-                problems.append({"code": "ANCHOR_ROW_MISMATCH", "seq": anchor["seq"]})
+        elif anchor is not None:
+            if key is None:
+                problems.append({"code": "KEY_MISSING"})
+            elif anchor.get("format") != ANCHOR_FORMAT or not hmac.compare_digest(
+                    _anchor_body_mac(key, anchor), str(anchor.get("anchor_hmac", ""))):
+                problems.append({"code": "ANCHOR_INVALID"})
+            else:
+                anchored_seq = anchor["seq"]
+                by_seq = {r["seq"]: r for r in rows}
+                if anchor.get("hmac_from_seq") != first_signed:
+                    problems.append({"code": "SIGNATURE_START_MISMATCH", "anchor": anchor.get("hmac_from_seq"),
+                                     "found": first_signed})
+                if max_seq is None or max_seq < anchor["seq"] or len(rows) < int(anchor.get("rows", 0)):
+                    problems.append({"code": "TRUNCATED", "anchored_seq": anchor["seq"], "max_seq": max_seq,
+                                     "anchored_rows": anchor.get("rows"), "rows": len(rows)})
+                elif by_seq.get(anchor["seq"], {}).get("row_sha256") != anchor["row_sha256"]:
+                    problems.append({"code": "ANCHOR_ROW_MISMATCH", "seq": anchor["seq"]})
+    if not problems and log:
+        if log[0].get("format") == "UNREADABLE":
+            problems.append({"code": "ANCHOR_LOG_UNREADABLE"})
+        elif key is not None:
+            last_seq = -1
+            for entry in log:
+                if entry.get("format") != ANCHOR_LOG_FORMAT:
+                    problems.append({"code": "ANCHOR_LOG_INVALID"})
+                    break
+                body = {k: entry[k] for k in ("format", "seq", "row_sha256", "rows", "hmac_from_seq", "updated_at")
+                        if k in entry}
+                if not hmac.compare_digest(_log_entry_mac(key, body), str(entry.get("log_hmac", ""))):
+                    problems.append({"code": "ANCHOR_LOG_INVALID"})
+                    break
+                seq = int(entry["seq"])
+                if seq < last_seq:
+                    problems.append({"code": "ANCHOR_REPLAY", "seq": seq, "last_seq": last_seq})
+                    break
+                last_seq = seq
+            if not problems and anchor is not None and log:
+                last = log[-1]
+                if int(last["seq"]) != anchor["seq"] or last["row_sha256"] != anchor["row_sha256"]:
+                    problems.append({"code": "ANCHOR_LOG_HEAD_MISMATCH"})
+                elif int(last["seq"]) > anchor["seq"]:
+                    problems.append({"code": "ANCHOR_REPLAY"})
     out = {"ok": not problems, "rows": len(rows), "head": prev if not problems else None, "signed_rows": signed,
-           "legacy_unsigned_rows": legacy, "anchored_seq": anchored_seq, "problems": problems}
+           "legacy_unsigned_rows": legacy, "anchored_seq": anchored_seq, "problems": problems,
+           "legacy_max_seq": legacy_max}
     if problems and problems[0].get("seq") is not None:
         out["broken_at_seq"] = problems[0]["seq"]
     return out

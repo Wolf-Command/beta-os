@@ -53,6 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     rn = gbs.add_parser("renew")
     rn.add_argument("work_item_id")
     rn.add_argument("--lease", required=True)
+    rn.add_argument("--caller", default=None, help="presenting routine identity (recorded on rejections)")
     co = gbs.add_parser("complete")
     co.add_argument("work_item_id")
     co.add_argument("--lease", required=True)
@@ -62,11 +63,13 @@ def main(argv: list[str] | None = None) -> int:
     co.add_argument("--evidence-file")
     co.add_argument("--executed-by", default=None,
                     help="who actually executed the work, if not the lease holder (recorded, never inferred)")
+    co.add_argument("--caller", default=None, help="presenting routine identity (recorded on rejections)")
     fa = gbs.add_parser("fail")
     fa.add_argument("work_item_id")
     fa.add_argument("--lease", required=True)
     fa.add_argument("--reason", required=True)
     fa.add_argument("--retryable", action="store_true")
+    fa.add_argument("--caller", default=None, help="presenting routine identity (recorded on rejections)")
     gbs.add_parser("release-expired")
     rr = gbs.add_parser("rering")
     rr.add_argument("work_item_id")
@@ -196,10 +199,9 @@ def main(argv: list[str] | None = None) -> int:
     return 2
 
 
-# Exit codes for grok-bridge: 0 ok, 3 protocol rejection (ALREADY_CLAIMED, STALE_LEASE, ...),
-# 2 usage / not found / bad input, 1 internal error. stdout is always exactly one JSON object.
-_GB_USAGE_CODES = {"NOT_FOUND", "NOT_OFFERED", "BAD_LEASE_ID", "EMPTY_RESULT", "RESULT_TOO_LARGE", "ITEM_TERMINAL",
-                   "NO_SUCH_AUDIT_ROW"}
+_GB_PROTOCOL_CODES = {"ALREADY_CLAIMED", "STALE_LEASE", "NONCE_MISMATCH", "ITEM_NOT_CLAIMABLE", "ITEM_TERMINAL",
+                    "ALREADY_COMPLETED", "ALREADY_FAILED", "SECRET_SHAPED_REJECTED", "RENEWAL_LIMIT",
+                    "RESULT_QUARANTINED", "RESERVED_IDENTITY"}
 
 
 def _grok_bridge(args) -> int:
@@ -212,7 +214,7 @@ def _grok_bridge(args) -> int:
         elif c == "claim":
             out = gb.claim(args.work_item_id, claimant=args.claimant, nonce=args.nonce)
         elif c == "renew":
-            out = gb.renew(args.work_item_id, lease_id=args.lease)
+            out = gb.renew(args.work_item_id, lease_id=args.lease, caller=args.caller)
         elif c == "complete":
             if args.result_stdin:
                 result = sys.stdin.buffer.read(gb.MAX_RESULT_BYTES + 1)
@@ -224,9 +226,10 @@ def _grok_bridge(args) -> int:
                 with open(args.evidence_file, "rb") as fh:
                     evidence = fh.read(gb.MAX_RESULT_BYTES + 1)
             out = gb.complete(args.work_item_id, lease_id=args.lease, result=result, evidence=evidence,
-                              executed_by=args.executed_by)
+                              executed_by=args.executed_by, caller=args.caller)
         elif c == "fail":
-            out = gb.fail(args.work_item_id, lease_id=args.lease, reason=args.reason, retryable=args.retryable)
+            out = gb.fail(args.work_item_id, lease_id=args.lease, reason=args.reason, retryable=args.retryable,
+                          caller=args.caller)
         elif c == "release-expired":
             out = gb.release_expired(actor="cli")
         elif c == "rering":
@@ -246,13 +249,25 @@ def _grok_bridge(args) -> int:
     except (ValueError, OSError) as exc:
         print(json.dumps({"ok": False, "code": "BAD_INPUT", "message": str(exc)[:200]}, sort_keys=True))
         return 2
+    except gb.AuditIntegrityError as exc:
+        print(json.dumps({"ok": False, "code": "AUDIT_INTEGRITY_ERROR", "message": str(exc)[:200]}, sort_keys=True))
+        return 1
     except Exception as exc:  # noqa: BLE001
         print(json.dumps({"ok": False, "code": "INTERNAL_ERROR", "message": type(exc).__name__}, sort_keys=True))
         return 1
     print(json.dumps(out, sort_keys=True, default=str))
     if out.get("ok"):
         return 0
-    return 2 if out.get("code") in _GB_USAGE_CODES else 3
+    code = out.get("code")
+    if code in _GB_USAGE_CODES:
+        return 2
+    if code in _GB_PROTOCOL_CODES:
+        return 3
+    return 3
+
+
+_GB_USAGE_CODES = {"NOT_FOUND", "NOT_OFFERED", "BAD_LEASE_ID", "EMPTY_RESULT", "RESULT_TOO_LARGE",
+                   "NO_SUCH_AUDIT_ROW"}
 
 
 if __name__ == "__main__":

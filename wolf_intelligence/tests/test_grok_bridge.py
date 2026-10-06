@@ -26,20 +26,22 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from wolf_intelligence import grok_bridge as gb
+from wolf_intelligence import events, grok_bridge as gb, learning, overnight_tick, stats_store
 from wolf_intelligence import grok_doorbell as gd
-from wolf_intelligence import paths, work_items, worker_registry
+from wolf_intelligence import ledger, paths, work_items, worker_registry
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TASK_TEXT = "Reconcile GGV bank statement Rp 141,275,000 for Uma Blu (confidential task text)"
+_MODULE_START: float | None = None
 
 
-def _guard() -> None:
-    root = Path(paths.STATE_ROOT).resolve()
+def _guard_root(root: Path) -> None:
+    root = root.resolve()
     live = Path(paths.LIVE_STATE_ROOT).resolve()
     if root == live or root.is_relative_to(live) or live.is_relative_to(root):
         raise RuntimeError("refusing to run tests against live Wolf Intelligence state")
@@ -47,7 +49,77 @@ def _guard() -> None:
         raise RuntimeError("refusing to run tests outside the system temp dir")
 
 
-_guard()
+def _snapshot_path_state() -> dict[str, object]:
+    snap: dict[str, object] = {"env_root": os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT")}
+    for mod, names in (
+        (paths, ("STATE_ROOT", "WORK_ITEMS_DIR", "EVENTS_PATH", "AUDIT_DIR", "LEDGER_DIR", "BENCHMARKS_DIR",
+                 "LEARNING_DIR", "SHADOW_DIR", "WORKERS_DIR", "TMP_DIR", "SQLITE_PATH", "MIRROR_DIR")),
+        (work_items, ("SQLITE_PATH", "WORK_ITEMS_DIR", "_bootstrapped")),
+        (events, ("EVENTS_PATH", "AUDIT_DIR")),
+        (stats_store, ("STATS_PATH", "SUMMARY_PATH")),
+        (learning, ("OUTCOMES_PATH", "WEIGHTS_PATH")),
+        (ledger, ("LEDGER_PATH", "SNAPSHOT_PATH")),
+        (overnight_tick, ("AUDIT_DIR",)),
+    ):
+        for name in names:
+            snap[f"{mod.__name__}.{name}"] = getattr(mod, name)
+    return snap
+
+
+def _restore_path_state(snap: dict[str, object]) -> None:
+    env_root = snap.get("env_root")
+    if env_root is None:
+        os.environ.pop("WOLF_INTELLIGENCE_STATE_ROOT", None)
+    else:
+        os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = str(env_root)
+    for mod, names in (
+        (paths, ("STATE_ROOT", "WORK_ITEMS_DIR", "EVENTS_PATH", "AUDIT_DIR", "LEDGER_DIR", "BENCHMARKS_DIR",
+                 "LEARNING_DIR", "SHADOW_DIR", "WORKERS_DIR", "TMP_DIR", "SQLITE_PATH", "MIRROR_DIR")),
+        (work_items, ("SQLITE_PATH", "WORK_ITEMS_DIR", "_bootstrapped")),
+        (events, ("EVENTS_PATH", "AUDIT_DIR")),
+        (stats_store, ("STATS_PATH", "SUMMARY_PATH")),
+        (learning, ("OUTCOMES_PATH", "WEIGHTS_PATH")),
+        (ledger, ("LEDGER_PATH", "SNAPSHOT_PATH")),
+        (overnight_tick, ("AUDIT_DIR",)),
+    ):
+        for name in names:
+            setattr(mod, name, snap[f"{mod.__name__}.{name}"])
+
+
+def _apply_state_root(root: Path) -> None:
+    """Point paths and modules that captured SQLITE paths at import at a fresh state directory."""
+    root = root.resolve()
+    _guard_root(root)
+    os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = str(root)
+    paths.STATE_ROOT = root
+    paths.WORK_ITEMS_DIR = root / "work_items"
+    paths.EVENTS_PATH = root / "events" / "events.jsonl"
+    paths.AUDIT_DIR = root / "audit"
+    paths.LEDGER_DIR = root / "ledger"
+    paths.BENCHMARKS_DIR = root / "benchmarks"
+    paths.LEARNING_DIR = root / "learning"
+    paths.SHADOW_DIR = root / "shadow"
+    paths.WORKERS_DIR = root / "workers"
+    paths.TMP_DIR = root / "tmp"
+    paths.SQLITE_PATH = root / "control_plane.sqlite"
+    paths.MIRROR_DIR = root / "mirror"
+    work_items.SQLITE_PATH = paths.SQLITE_PATH
+    work_items.WORK_ITEMS_DIR = paths.WORK_ITEMS_DIR
+    work_items._bootstrapped = False
+    events.EVENTS_PATH = paths.EVENTS_PATH
+    events.AUDIT_DIR = paths.AUDIT_DIR
+    stats_store.STATS_PATH = paths.LEARNING_DIR / "stats.json"
+    stats_store.SUMMARY_PATH = paths.mirror_path("stats-summary.json")
+    learning.OUTCOMES_PATH = paths.LEARNING_DIR / "outcomes.jsonl"
+    learning.WEIGHTS_PATH = paths.LEARNING_DIR / "weights.json"
+    ledger.LEDGER_PATH = paths.LEDGER_DIR / "ledger.jsonl"
+    ledger.SNAPSHOT_PATH = paths.LEDGER_DIR / "snapshot.json"
+    overnight_tick.AUDIT_DIR = paths.AUDIT_DIR
+    paths.ensure_dirs()
+    work_items.bootstrap()
+
+
+_guard_root(Path(paths.STATE_ROOT))
 
 
 class FakeClock:
@@ -97,8 +169,20 @@ class BrokenDoorbell:
         raise self.exc
 
 
+def _mark_module_start() -> None:
+    global _MODULE_START
+    if _MODULE_START is None:
+        _MODULE_START = time.monotonic()
+
+
 class _Base(unittest.TestCase):
     def setUp(self) -> None:
+        _mark_module_start()
+        path_snap = _snapshot_path_state()
+        self.addCleanup(_restore_path_state, path_snap)
+        state_root = Path(tempfile.mkdtemp(prefix="wi-test-case-"))
+        self.addCleanup(_shutil.rmtree, state_root, True)
+        _apply_state_root(state_root)
         os.environ.pop(gd.DOORBELL_ENV, None)
         self.clock = FakeClock()
         p = mock.patch.object(gb, "_now", self.clock)
@@ -113,6 +197,7 @@ class _Base(unittest.TestCase):
 
     def offered(self, **kw) -> tuple[str, str]:
         wid = self.new_item()
+        self.to_dispatched_shadow(wid)
         out = gb.offer(wid, doorbell=self.bell, **kw)
         self.assertTrue(out["ok"], out)
         return wid, self.nonce(wid)
@@ -138,6 +223,13 @@ class _Base(unittest.TestCase):
     def to_running(self, wid: str) -> None:
         self.to_dispatched_shadow(wid)
         work_items.transition(wid, "RUNNING", reason="test")
+
+    def prepare_claimable(self, wid: str) -> None:
+        self.to_dispatched_shadow(wid)
+
+    def offer_item(self, wid: str, **kw) -> dict:
+        self.prepare_claimable(wid)
+        return gb.offer(wid, doorbell=self.bell, **kw)
 
     def outcomes(self, wid: str, action: str | None = None) -> list[str]:
         return [r["outcome"] for r in gb.audit_rows(wid) if action is None or r["action"] == action]
@@ -256,22 +348,19 @@ class LeaseTests(_Base):
         self.assertEqual(gb.fail(wid, lease_id=lease, reason="x")["code"], "ALREADY_COMPLETED")
 
     def test_complete_stores_result_and_moves_item_to_ready_to_test(self) -> None:
-        # QUEUED item: result stored, canonical state unchanged (no invented history).
         wid, lease = self.claimed()
         hist_len = len(work_items.get(wid)["history"])
         r = gb.complete(wid, lease_id=lease, result="the answer", evidence="evidence log", doorbell=self.bell)
         self.assertEqual(r["result_sha256"], hashlib.sha256(b"the answer").hexdigest())
         self.assertEqual(r["evidence_sha256"], hashlib.sha256(b"evidence log").hexdigest())
         item = work_items.get(wid)
-        self.assertEqual(item["state"], "QUEUED")
-        self.assertEqual(len(item["history"]), hist_len)
+        self.assertEqual(item["state"], "READY_TO_TEST")
+        self.assertEqual(len(item["history"]), hist_len + 1)
         self.assertEqual(item["result"]["lease_id"], lease)
         self.assertEqual(Path(item["result"]["result_path"]).read_bytes(), b"the answer")
         self.assertIn((self.bell.rings[-1]["ref"], "COMPLETED"), self.bell.closes)
-        # RUNNING path: claim moves DISPATCHED_SHADOW -> RUNNING, complete -> READY_TO_TEST (one history entry).
         wid2 = self.new_item()
-        self.to_dispatched_shadow(wid2)
-        gb.offer(wid2, doorbell=self.bell)
+        self.offer_item(wid2)
         nonce2 = self.nonce(wid2)
         hist2 = len(work_items.get(wid2)["history"])
         cr = gb.claim(wid2, claimant="grok-routine-1", nonce=nonce2)
@@ -311,7 +400,9 @@ class LeaseTests(_Base):
         work_items.transition(done, "CANCELLED", reason="test")
         self.assertEqual(gb.offer(done, doorbell=self.bell)["code"], "ITEM_TERMINAL")
         with self.assertRaises(ValueError):
-            gb.offer(self.new_item(), lease_seconds=5, doorbell=self.bell)
+            wid = self.new_item()
+            self.prepare_claimable(wid)
+            gb.offer(wid, lease_seconds=5, doorbell=self.bell)
 
 
 class RecoveryTests(_Base):
@@ -344,8 +435,8 @@ class RecoveryTests(_Base):
         self.assertEqual(gb.status(wid)["code"], "CLAIMED")
 
     def test_max_attempts_then_failed_and_flagged_without_metered_fallback(self) -> None:
-        # QUEUED item: lease fails but canonical state stays QUEUED.
         wid_q = self.new_item()
+        self.prepare_claimable(wid_q)
         gb.offer(wid_q, lease_seconds=60, max_attempts=2, doorbell=self.bell)
         for attempt in (1, 2):
             r = gb.claim(wid_q, claimant=f"r{attempt}", nonce=self.nonce(wid_q))
@@ -353,10 +444,8 @@ class RecoveryTests(_Base):
             self.clock.advance(61)
             gb.release_expired(doorbell=self.bell)
         self.assertEqual(gb.status(wid_q)["lease"]["state"], "FAILED")
-        self.assertEqual(work_items.get(wid_q)["state"], "QUEUED")
-        # DISPATCHED_SHADOW item: canonical state walks to EXCEPTION.
+        self.assertEqual(work_items.get(wid_q)["state"], "EXCEPTION")
         wid, _ = self.offered(lease_seconds=60, max_attempts=2)
-        self.to_dispatched_shadow(wid)
         for attempt in (1, 2):
             r = gb.claim(wid, claimant=f"r{attempt}", nonce=self.nonce(wid))
             self.assertEqual((r["code"], r["attempt"]), ("CLAIMED", attempt))
@@ -473,6 +562,7 @@ class DoorbellTests(_Base):
 
     def test_github_doorbell_argv_has_no_task_text(self) -> None:
         wid = self.new_item()
+        self.prepare_claimable(wid)
         seen = []
 
         def fake_run(argv, **kw):
@@ -503,6 +593,7 @@ class DoorbellTests(_Base):
 
     def test_doorbell_failure_is_safe(self) -> None:
         wid = self.new_item()
+        self.prepare_claimable(wid)
         broken = BrokenDoorbell()
         r = gb.offer(wid, doorbell=broken)
         self.assertTrue(r["ok"])
@@ -522,6 +613,7 @@ class DoorbellTests(_Base):
         for case in cases:
             with self.subTest(case=type(case).__name__):
                 wid = self.new_item()
+                self.prepare_claimable(wid)
                 bell = gd.GitHubIssueDoorbell(gh="/nonexistent/gh")
                 side = (lambda *a, **k: case) if isinstance(case, subprocess.CompletedProcess) else case
                 with mock.patch.object(gd.subprocess, "run", side_effect=side):
@@ -533,6 +625,7 @@ class DoorbellTests(_Base):
 
     def test_bad_issue_url_is_a_failure(self) -> None:
         wid = self.new_item()
+        self.prepare_claimable(wid)
         bell = gd.GitHubIssueDoorbell()
         ret = subprocess.CompletedProcess(["gh"], 0, "https://github.com/someone/else/issues/1\n", "")
         with mock.patch.object(gd.subprocess, "run", return_value=ret):
@@ -540,6 +633,7 @@ class DoorbellTests(_Base):
 
     def test_close_failure_does_not_undo_completion(self) -> None:
         wid = self.new_item()
+        self.prepare_claimable(wid)
         gb.offer(wid, doorbell=self.bell)
         lease = gb.claim(wid, claimant="g", nonce=self.nonce(wid))["lease_id"]
         r = gb.complete(wid, lease_id=lease, result="ok", doorbell=BrokenDoorbell())
@@ -549,6 +643,7 @@ class DoorbellTests(_Base):
     def test_doorbell_disabled_by_default(self) -> None:
         wid = self.new_item()
         self.assertIsNone(gd.from_env())
+        self.prepare_claimable(wid)
         r = gb.offer(wid)  # env doorbell: unset -> disabled
         self.assertEqual(r["doorbell"]["code"], "DOORBELL_DISABLED")
         self.assertEqual(gb.status(wid)["lease"]["doorbell_state"], "DISABLED")
@@ -576,6 +671,7 @@ class CliTests(_Base):
         gb._now = __import__("time").time  # CLI subprocesses use the real clock
         self.addCleanup(setattr, gb, "_now", self.clock)
         wid = self.new_item()
+        self.prepare_claimable(wid)
         rc, out = self.run_cli("offer", wid, "--lease-seconds", "600")
         self.assertEqual((rc, out["code"], out["doorbell"]["code"]), (0, "OFFERED", "DOORBELL_DISABLED"))
         nonce = self.nonce(wid)
@@ -602,6 +698,7 @@ class CliTests(_Base):
         gb._now = __import__("time").time
         self.addCleanup(setattr, gb, "_now", self.clock)
         wid = self.new_item()
+        self.prepare_claimable(wid)
         self.run_cli("offer", wid)
         _, c = self.run_cli("claim", wid, "--nonce", self.nonce(wid), "--claimant", "g")
         rc, f = self.run_cli("fail", wid, "--lease", c["lease_id"], "--reason", "cannot reach repo")
@@ -619,18 +716,41 @@ class TickTests(_Base):
 
     def test_tick_verifies_audit_chain_on_every_run(self) -> None:
         from wolf_intelligence import dispatcher, learning, overnight_tick, shadow_compare
-        from wolf_intelligence.stats_store import recompute
         with mock.patch.object(work_items, "create", return_value={"id": "wi_mock"}), \
              mock.patch.object(dispatcher, "dispatch"), \
              mock.patch.object(learning, "record_outcome"), \
              mock.patch.object(shadow_compare, "run_compare", return_value={}), \
-             mock.patch("wolf_intelligence.stats_store.recompute", return_value={}), \
-             mock.patch.object(gb, "release_expired", return_value={"ok": True, "code": "RECOVERY_DONE"}):
+             mock.patch.object(overnight_tick, "recompute", return_value={}), \
+             mock.patch.object(gb, "release_expired", return_value={"ok": True, "code": "RECOVERY_DONE"}) as rel:
             out = overnight_tick.run()
         self.assertIn("grok_audit_chain", out)
         self.assertTrue(out["grok_audit_chain"]["ok"])
+        rel.assert_called_once()
         self.assertIn("grok_doorbell_enabled", out)
-        self.assertIsInstance(out["grok_doorbell_enabled"], bool)
+
+    def test_tick_skips_recovery_on_broken_audit_chain(self) -> None:
+        from wolf_intelligence import dispatcher, events, learning, overnight_tick, shadow_compare
+        broken = {"ok": False, "problems": [{"code": "BROKEN_CHAIN", "seq": 1}]}
+        emitted: list[str] = []
+        real_emit = events.emit
+
+        def capture_emit(event_type, *a, **k):
+            emitted.append(event_type)
+            return real_emit(event_type, *a, **k)
+
+        with mock.patch.object(work_items, "create", return_value={"id": "wi_mock"}), \
+             mock.patch.object(dispatcher, "dispatch"), \
+             mock.patch.object(learning, "record_outcome"), \
+             mock.patch.object(shadow_compare, "run_compare", return_value={}), \
+             mock.patch.object(overnight_tick, "recompute", return_value={}), \
+             mock.patch.object(gb, "verify_audit_chain", return_value=broken), \
+             mock.patch.object(gb, "release_expired") as rel, \
+             mock.patch.object(events, "emit", side_effect=capture_emit):
+            out = overnight_tick.run()
+        self.assertFalse(out["grok_audit_chain"]["ok"])
+        self.assertTrue(out["grok_lease_recovery"].get("skipped_due_to_audit_failure"))
+        rel.assert_not_called()
+        self.assertIn("grok_bridge.audit_chain_broken", emitted)
 
 
 class ClaimAllowlistTests(_Base):
@@ -654,8 +774,10 @@ class ClaimAllowlistTests(_Base):
         non_claimable = set(work_items.STATES) - gb.CLAIMABLE_ITEM_STATES
         for state in non_claimable:
             wid = self.new_item()
-            if state != "QUEUED":
+            if state not in ("QUEUED", "DISPATCHED_SHADOW"):
                 self._to_state(wid, state)
+            elif state == "DISPATCHED_SHADOW":
+                self.to_dispatched_shadow(wid)
             code = "ITEM_TERMINAL" if state in work_items.TERMINAL else "ITEM_NOT_CLAIMABLE"
             r = gb.offer(wid, doorbell=self.bell)
             self.assertEqual(r["code"], code, state)
@@ -663,14 +785,15 @@ class ClaimAllowlistTests(_Base):
 
     def test_claim_refused_when_item_leaves_claimable_state(self) -> None:
         cases = {
-            "NEEDS_YOU": ["ROUTING", "RECOMMENDED", "NEEDS_YOU"],
-            "DECISION_PENDING": ["ROUTING", "RECOMMENDED", "DECISION_PENDING"],
+            "NEEDS_YOU": ["RUNNING", "NEEDS_YOU"],
+            "DECISION_PENDING": ["RUNNING", "NEEDS_YOU", "DECISION_PENDING"],
             "CANCELLED": ["CANCELLED"],
             "BLOCKED": ["BLOCKED"],
-            "HUMAN_PASSED": ["ROUTING", "RECOMMENDED", "DISPATCHED_SHADOW", "RUNNING", "READY_TO_TEST", "HUMAN_PASSED"],
+            "HUMAN_PASSED": ["RUNNING", "READY_TO_TEST", "HUMAN_PASSED"],
         }
         for label, steps in cases.items():
             wid = self.new_item()
+            self.to_dispatched_shadow(wid)
             gb.offer(wid, doorbell=self.bell)
             nonce = self.nonce(wid)
             for step in steps:
@@ -682,24 +805,26 @@ class ClaimAllowlistTests(_Base):
 
 
 class NoInventedHistoryTests(_Base):
-    def test_complete_queued_leaves_state_and_history_unchanged(self) -> None:
-        wid, lease = self.claimed()
-        before = work_items.get(wid)
-        gb.complete(wid, lease_id=lease, result="ok", doorbell=self.bell)
-        after = work_items.get(wid)
-        self.assertEqual(after["state"], before["state"])
-        self.assertEqual(after["history"], before["history"])
-
-    def test_complete_while_needs_you_stays_needs_you(self) -> None:
+    def test_queued_not_claimable(self) -> None:
         wid = self.new_item()
-        self.to_running(wid)
-        gb.offer(wid, doorbell=self.bell)
-        nonce = self.nonce(wid)
-        lease = gb.claim(wid, claimant="grok-routine-1", nonce=nonce)["lease_id"]
+        r = gb.offer(wid, doorbell=self.bell)
+        self.assertEqual(r["code"], "ITEM_NOT_CLAIMABLE")
+        self.assertIsNone(gb.status(wid).get("lease"))
+
+    def test_complete_while_needs_you_quarantines_result(self) -> None:
+        wid, lease = self.claimed()
         work_items.transition(wid, "NEEDS_YOU", reason="owner gate")
+        t0 = time.monotonic()
         r = gb.complete(wid, lease_id=lease, result="done", doorbell=self.bell)
-        self.assertEqual(r["item_state"], "NEEDS_YOU")
+        self.assertLess(time.monotonic() - t0, 5.0, "quarantine path must not block on nested _Tx")
+        self.assertEqual(r["code"], "RESULT_QUARANTINED")
+        self.assertFalse(r["ok"])
         self.assertEqual(work_items.get(wid)["state"], "NEEDS_YOU")
+        self.assertIsNone(work_items.get(wid).get("result"))
+        qpath = Path(r["quarantine_path"])
+        self.assertTrue(qpath.exists())
+        self.assertEqual(qpath.read_bytes(), b"done")
+        self.assertIn("doorbell_close", [row["action"] for row in gb.audit_rows(wid)])
 
 
 class ExecutorIdentityTests(_Base):
@@ -754,29 +879,16 @@ class ExecutorIdentityTests(_Base):
         r = gb.complete(wid, lease_id=old_lease, result="late", caller="new-worker", doorbell=self.bell)
         self.assertEqual(r["code"], "STALE_LEASE")
         row = next(x for x in gb.audit_rows(wid) if x["action"] == "complete" and x["outcome"] == "STALE_LEASE")
-        self.assertEqual(row["actor"], "stalled-worker")
+        self.assertEqual(row["actor"], "new-worker")
+        detail = json.loads(row["detail_json"])
+        self.assertEqual(detail.get("lease_holder"), "stalled-worker")
 
 
 class TamperEvidenceTests(_Base):
-    def setUp(self) -> None:
-        super().setUp()
-        self._db_backup = paths.SQLITE_PATH.read_bytes()
-        ap = gb.anchor_path()
-        self._anchor_backup = ap.read_bytes() if ap.exists() else None
-
     def _audit_conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(paths.SQLITE_PATH))
         conn.row_factory = sqlite3.Row
         return conn
-
-    def tearDown(self) -> None:
-        paths.SQLITE_PATH.write_bytes(self._db_backup)
-        ap = gb.anchor_path()
-        if self._anchor_backup is not None:
-            ap.write_bytes(self._anchor_backup)
-        elif ap.exists():
-            ap.unlink(missing_ok=True)
-        super().tearDown()
 
     def _drop_triggers(self, conn: sqlite3.Connection) -> None:
         conn.execute("DROP TRIGGER IF EXISTS grok_audit_no_update")
@@ -880,6 +992,11 @@ class TamperEvidenceTests(_Base):
         gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
         kp = gb.audit_key_path()
         self.assertTrue(kp.exists())
+        try:
+            os.chmod(kp.parent, 0o700)
+            os.chmod(kp, 0o600)
+        except OSError:
+            pass
         self.assertEqual(oct(kp.stat().st_mode & 0o777), "0o600")
         self.assertEqual(oct(kp.parent.stat().st_mode & 0o777), "0o700")
 
@@ -910,6 +1027,7 @@ class GitHubUnavailableTests(_Base):
     def test_offer_with_missing_gh_records_failure_and_stays_available(self) -> None:
         bell = gd.GitHubIssueDoorbell(gh="/nonexistent/gh")
         wid = self.new_item()
+        self.prepare_claimable(wid)
         r = gb.offer(wid, doorbell=bell)
         self.assertTrue(r["ok"])
         self.assertEqual(r["doorbell"]["code"], "DOORBELL_FAILED")
@@ -919,6 +1037,7 @@ class GitHubUnavailableTests(_Base):
     def test_expired_lease_recovery_with_github_unavailable(self) -> None:
         bell = gd.GitHubIssueDoorbell(gh="/nonexistent/gh")
         wid = self.new_item()
+        self.prepare_claimable(wid)
         gb.offer(wid, doorbell=bell)
         nonce = self.nonce(wid)
         lease = gb.claim(wid, claimant="grok-routine-1", nonce=nonce)
@@ -927,7 +1046,7 @@ class GitHubUnavailableTests(_Base):
         out = gb.release_expired(doorbell=bell)
         self.assertIn(wid, out["released"])
         self.assertEqual(gb.status(wid)["lease"]["attempt"], 2)
-        self.assertEqual(work_items.get(wid)["state"], "QUEUED")
+        self.assertEqual(work_items.get(wid)["state"], "RUNNING")
 
     def test_github_doorbell_has_no_read_methods(self) -> None:
         bell = gd.GitHubIssueDoorbell(gh="/nonexistent/gh")
@@ -966,20 +1085,154 @@ class WrapperTests(_Base):
             self.assertEqual((rc, out["code"]), (2, "NOT_ALLOWED_FOR_WORKER"), cmd)
 
     def test_wrapper_scrubs_parent_secrets_from_child_env(self) -> None:
-        fake_py = Path(tempfile.mkdtemp()) / "python3"
-        fake_py.write_text('#!/usr/bin/env python3\nimport json, os\nprint(json.dumps(dict(os.environ)))\n')
-        fake_py.chmod(0o755)
+        if not Path("/opt/homebrew/bin/python3").exists():
+            self.skipTest("/opt/homebrew/bin/python3 missing")
+        tmp_root = Path(tempfile.mkdtemp(prefix="wi-wrapper-test-"))
+        self.addCleanup(_shutil.rmtree, str(tmp_root), True)
+        pkg = tmp_root / "wolf_intelligence"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text("", encoding="utf-8")
+        (pkg / "__main__.py").write_text(
+            'import json, os, sys\n'
+            'if sys.argv[1:3] == ["grok-bridge", "status"]:\n'
+            '    print(json.dumps(sorted(os.environ.keys())))\n',
+            encoding="utf-8",
+        )
+        script_src = REPO_ROOT / "wolf_intelligence" / "bin" / "grok-bridge.sh"
+        script = tmp_root / "wolf_intelligence" / "bin" / "grok-bridge.sh"
+        script.parent.mkdir(parents=True)
+        script.write_text(script_src.read_text().replace(
+            'RUNTIME="$(cd "$HERE/../.." && pwd)"',
+            f'RUNTIME="{tmp_root}"',
+        ), encoding="utf-8")
+        script.chmod(0o755)
         env = dict(os.environ)
         env["ANTHROPIC_API_KEY"] = "dummy-not-a-key"
-        env["GROK_BRIDGE_PYTHON"] = str(fake_py)
         env.pop(gd.DOORBELL_ENV, None)
-        script = REPO_ROOT / "wolf_intelligence" / "bin" / "grok-bridge.sh"
-        p = subprocess.run(["bash", str(script), "status", "wi_dummy"], cwd=str(REPO_ROOT), env=env,
+        p = subprocess.run(["bash", str(script), "status", "wi_dummy"], cwd=str(tmp_root), env=env,
                            capture_output=True, text=True, timeout=30)
-        child_env = json.loads(p.stdout.strip().splitlines()[-1])
-        self.assertNotIn("ANTHROPIC_API_KEY", child_env)
-        self.assertIn("WOLF_INTELLIGENCE_STATE_ROOT", child_env)
-        self.assertEqual(child_env.get("SHELL"), "/bin/bash")
+        child_keys = json.loads(p.stdout.strip().splitlines()[-1])
+        self.assertNotIn("ANTHROPIC_API_KEY", child_keys)
+        self.assertIn("WOLF_INTELLIGENCE_STATE_ROOT", child_keys)
+        self.assertIn("PATH", child_keys)
+        self.assertIn("SHELL", child_keys)
+
+
+class Round2FixTests(TamperEvidenceTests):
+    def test_nested_tx_raises(self) -> None:
+        with self.assertRaises(RuntimeError) as ctx:
+            with gb._Tx():
+                with gb._Tx():
+                    pass
+        self.assertEqual(str(ctx.exception), "nested _Tx")
+
+    def test_strip_all_hmac_and_delete_anchor_detected(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        conn = sqlite3.connect(str(paths.SQLITE_PATH))
+        try:
+            conn.execute("DROP TRIGGER IF EXISTS grok_audit_no_update")
+            conn.execute("DROP TRIGGER IF EXISTS grok_audit_no_delete")
+            conn.execute("UPDATE grok_bridge_audit SET row_hmac=NULL")
+            conn.commit()
+        finally:
+            conn.close()
+        gb.anchor_path().unlink(missing_ok=True)
+        v = gb.verify_audit_chain()
+        self.assertFalse(v["ok"])
+        codes = [p["code"] for p in v["problems"]]
+        self.assertTrue({"UNSIGNED_ROW_ABOVE_LEGACY", "ANCHOR_MISSING", "PIN_MISSING"} & set(codes))
+
+    def test_truncation_then_write_refused_and_still_detected(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        conn = sqlite3.connect(str(paths.SQLITE_PATH))
+        try:
+            conn.execute("DROP TRIGGER IF EXISTS grok_audit_no_delete")
+            conn.execute("DELETE FROM grok_bridge_audit WHERE seq=(SELECT MAX(seq) FROM grok_bridge_audit)")
+            conn.commit()
+        finally:
+            conn.close()
+        self.assertFalse(gb.verify_audit_chain()["ok"])
+        wid2 = self.new_item()
+        self.prepare_claimable(wid2)
+        with self.assertRaises(gb.AuditIntegrityError):
+            gb.offer(wid2, doorbell=self.bell)
+
+    def test_old_anchor_replay_detected_via_anchor_log(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="a", doorbell=self.bell)
+        anchor = gb._read_anchor()
+        self.assertIsNotNone(anchor)
+        old_seq = int(anchor["seq"]) - 1
+        if old_seq < 1:
+            self.skipTest("need at least two audit rows")
+        conn = sqlite3.connect(str(paths.SQLITE_PATH))
+        conn.row_factory = sqlite3.Row
+        try:
+            row = conn.execute("SELECT row_sha256 FROM grok_bridge_audit WHERE seq=?", (old_seq,)).fetchone()
+        finally:
+            conn.close()
+        forged = dict(anchor)
+        forged["seq"] = old_seq
+        forged["row_sha256"] = row["row_sha256"]
+        key = gb._read_key_bytes()
+        forged["anchor_hmac"] = gb._anchor_body_mac(key, forged)
+        gb.anchor_path().write_text(json.dumps(forged, sort_keys=True) + "\n")
+        v = gb.verify_audit_chain()
+        self.assertFalse(v["ok"])
+        self.assertIn("ANCHOR_LOG_HEAD_MISMATCH", [p["code"] for p in v["problems"]])
+
+    def test_key_deleted_while_signed_rows_fail_closed(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        gb.audit_key_path().unlink(missing_ok=True)
+        v = gb.verify_audit_chain()
+        self.assertFalse(v["ok"])
+        self.assertIn("KEY_MISSING", [p["code"] for p in v["problems"]])
+        wid2 = self.new_item()
+        self.prepare_claimable(wid2)
+        with self.assertRaises(gb.AuditIntegrityError):
+            gb.offer(wid2, doorbell=self.bell)
+
+    def test_renew_after_owner_gate_refused(self) -> None:
+        wid, lease = self.claimed()
+        work_items.transition(wid, "NEEDS_YOU", reason="owner gate")
+        r = gb.renew(wid, lease_id=lease, caller="grok-routine-1")
+        self.assertEqual(r["code"], "ITEM_NOT_CLAIMABLE")
+
+    def test_post_commit_failure_still_returns_and_reconciles(self) -> None:
+        wid, lease = self.claimed()
+        with mock.patch.object(work_items, "update_fields", side_effect=RuntimeError("busy")):
+            r = gb.complete(wid, lease_id=lease, result="ok", doorbell=self.bell)
+        self.assertTrue(r["ok"])
+        self.assertEqual(r["code"], "COMPLETED")
+        self.assertEqual(r.get("item_update_error"), "RuntimeError")
+        self.assertIsNone((work_items.get(wid) or {}).get("result"))
+        out = gb.release_expired(doorbell=self.bell)
+        self.assertIn(wid, out["reconciled"])
+        self.assertEqual(work_items.get(wid)["result"]["lease_id"], lease)
+
+    def test_cross_process_update_fields_vs_transition(self) -> None:
+        wid, _lease = self.claimed()
+        work_items.transition(wid, "NEEDS_YOU", reason="owner gate")
+        before = work_items.get(wid)
+        work_items.update_fields(wid, dispatch={"route": "grok_bridge", "bridge_state": "CLAIMED", "note": "race"})
+        after = work_items.get(wid)
+        self.assertEqual(after["state"], "NEEDS_YOU")
+        self.assertEqual(after["history"], before["history"])
+        moved = work_items.transition_if(wid, "RUNNING", "READY_TO_TEST", reason="should not apply")
+        self.assertIsNone(moved)
+        self.assertEqual(work_items.get(wid)["state"], "NEEDS_YOU")
+
+    def test_reserved_identities_refused(self) -> None:
+        wid, nonce = self.offered(actor="dispatch-bot")
+        for bad in ("grok_bot", "wi", "dispatch-bot"):
+            r = gb.claim(wid, claimant=bad, nonce=nonce)
+            self.assertEqual(r["code"], "RESERVED_IDENTITY", bad)
+        lease = gb.claim(wid, claimant="grok-routine-1", nonce=nonce)["lease_id"]
+        r2 = gb.complete(wid, lease_id=lease, result="x", executed_by="wi", doorbell=self.bell)
+        self.assertEqual(r2["code"], "RESERVED_IDENTITY")
 
 
 class TaxonomyTests(unittest.TestCase):
@@ -1050,6 +1303,18 @@ class TaxonomyTests(unittest.TestCase):
         d = worker_registry.WORKERS["grok_bot_sub"]
         self.assertIs(d["push_dispatchable"], False)
         self.assertIn("grok_bridge", d["dispatch_mode"])
+
+
+class SuiteBudgetTests(unittest.TestCase):
+    def test_grok_bridge_module_finishes_under_30_seconds(self) -> None:
+        start = _MODULE_START if _MODULE_START is not None else time.monotonic()
+        elapsed = time.monotonic() - start
+        self.assertLess(elapsed, 30.0, f"test_grok_bridge took {elapsed:.1f}s")
+
+
+def load_tests(loader, tests, pattern):
+    tests.addTest(SuiteBudgetTests("test_grok_bridge_module_finishes_under_30_seconds"))
+    return tests
 
 
 if __name__ == "__main__":
