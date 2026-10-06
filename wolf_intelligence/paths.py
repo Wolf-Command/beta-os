@@ -83,6 +83,7 @@ def _propagate_state_paths() -> None:
                 "wolf_intelligence.allocation",
                 "wolf_intelligence.capacity",
                 "wolf_intelligence.imbalance",
+                "wolf_intelligence.failover",
             ):
                 _set(target, name, val)
 

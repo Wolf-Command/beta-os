@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from . import worker_registry
+from . import failover, worker_registry
 from .adapters.subscription_cli import scrubbed_env
 from .capacity import TZ, capacity_snapshot
 from .governance import GROK_WORKER_ID, load_policy
@@ -299,19 +299,17 @@ def _grok_excluded(capacity: dict[str, Any], candidates: tuple[str, ...]) -> boo
     return bool(_qualified_non_grok(capacity, candidates))
 
 
-def route_worker(kind: str, config: dict[str, Any], capacity: dict[str, Any]) -> str | None:
-    if kind == "build":
-        pool = BUILD_WORKERS
-    elif kind == "review":
-        pool = ("codex_sub",) if config.get("claude_paused") else REVIEW_WORKERS
-    elif kind == "test":
-        pool = TEST_WORKERS
-    else:
-        return None
-    qualified = _qualified_non_grok(capacity, pool)
-    if not qualified:
-        return None
-    return qualified[0]
+def route_worker(
+    kind: str,
+    config: dict[str, Any],
+    capacity: dict[str, Any],
+    item: dict[str, Any] | None = None,
+    items: dict[str, dict[str, Any]] | None = None,
+    now: datetime | str | None = None,
+) -> str | None:
+    """Legacy pool router — delegates to deterministic failover when item context is available."""
+    stub = item or {"id": f"route-{kind}", "kind": kind, "spec": {}}
+    return failover.select_worker(kind, config, capacity, item=stub, items=items, now=now)
 
 
 def eligibility(
@@ -319,22 +317,40 @@ def eligibility(
     items: dict[str, dict[str, Any]],
     capacity: dict[str, Any],
     config: dict[str, Any],
+    now: datetime | str | None = None,
 ) -> tuple[str | None, str]:
-    if item.get("status") not in ("QUEUED", "FAILED"):
+    if item.get("status") not in ("QUEUED", "FAILED", "WAITING_FOR_CAPACITY"):
         return None, f"status:{item.get('status')}"
     if not _deps_satisfied(item, items):
         return None, "deps_unsatisfied"
-    worker = route_worker(item["kind"], config, capacity)
-    if not worker:
-        return None, "no_eligible_worker"
-    if worker_registry.is_metered(worker):
-        return None, "metered_queue"
-    if worker == GROK_WORKER_ID or _grok_excluded(capacity, (worker,)):
-        alt = route_worker(item["kind"], config, capacity)
-        if not alt or alt == GROK_WORKER_ID:
-            return None, "grok_excluded"
-        worker = alt
-    return worker, "eligible"
+    failover.update_grok_capacity_flag(capacity)
+    decision = failover.decide_routing(
+        item,
+        capacity=capacity,
+        orch_config=config,
+        items=items,
+        now=now,
+    )
+    action = decision.get("action")
+    worker = decision.get("worker_id")
+    if action in ("DISPATCH", "FAILOVER") and worker:
+        if worker_registry.is_metered(worker) and not failover.metered_allowed(worker):
+            return None, "metered_queue"
+        return worker, action.lower()
+    if action == "WAIT":
+        return None, "wait_for_preferred"
+    if action == "WAITING_FOR_CAPACITY":
+        if decision.get("notify_owner"):
+            notify_owner(item["id"], "WAITING_FOR_CAPACITY: urgent item blocked", now=now)
+        before = dict(item)
+        item["status"] = "WAITING_FOR_CAPACITY"
+        item["updated_at"] = _now_iso(now)
+        all_items = load_items()
+        all_items[item["id"]] = item
+        save_items(all_items)
+        audit_transition(item["id"], "waiting_for_capacity", before, item, now=now, extra=decision.get("audit"))
+        return None, "waiting_for_capacity"
+    return None, "no_eligible_worker"
 
 
 def claim(
@@ -583,6 +599,13 @@ def dispatch_item(
                 payload = {"summary": out.strip()[:500]}
 
     if err_kind == "TIMEOUT":
+        failover.record_availability_from_dispatch(
+            worker_id,
+            exit_code=exit_code,
+            stderr=err_txt or "",
+            stdout=out or "",
+            now=now,
+        )
         return _finish_dispatch(
             items[item_id],
             worker_id,
@@ -594,6 +617,15 @@ def dispatch_item(
             payload=payload,
             now=now,
             elapsed_ms=elapsed_ms,
+        )
+
+    if exit_code != 0 or err_txt.strip():
+        failover.record_availability_from_dispatch(
+            worker_id,
+            exit_code=exit_code,
+            stderr=err_txt or "",
+            stdout=out or "",
+            now=now,
         )
 
     verdict = str(payload.get("verdict") or payload.get("status") or "").upper()
@@ -762,7 +794,7 @@ def run_once(*, worktree: str | None = None, now: datetime | str | None = None) 
         item = items.get(item_id)
         if not item or item.get("status") != "QUEUED":
             continue
-        worker, reason = eligibility(item, items, cap, config)
+        worker, reason = eligibility(item, items, cap, config, now=now)
         if not worker:
             processed.append({"work_item_id": item_id, "action": "skipped", "reason": reason})
             continue

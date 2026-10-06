@@ -70,6 +70,11 @@ def main(argv: list[str] | None = None) -> int:
     o_run = orch_sub.add_parser("health")
     o_run.add_argument("--now", default=None)
 
+    fo = sub.add_parser("failover")
+    fo_sub = fo.add_subparsers(dest="fo_cmd", required=True)
+    fo_proof = fo_sub.add_parser("proof")
+    fo_proof.add_argument("--state-root", required=True)
+
     gov = sub.add_parser("governance")
     gov_sub = gov.add_subparsers(dest="gov_cmd", required=True)
     gov_sub.add_parser("status")
@@ -227,6 +232,19 @@ def main(argv: list[str] | None = None) -> int:
             h = orch.health(now=args.now)
             print(json.dumps(h, indent=2))
             return 0 if h.get("ok") else 1
+    if args.cmd == "failover":
+        from . import failover as fo_mod
+        from .paths import rebind_state_paths
+
+        if args.fo_cmd == "proof":
+            os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = args.state_root
+            rebind_state_paths()
+            from . import orchestrator as orch
+
+            orch.rebind_orchestrator_paths()
+            out = fo_mod.run_proof(args.state_root)
+            print(json.dumps(out, indent=2))
+            return 0 if all(v == "PASS" for v in out["scenarios"].values()) else 1
     if args.cmd == "governance":
         if args.gov_cmd == "status":
             from .allocation import load_tightening, new_orchestrator_session
