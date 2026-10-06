@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from core import wolf_policy_gate as gate
+from core import nogrok_control as gate
 
 SCHEMA = "wolf.owner-front-door.v1"
 
@@ -265,7 +265,7 @@ def answer(
     elif _hit(q, "overnight", "what happened"):
         lines = [f"{item.get('what')}: {item.get('status')}" for item in state.get("items") or []]
         text = " ".join(lines) if lines else "No overnight work items are recorded."
-        evidence.append({"kind": "work-state", "path": "state/wolf-control/work-state.json"})
+        evidence.append({"kind": "work-items", "path": "state/wolf-control/work-items.json"})
     elif _hit(q, "ggv", "finance"):
         finance = door["ggv_finance"]
         text = f"GGV Finance is {finance['truth']}."

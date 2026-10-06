@@ -141,4 +141,5 @@ state/mac-reachability/
 *.zip
 *.pid
 *.flock
+state/wolf-control/supervisor.json
 /0
