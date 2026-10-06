@@ -130,6 +130,15 @@ class _Base(unittest.TestCase):
         self.assertEqual(r["code"], "CLAIMED", r)
         return wid, r["lease_id"]
 
+    def to_dispatched_shadow(self, wid: str) -> None:
+        work_items.transition(wid, "ROUTING", reason="test")
+        work_items.transition(wid, "RECOMMENDED", reason="test")
+        work_items.transition(wid, "DISPATCHED_SHADOW", reason="test")
+
+    def to_running(self, wid: str) -> None:
+        self.to_dispatched_shadow(wid)
+        work_items.transition(wid, "RUNNING", reason="test")
+
     def outcomes(self, wid: str, action: str | None = None) -> list[str]:
         return [r["outcome"] for r in gb.audit_rows(wid) if action is None or r["action"] == action]
 
@@ -178,6 +187,23 @@ class ClaimRaceTests(_Base):
         self.assertEqual(codes.count("ALREADY_CLAIMED"), 19, codes)
         self.assertEqual(sorted(rc for rc, _ in outs), [0] + [3] * 19)
         self.assertEqual(self.outcomes(wid, "claim").count("CLAIMED"), 1)
+
+    def test_50_parallel_process_claimers_via_cli_exactly_one_wins(self) -> None:
+        wid, nonce = self.offered()
+        env = dict(os.environ)
+        env.pop(gd.DOORBELL_ENV, None)
+        procs = [subprocess.Popen([sys.executable, "-m", "wolf_intelligence", "grok-bridge", "claim", wid,
+                                   "--nonce", nonce, "--claimant", f"proc-{i}"], cwd=str(REPO_ROOT), env=env,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for i in range(50)]
+        outs = []
+        for p in procs:
+            so, _ = p.communicate(timeout=180)
+            outs.append((p.returncode, json.loads(so.strip().splitlines()[-1])))
+        codes = sorted(o["code"] for _, o in outs)
+        self.assertEqual(codes.count("CLAIMED"), 1, codes)
+        self.assertEqual(codes.count("ALREADY_CLAIMED"), 49, codes)
+        self.assertEqual(self.outcomes(wid, "claim").count("CLAIMED"), 1)
+        self.assertTrue(gb.verify_audit_chain()["ok"])
 
 
 class LeaseTests(_Base):
@@ -230,15 +256,34 @@ class LeaseTests(_Base):
         self.assertEqual(gb.fail(wid, lease_id=lease, reason="x")["code"], "ALREADY_COMPLETED")
 
     def test_complete_stores_result_and_moves_item_to_ready_to_test(self) -> None:
+        # QUEUED item: result stored, canonical state unchanged (no invented history).
         wid, lease = self.claimed()
+        hist_len = len(work_items.get(wid)["history"])
         r = gb.complete(wid, lease_id=lease, result="the answer", evidence="evidence log", doorbell=self.bell)
         self.assertEqual(r["result_sha256"], hashlib.sha256(b"the answer").hexdigest())
         self.assertEqual(r["evidence_sha256"], hashlib.sha256(b"evidence log").hexdigest())
         item = work_items.get(wid)
-        self.assertEqual(item["state"], "READY_TO_TEST")
+        self.assertEqual(item["state"], "QUEUED")
+        self.assertEqual(len(item["history"]), hist_len)
         self.assertEqual(item["result"]["lease_id"], lease)
         self.assertEqual(Path(item["result"]["result_path"]).read_bytes(), b"the answer")
         self.assertIn((self.bell.rings[-1]["ref"], "COMPLETED"), self.bell.closes)
+        # RUNNING path: claim moves DISPATCHED_SHADOW -> RUNNING, complete -> READY_TO_TEST (one history entry).
+        wid2 = self.new_item()
+        self.to_dispatched_shadow(wid2)
+        gb.offer(wid2, doorbell=self.bell)
+        nonce2 = self.nonce(wid2)
+        hist2 = len(work_items.get(wid2)["history"])
+        cr = gb.claim(wid2, claimant="grok-routine-1", nonce=nonce2)
+        self.assertEqual(cr["code"], "CLAIMED")
+        self.assertEqual(work_items.get(wid2)["state"], "RUNNING")
+        self.assertEqual(len(work_items.get(wid2)["history"]), hist2 + 1)
+        r2 = gb.complete(wid2, lease_id=cr["lease_id"], result="running answer", doorbell=self.bell)
+        self.assertEqual(r2["item_state"], "READY_TO_TEST")
+        self.assertEqual(r2["item_transition"], "RUNNING->READY_TO_TEST")
+        item2 = work_items.get(wid2)
+        self.assertEqual(item2["state"], "READY_TO_TEST")
+        self.assertEqual(len(item2["history"]), hist2 + 2)
 
     def test_secret_shaped_result_rejected_lease_kept(self) -> None:
         wid, lease = self.claimed()
@@ -294,11 +339,24 @@ class RecoveryTests(_Base):
     def test_unexpired_lease_not_released(self) -> None:
         wid, _ = self.claimed(lease_seconds=300)
         self.clock.advance(299)
-        self.assertEqual(gb.release_expired(doorbell=self.bell)["released"], [])
+        out = gb.release_expired(doorbell=self.bell)
+        self.assertNotIn(wid, out["released"])
         self.assertEqual(gb.status(wid)["code"], "CLAIMED")
 
     def test_max_attempts_then_failed_and_flagged_without_metered_fallback(self) -> None:
+        # QUEUED item: lease fails but canonical state stays QUEUED.
+        wid_q = self.new_item()
+        gb.offer(wid_q, lease_seconds=60, max_attempts=2, doorbell=self.bell)
+        for attempt in (1, 2):
+            r = gb.claim(wid_q, claimant=f"r{attempt}", nonce=self.nonce(wid_q))
+            self.assertEqual((r["code"], r["attempt"]), ("CLAIMED", attempt))
+            self.clock.advance(61)
+            gb.release_expired(doorbell=self.bell)
+        self.assertEqual(gb.status(wid_q)["lease"]["state"], "FAILED")
+        self.assertEqual(work_items.get(wid_q)["state"], "QUEUED")
+        # DISPATCHED_SHADOW item: canonical state walks to EXCEPTION.
         wid, _ = self.offered(lease_seconds=60, max_attempts=2)
+        self.to_dispatched_shadow(wid)
         for attempt in (1, 2):
             r = gb.claim(wid, claimant=f"r{attempt}", nonce=self.nonce(wid))
             self.assertEqual((r["code"], r["attempt"]), ("CLAIMED", attempt))
@@ -364,7 +422,7 @@ class AuditTests(_Base):
         self.assertEqual(by[("claim", "CLAIMED")]["lease_id"], lease2)
         done = by[("complete", "COMPLETED")]
         self.assertEqual((done["lease_id"], done["actor"], done["from_state"], done["to_state"]),
-                         (lease2, "grok_bot", "CLAIMED", "COMPLETED"))
+                         (lease2, "grok-b", "CLAIMED", "COMPLETED"))
         self.assertEqual(done["sha256"], hashlib.sha256(b"final answer").hexdigest())
         self.assertIn(hashlib.sha256(b"proof").hexdigest(), done["detail_json"])
         self.assertEqual(gb.verify_audit_chain()["ok"], True)
@@ -380,11 +438,22 @@ class AuditTests(_Base):
         self.assertTrue(gb.verify_audit_chain()["ok"])
         conn = sqlite3.connect(str(paths.SQLITE_PATH))
         try:
-            seq = conn.execute("SELECT seq FROM grok_bridge_audit WHERE work_item_id=? AND outcome='COMPLETED'", (wid,)).fetchone()[0]
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("UPDATE grok_bridge_audit SET actor='blocked' WHERE seq=1")
+            conn.row_factory = sqlite3.Row
+            conn.execute("DROP TRIGGER grok_audit_no_update")
+            conn.execute("DROP TRIGGER grok_audit_no_delete")
+            seq = conn.execute("SELECT seq FROM grok_bridge_audit WHERE work_item_id=? AND outcome='COMPLETED'",
+                               (wid,)).fetchone()[0]
+            orig = dict(conn.execute("SELECT * FROM grok_bridge_audit WHERE seq=?", (seq,)).fetchone())
             conn.execute("UPDATE grok_bridge_audit SET actor='someone-else' WHERE seq=?", (seq,))
             conn.commit()
             self.assertFalse(gb.verify_audit_chain()["ok"])
-            conn.execute("UPDATE grok_bridge_audit SET actor='grok_bot' WHERE seq=?", (seq,))
+            conn.execute("DROP TRIGGER IF EXISTS grok_audit_no_update")
+            conn.execute("DROP TRIGGER IF EXISTS grok_audit_no_delete")
+            conn.execute("UPDATE grok_bridge_audit SET actor=? WHERE seq=?", (orig["actor"], seq))
+            conn.commit()
+            gb.init_schema(conn)
             conn.commit()
         finally:
             conn.close()
@@ -547,6 +616,370 @@ class TickTests(_Base):
             rel.assert_called_once_with(actor="overnight-tick")
         with mock.patch.object(gb, "release_expired", side_effect=sqlite3.OperationalError("locked")):
             self.assertEqual(overnight_tick._grok_lease_recovery()["code"], "RECOVERY_ERROR")
+
+    def test_tick_verifies_audit_chain_on_every_run(self) -> None:
+        from wolf_intelligence import dispatcher, learning, overnight_tick, shadow_compare
+        from wolf_intelligence.stats_store import recompute
+        with mock.patch.object(work_items, "create", return_value={"id": "wi_mock"}), \
+             mock.patch.object(dispatcher, "dispatch"), \
+             mock.patch.object(learning, "record_outcome"), \
+             mock.patch.object(shadow_compare, "run_compare", return_value={}), \
+             mock.patch("wolf_intelligence.stats_store.recompute", return_value={}), \
+             mock.patch.object(gb, "release_expired", return_value={"ok": True, "code": "RECOVERY_DONE"}):
+            out = overnight_tick.run()
+        self.assertIn("grok_audit_chain", out)
+        self.assertTrue(out["grok_audit_chain"]["ok"])
+        self.assertIn("grok_doorbell_enabled", out)
+        self.assertIsInstance(out["grok_doorbell_enabled"], bool)
+
+
+class ClaimAllowlistTests(_Base):
+    _TRANSITIONS_TO: dict[str, list[str]] = {
+        "ROUTING": ["ROUTING"],
+        "RECOMMENDED": ["ROUTING", "RECOMMENDED"],
+        "READY_TO_TEST": ["ROUTING", "RECOMMENDED", "DISPATCHED_SHADOW", "RUNNING", "READY_TO_TEST"],
+        "NEEDS_YOU": ["ROUTING", "RECOMMENDED", "NEEDS_YOU"],
+        "DECISION_PENDING": ["ROUTING", "RECOMMENDED", "DECISION_PENDING"],
+        "EXCEPTION": ["ROUTING", "RECOMMENDED", "DISPATCHED_SHADOW", "EXCEPTION"],
+        "HUMAN_PASSED": ["ROUTING", "RECOMMENDED", "DISPATCHED_SHADOW", "RUNNING", "READY_TO_TEST", "HUMAN_PASSED"],
+        "BLOCKED": ["BLOCKED"],
+        "CANCELLED": ["CANCELLED"],
+    }
+
+    def _to_state(self, wid: str, target: str) -> None:
+        for step in self._TRANSITIONS_TO[target]:
+            work_items.transition(wid, step, reason="test")
+
+    def test_offer_refused_for_non_claimable_states(self) -> None:
+        non_claimable = set(work_items.STATES) - gb.CLAIMABLE_ITEM_STATES
+        for state in non_claimable:
+            wid = self.new_item()
+            if state != "QUEUED":
+                self._to_state(wid, state)
+            code = "ITEM_TERMINAL" if state in work_items.TERMINAL else "ITEM_NOT_CLAIMABLE"
+            r = gb.offer(wid, doorbell=self.bell)
+            self.assertEqual(r["code"], code, state)
+            self.assertIsNone(gb.status(wid).get("lease"))
+
+    def test_claim_refused_when_item_leaves_claimable_state(self) -> None:
+        cases = {
+            "NEEDS_YOU": ["ROUTING", "RECOMMENDED", "NEEDS_YOU"],
+            "DECISION_PENDING": ["ROUTING", "RECOMMENDED", "DECISION_PENDING"],
+            "CANCELLED": ["CANCELLED"],
+            "BLOCKED": ["BLOCKED"],
+            "HUMAN_PASSED": ["ROUTING", "RECOMMENDED", "DISPATCHED_SHADOW", "RUNNING", "READY_TO_TEST", "HUMAN_PASSED"],
+        }
+        for label, steps in cases.items():
+            wid = self.new_item()
+            gb.offer(wid, doorbell=self.bell)
+            nonce = self.nonce(wid)
+            for step in steps:
+                work_items.transition(wid, step, reason="test")
+            r = gb.claim(wid, claimant="late-claimer", nonce=nonce)
+            self.assertEqual(r["code"], "ITEM_NOT_CLAIMABLE", label)
+            self.assertEqual(gb.status(wid)["code"], "AVAILABLE")
+            self.assertIn("ITEM_NOT_CLAIMABLE", self.outcomes(wid, "claim"))
+
+
+class NoInventedHistoryTests(_Base):
+    def test_complete_queued_leaves_state_and_history_unchanged(self) -> None:
+        wid, lease = self.claimed()
+        before = work_items.get(wid)
+        gb.complete(wid, lease_id=lease, result="ok", doorbell=self.bell)
+        after = work_items.get(wid)
+        self.assertEqual(after["state"], before["state"])
+        self.assertEqual(after["history"], before["history"])
+
+    def test_complete_while_needs_you_stays_needs_you(self) -> None:
+        wid = self.new_item()
+        self.to_running(wid)
+        gb.offer(wid, doorbell=self.bell)
+        nonce = self.nonce(wid)
+        lease = gb.claim(wid, claimant="grok-routine-1", nonce=nonce)["lease_id"]
+        work_items.transition(wid, "NEEDS_YOU", reason="owner gate")
+        r = gb.complete(wid, lease_id=lease, result="done", doorbell=self.bell)
+        self.assertEqual(r["item_state"], "NEEDS_YOU")
+        self.assertEqual(work_items.get(wid)["state"], "NEEDS_YOU")
+
+
+class ExecutorIdentityTests(_Base):
+    def test_dispatcher_claimant_and_result_identity_fields(self) -> None:
+        wid = self.new_item()
+        self.to_dispatched_shadow(wid)
+        gb.offer(wid, actor="dispatch-bot", doorbell=self.bell)
+        nonce = self.nonce(wid)
+        claim = gb.claim(wid, claimant="grok-routine-1", nonce=nonce)
+        lease = claim["lease_id"]
+        offer_row = next(r for r in gb.audit_rows(wid) if r["action"] == "offer" and r["outcome"] == "OFFERED")
+        self.assertEqual(json.loads(offer_row["detail_json"])["dispatcher"], "dispatch-bot")
+        self.assertEqual(gb.status(wid)["lease"]["dispatcher"], "dispatch-bot")
+        self.assertEqual(claim["idempotency_key"], f"{wid}:attempt-1")
+        gb.renew(wid, lease_id=lease)
+        gb.complete(wid, lease_id=lease, result="answer", executed_by="sub-agent", doorbell=self.bell)
+        for action in ("claim", "renew", "complete"):
+            row = next(r for r in gb.audit_rows(wid) if r["action"] == action
+                       and r["outcome"] in ("CLAIMED", "RENEWED", "COMPLETED"))
+            self.assertEqual(row["actor"], "grok-routine-1", action)
+        self.assertNotIn("grok_bot", {r["actor"] for r in gb.audit_rows(wid)})
+        item = work_items.get(wid)
+        res = item["result"]
+        for k in ("dispatcher", "claimed_by", "executed_by", "completed_by", "claimed_at", "completed_at",
+                  "attempt", "result_sha256", "evidence_sha256"):
+            self.assertIn(k, res, k)
+        self.assertEqual(res["dispatcher"], "dispatch-bot")
+        self.assertEqual(res["claimed_by"], "grok-routine-1")
+        self.assertEqual(res["executed_by"], "sub-agent")
+        self.assertEqual(res["completed_by"], "grok-routine-1")
+        self.assertEqual(res["executed_by_source"], "declared_by_lease_holder")
+        wid2, lease2 = self.claimed()
+        gb.fail(wid2, lease_id=lease2, reason="nope", doorbell=self.bell)
+        fail_row = next(r for r in gb.audit_rows(wid2) if r["action"] == "fail")
+        self.assertEqual(fail_row["actor"], "grok-routine-1")
+
+    def test_executed_by_defaults_to_claimant(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        res = work_items.get(wid)["result"]
+        self.assertEqual(res["executed_by"], "grok-routine-1")
+        self.assertEqual(res["executed_by_source"], "defaulted_to_lease_holder")
+
+    def test_stale_complete_after_reclaim_attributed_to_original_holder(self) -> None:
+        wid, nonce = self.offered(lease_seconds=300)
+        old = gb.claim(wid, claimant="stalled-worker", nonce=nonce)
+        old_lease = old["lease_id"]
+        self.clock.advance(301)
+        gb.release_expired(doorbell=self.bell)
+        new = gb.claim(wid, claimant="new-worker", nonce=self.nonce(wid))
+        self.assertEqual(new["code"], "CLAIMED")
+        r = gb.complete(wid, lease_id=old_lease, result="late", caller="new-worker", doorbell=self.bell)
+        self.assertEqual(r["code"], "STALE_LEASE")
+        row = next(x for x in gb.audit_rows(wid) if x["action"] == "complete" and x["outcome"] == "STALE_LEASE")
+        self.assertEqual(row["actor"], "stalled-worker")
+
+
+class TamperEvidenceTests(_Base):
+    def setUp(self) -> None:
+        super().setUp()
+        self._db_backup = paths.SQLITE_PATH.read_bytes()
+        ap = gb.anchor_path()
+        self._anchor_backup = ap.read_bytes() if ap.exists() else None
+
+    def _audit_conn(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(str(paths.SQLITE_PATH))
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    def tearDown(self) -> None:
+        paths.SQLITE_PATH.write_bytes(self._db_backup)
+        ap = gb.anchor_path()
+        if self._anchor_backup is not None:
+            ap.write_bytes(self._anchor_backup)
+        elif ap.exists():
+            ap.unlink(missing_ok=True)
+        super().tearDown()
+
+    def _drop_triggers(self, conn: sqlite3.Connection) -> None:
+        conn.execute("DROP TRIGGER IF EXISTS grok_audit_no_update")
+        conn.execute("DROP TRIGGER IF EXISTS grok_audit_no_delete")
+
+    def _recompute_sha_only(self, conn: sqlite3.Connection) -> None:
+        rows = conn.execute("SELECT * FROM grok_bridge_audit ORDER BY seq").fetchall()
+        prev = None
+        for r in rows:
+            body = {k: r[k] for k in gb._ROW_FIELDS}
+            row_sha = gb.sha256_bytes(json.dumps(body, sort_keys=True).encode())
+            conn.execute("UPDATE grok_bridge_audit SET prev_row_sha256=?, row_sha256=? WHERE seq=?",
+                         (prev, row_sha, r["seq"]))
+            prev = row_sha
+        conn.commit()
+
+    def test_append_only_triggers_block_update_and_delete(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        conn = self._audit_conn()
+        try:
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("UPDATE grok_bridge_audit SET actor='x' WHERE seq=1")
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("DELETE FROM grok_bridge_audit WHERE seq=1")
+        finally:
+            conn.close()
+
+    def test_hmac_mismatch_after_tamper_with_recomputed_chain(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        conn = self._audit_conn()
+        try:
+            self._drop_triggers(conn)
+            seq = conn.execute("SELECT seq FROM grok_bridge_audit ORDER BY seq DESC LIMIT 1").fetchone()[0]
+            conn.execute("UPDATE grok_bridge_audit SET actor='tampered' WHERE seq=?", (seq,))
+            conn.commit()
+            self._recompute_sha_only(conn)
+        finally:
+            conn.close()
+        v = gb.verify_audit_chain()
+        self.assertFalse(v["ok"])
+        self.assertEqual(v["problems"][0]["code"], "HMAC_MISMATCH")
+
+    def test_truncated_tail_detected(self) -> None:
+        wid, nonce = self.offered(lease_seconds=300, max_attempts=3)
+        gb.claim(wid, claimant="loser", nonce="f" * 32)
+        lease1 = gb.claim(wid, claimant="grok-a", nonce=nonce)["lease_id"]
+        self.clock.advance(300)
+        gb.complete(wid, lease_id=lease1, result="late", doorbell=self.bell)
+        gb.release_expired(doorbell=self.bell)
+        lease2 = gb.claim(wid, claimant="grok-b", nonce=self.nonce(wid))["lease_id"]
+        gb.renew(wid, lease_id=lease2)
+        gb.complete(wid, lease_id=lease2, result="final answer", doorbell=self.bell)
+        self.assertGreaterEqual(len(gb.audit_rows(wid)), 10)
+        conn = self._audit_conn()
+        try:
+            self._drop_triggers(conn)
+            for _ in range(5):
+                conn.execute("DELETE FROM grok_bridge_audit WHERE seq=(SELECT MAX(seq) FROM grok_bridge_audit)")
+            conn.commit()
+        finally:
+            conn.close()
+        v = gb.verify_audit_chain()
+        self.assertFalse(v["ok"])
+        self.assertEqual(v["problems"][0]["code"], "TRUNCATED")
+
+    def test_nulled_hmac_detected(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        conn = self._audit_conn()
+        try:
+            self._drop_triggers(conn)
+            conn.execute("UPDATE grok_bridge_audit SET row_hmac=NULL")
+            conn.commit()
+        finally:
+            conn.close()
+        self.assertFalse(gb.verify_audit_chain()["ok"])
+
+    def test_forged_anchor_invalid(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        ap = gb.anchor_path()
+        prior = ap.read_text() if ap.exists() else None
+        try:
+            ap.write_text(json.dumps({"format": gb.ANCHOR_FORMAT, "seq": 99999,
+                                      "row_sha256": "0" * 64, "rows": 1,
+                                      "hmac_from_seq": 1, "anchor_hmac": "deadbeef"}) + "\n")
+            v = gb.verify_audit_chain()
+            self.assertFalse(v["ok"])
+            codes = [p["code"] for p in v["problems"]]
+            self.assertIn("ANCHOR_INVALID", codes)
+        finally:
+            if prior is None:
+                ap.unlink(missing_ok=True)
+            else:
+                ap.write_text(prior)
+
+    def test_audit_key_file_permissions(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        kp = gb.audit_key_path()
+        self.assertTrue(kp.exists())
+        self.assertEqual(oct(kp.stat().st_mode & 0o777), "0o600")
+        self.assertEqual(oct(kp.parent.stat().st_mode & 0o777), "0o700")
+
+    def test_correct_appends_without_mutating_original(self) -> None:
+        wid, lease = self.claimed()
+        gb.complete(wid, lease_id=lease, result="x", doorbell=self.bell)
+        conn = self._audit_conn()
+        try:
+            orig = dict(conn.execute("SELECT * FROM grok_bridge_audit WHERE outcome='COMPLETED'").fetchone())
+        finally:
+            conn.close()
+        seq = orig["seq"]
+        r = gb.correct(seq, reason="typo in detail", actor="owner")
+        self.assertTrue(r["ok"])
+        conn = self._audit_conn()
+        try:
+            after = dict(conn.execute("SELECT * FROM grok_bridge_audit WHERE seq=?", (seq,)).fetchone())
+            corr = dict(conn.execute("SELECT * FROM grok_bridge_audit WHERE action='correction'").fetchone())
+        finally:
+            conn.close()
+        self.assertEqual(after, orig)
+        detail = json.loads(corr["detail_json"])
+        self.assertEqual(detail["corrects_seq"], seq)
+        self.assertEqual(detail["corrects_row_sha256"], orig["row_sha256"])
+
+
+class GitHubUnavailableTests(_Base):
+    def test_offer_with_missing_gh_records_failure_and_stays_available(self) -> None:
+        bell = gd.GitHubIssueDoorbell(gh="/nonexistent/gh")
+        wid = self.new_item()
+        r = gb.offer(wid, doorbell=bell)
+        self.assertTrue(r["ok"])
+        self.assertEqual(r["doorbell"]["code"], "DOORBELL_FAILED")
+        self.assertEqual(gb.status(wid)["code"], "AVAILABLE")
+        self.assertIn("FAILED", self.outcomes(wid, "doorbell_ring"))
+
+    def test_expired_lease_recovery_with_github_unavailable(self) -> None:
+        bell = gd.GitHubIssueDoorbell(gh="/nonexistent/gh")
+        wid = self.new_item()
+        gb.offer(wid, doorbell=bell)
+        nonce = self.nonce(wid)
+        lease = gb.claim(wid, claimant="grok-routine-1", nonce=nonce)
+        self.assertEqual(lease["code"], "CLAIMED")
+        self.clock.advance(1801)
+        out = gb.release_expired(doorbell=bell)
+        self.assertIn(wid, out["released"])
+        self.assertEqual(gb.status(wid)["lease"]["attempt"], 2)
+        self.assertEqual(work_items.get(wid)["state"], "QUEUED")
+
+    def test_github_doorbell_has_no_read_methods(self) -> None:
+        bell = gd.GitHubIssueDoorbell(gh="/nonexistent/gh")
+        public = [m for m in dir(bell) if not m.startswith("_") and callable(getattr(bell, m))]
+        self.assertEqual(set(public), {"close", "ring"})
+
+
+class IdempotencyKeyTests(_Base):
+    def test_claim_returns_idempotency_key(self) -> None:
+        wid, nonce = self.offered(max_attempts=3, lease_seconds=300)
+        r = gb.claim(wid, claimant="grok-routine-1", nonce=nonce)
+        self.assertEqual(r["idempotency_key"], f"{wid}:attempt-1")
+        self.clock.advance(301)
+        gb.release_expired(doorbell=self.bell)
+        r2 = gb.claim(wid, claimant="grok-routine-1", nonce=self.nonce(wid))
+        self.assertEqual(r2["code"], "CLAIMED", r2)
+        self.assertEqual(r2["idempotency_key"], f"{wid}:attempt-2")
+
+
+class WrapperTests(_Base):
+    def _run_wrapper(self, *args: str, extra_env: dict | None = None) -> tuple[int, str]:
+        env = dict(os.environ)
+        env.pop(gd.DOORBELL_ENV, None)
+        if extra_env:
+            env.update(extra_env)
+        script = REPO_ROOT / "wolf_intelligence" / "bin" / "grok-bridge.sh"
+        p = subprocess.run(["bash", str(script), *args], cwd=str(REPO_ROOT), env=env,
+                           capture_output=True, text=True, timeout=60)
+        return p.returncode, p.stdout.strip().splitlines()[-1]
+
+    def test_wrapper_refuses_offer_and_release_expired(self) -> None:
+        wid = self.new_item()
+        for cmd in ("offer", "release-expired"):
+            rc, line = self._run_wrapper(cmd, wid) if cmd == "offer" else self._run_wrapper(cmd)
+            out = json.loads(line)
+            self.assertEqual((rc, out["code"]), (2, "NOT_ALLOWED_FOR_WORKER"), cmd)
+
+    def test_wrapper_scrubs_parent_secrets_from_child_env(self) -> None:
+        fake_py = Path(tempfile.mkdtemp()) / "python3"
+        fake_py.write_text('#!/usr/bin/env python3\nimport json, os\nprint(json.dumps(dict(os.environ)))\n')
+        fake_py.chmod(0o755)
+        env = dict(os.environ)
+        env["ANTHROPIC_API_KEY"] = "dummy-not-a-key"
+        env["GROK_BRIDGE_PYTHON"] = str(fake_py)
+        env.pop(gd.DOORBELL_ENV, None)
+        script = REPO_ROOT / "wolf_intelligence" / "bin" / "grok-bridge.sh"
+        p = subprocess.run(["bash", str(script), "status", "wi_dummy"], cwd=str(REPO_ROOT), env=env,
+                           capture_output=True, text=True, timeout=30)
+        child_env = json.loads(p.stdout.strip().splitlines()[-1])
+        self.assertNotIn("ANTHROPIC_API_KEY", child_env)
+        self.assertIn("WOLF_INTELLIGENCE_STATE_ROOT", child_env)
+        self.assertEqual(child_env.get("SHELL"), "/bin/bash")
 
 
 class TaxonomyTests(unittest.TestCase):

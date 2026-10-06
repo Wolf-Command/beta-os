@@ -53,6 +53,7 @@ CANONICAL_EVENTS = frozenset(
         "grok_bridge.doorbell_rung",
         "grok_bridge.doorbell_failed",
         "grok_bridge.doorbell_closed",
+        "grok_bridge.audit_chain_broken",
     }
 )
 

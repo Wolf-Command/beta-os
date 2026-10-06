@@ -316,7 +316,7 @@ def list_items(*, state: str | None = None, limit: int = 200) -> list[dict[str, 
         conn.close()
 
 
-def _save(conn: sqlite3.Connection, item: dict[str, Any]) -> None:
+def _persist(conn: sqlite3.Connection, item: dict[str, Any], *, commit: bool = True) -> None:
     conn.execute(
         """
         UPDATE work_items SET
@@ -344,8 +344,13 @@ def _save(conn: sqlite3.Connection, item: dict[str, Any]) -> None:
             item["id"],
         ),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     _mirror_json(item)
+
+
+def _save(conn: sqlite3.Connection, item: dict[str, Any]) -> None:
+    _persist(conn, item, commit=True)
 
 
 def transition(wid: str, new_state: str, *, reason: str = "", extra: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -418,7 +423,7 @@ def transition_if(wid: str, expected: str, new_state: str, *, reason: str = "") 
                 item["updated_at"] = now_iso()
                 item.setdefault("history", []).append({"at": item["updated_at"], "state": new_state,
                                                        "reason": reason or ""})
-                _save(conn, item)
+                _persist(conn, item, commit=False)
                 conn.execute("COMMIT")
             except BaseException:
                 if conn.in_transaction:

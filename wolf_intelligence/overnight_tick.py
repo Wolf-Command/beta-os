@@ -21,9 +21,35 @@ def _grok_lease_recovery() -> dict:
         return {"ok": False, "code": "RECOVERY_ERROR", "error": type(exc).__name__}
 
 
+def _grok_doorbell_enabled() -> bool:
+    try:
+        from . import grok_doorbell
+        return grok_doorbell.from_env() is not None
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _grok_audit_verify() -> dict:
+    """Verify the grok_bridge audit chain on every tick. Never raises."""
+    try:
+        from . import events, grok_bridge
+        result = grok_bridge.verify_audit_chain()
+        if not result.get("ok"):
+            try:
+                events.emit("grok_bridge.audit_chain_broken",
+                            {"problems": result.get("problems"), "broken_at_seq": result.get("broken_at_seq")})
+            except Exception:  # noqa: BLE001
+                pass
+        return result
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "code": "VERIFY_ERROR", "error": type(exc).__name__}
+
+
 def run() -> dict:
     ensure_dirs()
     grok_recovery = _grok_lease_recovery()
+    grok_audit_chain = _grok_audit_verify()
+    grok_doorbell_enabled = _grok_doorbell_enabled()
     # 3 fresh shadow samples
     ids = []
     for i in range(3):
@@ -40,6 +66,7 @@ def run() -> dict:
     shadow_compare.run_compare(samples=5)
     stats = recompute()
     out = {"at": datetime.now(TZ).isoformat(timespec="seconds"), "work_items": ids, "stats": stats,
-           "grok_lease_recovery": grok_recovery}
+           "grok_lease_recovery": grok_recovery, "grok_audit_chain": grok_audit_chain,
+           "grok_doorbell_enabled": grok_doorbell_enabled}
     (AUDIT_DIR / "overnight-tick-latest.json").write_text(json.dumps(out, indent=2) + "\n")
     return out

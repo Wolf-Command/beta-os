@@ -40,10 +40,10 @@ The Anthropic API is a separate, gated worker. The persistent export was NOT mod
 
 Grok Bot.app v0.66.0 has no local API, no CLI and no deep link that takes a prompt and returns an answer
 (`grokbot://` and `sand://` only open the app or OAuth callbacks). The local-exec daemon is inbound: a Grok Bot cloud
-session drives the Studio. Its credential file must not be replayed. So WI writes jobs to
-`<REAL root>/grok_bot_pull/outbox/` and a human-started Grok Bot session answers into `inbox/`. Smallest real fix
-for autonomous dispatch: a Grok Bot scheduled run that drains the outbox on a timer, or a vendor-supported Grok Bot
-API/CLI.
+session drives the Studio. Its credential file must not be replayed. Autonomous dispatch is via the event-driven
+Grok work bridge (`grok_bridge.py`, `GROK-BRIDGE.md`): WI rings a GitHub doorbell, the Grok routine claims over the
+Studio machine pipe, and results return through `grok-bridge.sh complete` / `fail`. See `GROK-ROUTINE-SPEC.md` for the
+worker routine contract.
 
 ## Evidence isolation
 

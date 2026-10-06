@@ -14,7 +14,26 @@ if [ -z "${WOLF_INTELLIGENCE_STATE_ROOT:-}" ]; then
   echo '{"ok": false, "code": "STATE_ROOT_REQUIRED", "message": "set WOLF_INTELLIGENCE_STATE_ROOT"}'
   exit 2
 fi
+CMD="${1:-}"
+case "$CMD" in
+  claim|renew|complete|fail|status) ;;
+  *)
+    echo '{"ok": false, "code": "NOT_ALLOWED_FOR_WORKER"}'
+    exit 2
+    ;;
+esac
 export WOLF_INTELLIGENCE_GROK_DOORBELL="${WOLF_INTELLIGENCE_GROK_DOORBELL:-github}"
-unset WOLF_INTELLIGENCE_LIVE_SUBMIT || true
 cd "$RUNTIME"
-exec /opt/homebrew/bin/python3 -m wolf_intelligence grok-bridge "$@"
+ENV_ARGS=()
+for var in HOME USER LOGNAME PATH LANG TMPDIR WOLF_INTELLIGENCE_STATE_ROOT \
+  WOLF_INTELLIGENCE_GROK_DOORBELL WOLF_INTELLIGENCE_GROK_DOORBELL_REPO \
+  WOLF_INTELLIGENCE_GROK_DOORBELL_ASSIGNEE WOLF_INTELLIGENCE_GROK_AUDIT_KEY_FILE \
+  GROK_BRIDGE_PYTHON; do
+  eval "val=\${$var-}"
+  if [ -n "$val" ]; then
+    ENV_ARGS+=("$var=$val")
+  fi
+done
+ENV_ARGS+=("SHELL=/bin/bash")
+PYTHON="${GROK_BRIDGE_PYTHON:-python3}"
+exec /usr/bin/env -i "${ENV_ARGS[@]}" "$PYTHON" -m wolf_intelligence grok-bridge "$@"
