@@ -12,7 +12,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 from zoneinfo import ZoneInfo
 
 from . import failover, worker_registry
@@ -29,6 +29,8 @@ def _orch_paths() -> dict[str, Path]:
         "ITEMS_PATH": root / "work_items.json",
         "LEASES_PATH": root / "leases.json",
         "DISPATCH_LEDGER_PATH": root / "dispatch-ledger.json",
+        "DISPATCH_LEDGER_LOG_PATH": root / "dispatch-ledger.jsonl",
+        "ORCHESTRATOR_LOCK_PATH": root / "orchestrator.lock",
         "CONFIG_PATH": root / "config.json",
         "AUDIT_PATH": root / "audit.jsonl",
         "NOTIFICATIONS_PATH": root / "notifications.jsonl",
@@ -41,6 +43,8 @@ ORCH_DIR = _paths["ORCH_DIR"]
 ITEMS_PATH = _paths["ITEMS_PATH"]
 LEASES_PATH = _paths["LEASES_PATH"]
 DISPATCH_LEDGER_PATH = _paths["DISPATCH_LEDGER_PATH"]
+DISPATCH_LEDGER_LOG_PATH = _paths["DISPATCH_LEDGER_LOG_PATH"]
+ORCHESTRATOR_LOCK_PATH = _paths["ORCHESTRATOR_LOCK_PATH"]
 CONFIG_PATH = _paths["CONFIG_PATH"]
 AUDIT_PATH = _paths["AUDIT_PATH"]
 NOTIFICATIONS_PATH = _paths["NOTIFICATIONS_PATH"]
@@ -51,12 +55,15 @@ DISPATCH_LEDGER_BLOCKING = frozenset({"in_flight", "completed", "failed"})
 
 def rebind_orchestrator_paths() -> None:
     global ORCH_DIR, ITEMS_PATH, LEASES_PATH, DISPATCH_LEDGER_PATH
+    global DISPATCH_LEDGER_LOG_PATH, ORCHESTRATOR_LOCK_PATH
     global CONFIG_PATH, AUDIT_PATH, NOTIFICATIONS_PATH, COMPLETIONS_DIR
     p = _orch_paths()
     ORCH_DIR = p["ORCH_DIR"]
     ITEMS_PATH = p["ITEMS_PATH"]
     LEASES_PATH = p["LEASES_PATH"]
     DISPATCH_LEDGER_PATH = p["DISPATCH_LEDGER_PATH"]
+    DISPATCH_LEDGER_LOG_PATH = p["DISPATCH_LEDGER_LOG_PATH"]
+    ORCHESTRATOR_LOCK_PATH = p["ORCHESTRATOR_LOCK_PATH"]
     CONFIG_PATH = p["CONFIG_PATH"]
     AUDIT_PATH = p["AUDIT_PATH"]
     NOTIFICATIONS_PATH = p["NOTIFICATIONS_PATH"]
@@ -77,8 +84,9 @@ COMPLETION_FIELDS = (
 )
 
 VALID_KINDS = frozenset({"build", "review", "test"})
-TERMINAL_STATUSES = frozenset({"CLOSED", "FAILED", "TIMED_OUT"})
-NON_PENDING_STATUSES = frozenset({"CLOSED", "FAILED", "TIMED_OUT", "AWAITING_REVIEW"})
+TERMINAL_STATUSES = frozenset({"CLOSED", "FAILED", "TIMED_OUT", "FAILED_TERMINAL"})
+NON_PENDING_STATUSES = frozenset({"CLOSED", "FAILED", "TIMED_OUT", "AWAITING_REVIEW", "FAILED_TERMINAL"})
+TERMINAL_NO_REGRESS = frozenset({"CLOSED", "FAILED_TERMINAL"})
 GROK_STATES_EXCLUDE = frozenset({"CONSERVE", "RESERVE", "EXHAUSTED"})
 STATE_RANK = {"NORMAL": 0, "CONSERVE": 1, "RESERVE": 2, "EXHAUSTED": 3}
 
@@ -131,11 +139,21 @@ def _append_jsonl(path: Path, rec: dict[str, Any]) -> None:
         f.write(json.dumps(rec, ensure_ascii=False, sort_keys=True) + "\n")
 
 
+def _append_jsonl_fsync(path: Path, rec: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(rec, ensure_ascii=False, sort_keys=True) + "\n"
+    with path.open("a", encoding="utf-8") as f:
+        f.write(line)
+        f.flush()
+        os.fsync(f.fileno())
+
+
 def load_config() -> dict[str, Any]:
     cfg = _read_json(CONFIG_PATH, {})
     cfg.setdefault("claude_paused", False)
     cfg.setdefault("worktree_cwd", None)
     cfg.setdefault("worker_cmds", {})
+    cfg.setdefault("allow_concurrent_orchestrators", False)
     return cfg
 
 
@@ -149,7 +167,7 @@ def load_items() -> dict[str, dict[str, Any]]:
 
 
 def save_items(items: dict[str, dict[str, Any]]) -> None:
-    _write_json(ITEMS_PATH, items)
+    _atomic_write_json(ITEMS_PATH, items)
 
 
 def load_leases() -> dict[str, dict[str, Any]]:
@@ -162,11 +180,28 @@ def save_leases(leases: dict[str, dict[str, Any]]) -> None:
 
 
 def load_dispatch_ledger() -> dict[str, dict[str, Any]]:
-    data = _read_json(DISPATCH_LEDGER_PATH, {})
-    return data if isinstance(data, dict) else {}
+    ledger: dict[str, dict[str, Any]] = {}
+    legacy = _read_json(DISPATCH_LEDGER_PATH, {})
+    if isinstance(legacy, dict):
+        ledger.update(legacy)
+    if DISPATCH_LEDGER_LOG_PATH.exists():
+        try:
+            for line in DISPATCH_LEDGER_LOG_PATH.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                entry = json.loads(line)
+                key = str(entry.get("idempotency_key") or _lease_key(
+                    str(entry.get("work_item_id") or ""),
+                    int(entry.get("attempt") or 0),
+                ))
+                ledger[key] = entry
+        except (OSError, json.JSONDecodeError):
+            pass
+    return ledger
 
 
 def save_dispatch_ledger(ledger: dict[str, dict[str, Any]]) -> None:
+    """Test helper — production path appends to dispatch-ledger.jsonl only."""
     _atomic_write_json(DISPATCH_LEDGER_PATH, ledger)
 
 
@@ -179,13 +214,13 @@ def _dispatch_ledger_entry_unlocked(
     now: datetime | str | None = None,
 ) -> dict[str, Any]:
     key = _lease_key(item_id, attempt)
-    ledger = load_dispatch_ledger()
-    entry = ledger.get(key) or {
+    prior = load_dispatch_ledger().get(key) or {}
+    entry = {
         "work_item_id": item_id,
         "attempt": attempt,
         "idempotency_key": _dispatch_idempotency_key(item_id, attempt),
+        "status": status,
     }
-    entry["status"] = status
     if worker is not None:
         entry["worker"] = worker
     ts = _now_iso(now)
@@ -193,8 +228,9 @@ def _dispatch_ledger_entry_unlocked(
         entry["dispatched_at"] = ts
     else:
         entry["completed_at"] = ts
-    ledger[key] = entry
-    save_dispatch_ledger(ledger)
+    if prior.get("dispatched_at"):
+        entry["dispatched_at"] = prior["dispatched_at"]
+    _append_jsonl_fsync(DISPATCH_LEDGER_LOG_PATH, entry)
     return entry
 
 
@@ -268,6 +304,106 @@ def _orch_exclusive_lock() -> Iterator[None]:
             yield
         finally:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
+def _item_version(item: dict[str, Any]) -> int:
+    return int(item.get("version") or 0)
+
+
+def _is_terminal_no_regress(item: dict[str, Any]) -> bool:
+    status = str(item.get("status") or "")
+    if status in TERMINAL_NO_REGRESS:
+        return True
+    if status in ("FAILED", "TIMED_OUT"):
+        attempt = int(item.get("attempt") or 0)
+        max_attempts = int(item.get("max_attempts") or 1)
+        return attempt >= max_attempts
+    return False
+
+
+def transition_item(
+    item_id: str,
+    *,
+    expected_status: str | tuple[str, ...] | None = None,
+    expected_version: int | None = None,
+    mutator: Callable[[dict[str, Any]], dict[str, Any] | None],
+    event: str,
+    now: datetime | str | None = None,
+    extra: dict[str, Any] | None = None,
+    parent_updates: dict[str, dict[str, Any]] | None = None,
+) -> tuple[bool, dict[str, Any] | None, str]:
+    """Atomic compare-and-swap work-item transition under exclusive lock."""
+    with _orch_exclusive_lock():
+        items = load_items()
+        item = items.get(item_id)
+        if not item:
+            return False, None, "not_found"
+        cur_status = str(item.get("status") or "")
+        cur_ver = _item_version(item)
+        if _is_terminal_no_regress(item):
+            return False, None, f"terminal:{cur_status}"
+        if expected_status is not None:
+            allowed = (expected_status,) if isinstance(expected_status, str) else expected_status
+            if cur_status not in allowed:
+                return False, None, f"status_mismatch:{cur_status}"
+        if expected_version is not None and cur_ver != expected_version:
+            return False, None, f"version_mismatch:{cur_ver}!={expected_version}"
+        before = dict(item)
+        updated = mutator(dict(item))
+        if updated is None:
+            return False, None, "mutator_refused"
+        if _is_terminal_no_regress(before) and updated.get("status") != before.get("status"):
+            return False, None, "terminal_regression_blocked"
+        updated["version"] = cur_ver + 1
+        updated.setdefault("updated_at", _now_iso(now))
+        items = load_items()
+        items[item_id] = updated
+        if parent_updates:
+            for parent_id, prec in parent_updates.items():
+                parent = items.get(parent_id)
+                if not parent or _is_terminal_no_regress(parent):
+                    continue
+                pver = _item_version(parent)
+                merged = dict(prec)
+                merged["version"] = pver + 1
+                merged.setdefault("updated_at", _now_iso(now))
+                items[parent_id] = merged
+        _atomic_write_json(ITEMS_PATH, items)
+        audit_transition(item_id, event, before, updated, now=now, extra=extra)
+        return True, updated, "ok"
+
+
+def acquire_orchestrator_run_lock() -> tuple[bool, Any, str]:
+    """Exclusive non-blocking orchestrator session lock."""
+    cfg = load_config()
+    if cfg.get("allow_concurrent_orchestrators"):
+        return True, None, "concurrent_allowed"
+    ORCH_DIR.mkdir(parents=True, exist_ok=True)
+    lock_file = ORCHESTRATOR_LOCK_PATH.open("w", encoding="utf-8")
+    try:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        lock_file.close()
+        audit_transition(
+            "orchestrator",
+            "orchestrator_lock_refused",
+            None,
+            None,
+            extra={"lock": str(ORCHESTRATOR_LOCK_PATH)},
+        )
+        return False, None, "orchestrator_lock_held"
+    lock_file.write(f"{os.getpid()}\n")
+    lock_file.flush()
+    return True, lock_file, "ok"
+
+
+def release_orchestrator_run_lock(lock_file: Any) -> None:
+    if lock_file is None:
+        return
+    try:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+    finally:
+        lock_file.close()
 
 
 def _active_item_lease(item_id: str, now: datetime | str | None = None) -> dict[str, Any] | None:
@@ -348,18 +484,13 @@ def write_completion(rec: dict[str, Any], attempt: int) -> tuple[Path, Path]:
     return json_path, md_path
 
 
-def submit(item: dict[str, Any], *, now: datetime | str | None = None) -> dict[str, Any]:
-    ensure_dirs()
-    ORCH_DIR.mkdir(parents=True, exist_ok=True)
+def _submit_record(item: dict[str, Any], *, now: datetime | str | None = None) -> dict[str, Any]:
     kind = str(item.get("kind") or "").strip()
     if kind not in VALID_KINDS:
         raise ValueError(f"invalid kind: {kind!r}")
     item_id = str(item.get("id") or "").strip()
     if not item_id:
         raise ValueError("work item id required")
-    items = load_items()
-    if item_id in items and items[item_id].get("status") not in TERMINAL_STATUSES:
-        raise ValueError(f"work item already exists: {item_id}")
     record = {
         "id": item_id,
         "kind": kind,
@@ -371,6 +502,7 @@ def submit(item: dict[str, Any], *, now: datetime | str | None = None) -> dict[s
         "max_attempts": int(item.get("max_attempts") or 3),
         "status": "QUEUED",
         "attempt": 0,
+        "version": 0,
         "created_at": _now_iso(now),
         "updated_at": _now_iso(now),
         "last_worker": None,
@@ -379,8 +511,32 @@ def submit(item: dict[str, Any], *, now: datetime | str | None = None) -> dict[s
     for field in CANONICAL_ITEM_FIELDS:
         if field in item:
             record[field] = item[field]
+    return record
+
+
+def submit(item: dict[str, Any], *, now: datetime | str | None = None) -> dict[str, Any]:
+    ensure_dirs()
+    ORCH_DIR.mkdir(parents=True, exist_ok=True)
+    record = _submit_record(item, now=now)
+    item_id = record["id"]
+    with _orch_exclusive_lock():
+        items = load_items()
+        if item_id in items and items[item_id].get("status") not in TERMINAL_STATUSES:
+            raise ValueError(f"work item already exists: {item_id}")
+        items[item_id] = record
+        _atomic_write_json(ITEMS_PATH, items)
+    audit_transition(item_id, "submit", None, record, now=now)
+    return record
+
+
+def _submit_under_lock(item: dict[str, Any], *, now: datetime | str | None = None) -> dict[str, Any]:
+    record = _submit_record(item, now=now)
+    item_id = record["id"]
+    items = load_items()
+    if item_id in items and items[item_id].get("status") not in TERMINAL_STATUSES:
+        raise ValueError(f"work item already exists: {item_id}")
     items[item_id] = record
-    save_items(items)
+    _atomic_write_json(ITEMS_PATH, items)
     audit_transition(item_id, "submit", None, record, now=now)
     return record
 
@@ -469,13 +625,17 @@ def eligibility(
     if action == "WAITING_FOR_CAPACITY":
         if decision.get("notify_owner") or _item_urgent(item):
             notify_owner(item["id"], "WAITING_FOR_CAPACITY: urgent item blocked", now=now)
-        before = dict(item)
-        item["status"] = "WAITING_FOR_CAPACITY"
-        item["updated_at"] = _now_iso(now)
-        all_items = load_items()
-        all_items[item["id"]] = item
-        save_items(all_items)
-        audit_transition(item["id"], "waiting_for_capacity", before, item, now=now, extra=decision.get("audit"))
+        ok, updated, _reason = transition_item(
+            item["id"],
+            expected_status=("QUEUED", "FAILED", "WAITING_FOR_CAPACITY"),
+            expected_version=_item_version(item),
+            mutator=lambda rec: {**rec, "status": "WAITING_FOR_CAPACITY"},
+            event="waiting_for_capacity",
+            now=now,
+            extra=decision.get("audit"),
+        )
+        if ok and updated:
+            item.update(updated)
         return None, "waiting_for_capacity"
     return None, "no_eligible_worker"
 
@@ -509,12 +669,14 @@ def claim(
             exp = existing.get("expires_at")
             if exp and datetime.fromisoformat(exp) > now_dt:
                 return None, "lease_active"
+        cur_ver = _item_version(item)
         before = dict(item)
         item["attempt"] = attempt
         item["status"] = "CLAIMED"
         item["updated_at"] = _now_iso(now_dt)
+        item["version"] = cur_ver + 1
         items[item_id] = item
-        save_items(items)
+        _atomic_write_json(ITEMS_PATH, items)
         lease = {
             "work_item_id": item_id,
             "attempt": attempt,
@@ -665,6 +827,7 @@ def reclaim_stale_leases(now: datetime | str | None = None) -> list[str]:
             before = dict(item)
             item["status"] = "QUEUED"
             item["updated_at"] = _now_iso(now_dt)
+            item["version"] = _item_version(item) + 1
             items[item_id] = item
             audit_transition(item_id, "lease_reclaimed", before, item, now=now_dt, extra={"lease_key": key})
         reclaimed.append(key)
@@ -862,10 +1025,13 @@ def dispatch_item(
             }
         items = load_items()
         before = dict(items[item_id])
-        items[item_id]["status"] = "RUNNING"
-        items[item_id]["last_worker"] = worker_id
-        items[item_id]["updated_at"] = _now_iso(now)
-        save_items(items)
+        running = dict(items[item_id])
+        running["status"] = "RUNNING"
+        running["last_worker"] = worker_id
+        running["updated_at"] = _now_iso(now)
+        running["version"] = _item_version(running) + 1
+        items[item_id] = running
+        _atomic_write_json(ITEMS_PATH, items)
         if lease:
             lease["dispatched"] = True
             lease["worker"] = worker_id
@@ -1107,21 +1273,21 @@ def _finish_dispatch(
     argv: list[str] | None = None,
     using_override: bool = False,
 ) -> dict[str, Any]:
-    items = load_items()
-    item = items.get(item["id"], item)
-    before = dict(item)
-    attempt = int(item.get("attempt") or 1)
-    owner_action = str((payload or {}).get("owner_action_required") or item.get("owner_action_required") or "")
+    item_id = item["id"]
+    snapshot = load_items().get(item_id, item)
+    attempt = int(snapshot.get("attempt") or 1)
+    expected_version = _item_version(snapshot)
+    owner_action = str((payload or {}).get("owner_action_required") or snapshot.get("owner_action_required") or "")
 
     if argv is None:
         cfg = load_config()
         worktree = str(cfg.get("worktree_cwd") or ".")
         try:
-            argv = _worker_cmd(worker_id, cfg, item, worktree)
+            argv = _worker_cmd(worker_id, cfg, snapshot, worktree)
         except ValueError:
             argv = [worker_id]
     rec = completion_record(
-        work_item_id=item["id"],
+        work_item_id=item_id,
         status=status,
         result_summary=summary,
         evidence_paths=evidence or [],
@@ -1133,75 +1299,99 @@ def _finish_dispatch(
     json_path, md_path = write_completion(rec, attempt)
     rec["EVIDENCE_PATHS"] = list(rec["EVIDENCE_PATHS"]) + [str(json_path), str(md_path)]
 
-    review_id = None
+    review_id: str | None = None
     parent_updates: dict[str, dict[str, Any]] = {}
-    if status == "COMPLETED" and item["kind"] == "build" and item.get("reviewer_gate"):
-        review_id = f"{item['id']}-review-{attempt}"
-        if review_id not in items:
-            submit(
-                {
-                    "id": review_id,
-                    "kind": "review",
-                    "spec": {"parent": item["id"], "acceptance": item.get("acceptance")},
-                    "acceptance": item.get("acceptance"),
-                    "depends_on": [item["id"]],
-                    "reviewer_gate": False,
-                    "timeout_s": item.get("timeout_s"),
-                    "max_attempts": 1,
-                },
-                now=now,
-            )
-            items = load_items()
-            item["review_enqueued"] = review_id
-        item["status"] = "AWAITING_REVIEW"
-    elif status == "COMPLETED" and item["kind"] == "review":
-        parent = (item.get("spec") or {}).get("parent")
-        if parent and items.get(parent):
-            parent_item = dict(items[parent])
-            parent_item["status"] = "CLOSED"
-            parent_item["updated_at"] = _now_iso(now)
-            parent_updates[parent] = parent_item
-        item["status"] = "CLOSED"
-    elif status == "FAILED" and item["kind"] == "review":
-        parent = (item.get("spec") or {}).get("parent")
-        if parent and items.get(parent):
-            parent_item = dict(items[parent])
-            if int(parent_item.get("attempt") or 0) < int(parent_item.get("max_attempts") or 1):
-                parent_item["status"] = "QUEUED"
+
+    def _apply_finish(rec_item: dict[str, Any]) -> dict[str, Any] | None:
+        nonlocal review_id
+        updated = dict(rec_item)
+        items_now = load_items()
+        if status == "COMPLETED" and updated["kind"] == "build" and updated.get("reviewer_gate"):
+            review_id = f"{updated['id']}-review-{attempt}"
+            if review_id not in items_now:
+                _submit_under_lock(
+                    {
+                        "id": review_id,
+                        "kind": "review",
+                        "spec": {"parent": updated["id"], "acceptance": updated.get("acceptance")},
+                        "acceptance": updated.get("acceptance"),
+                        "depends_on": [updated["id"]],
+                        "reviewer_gate": False,
+                        "timeout_s": updated.get("timeout_s"),
+                        "max_attempts": 1,
+                    },
+                    now=now,
+                )
+            updated["review_enqueued"] = review_id
+            updated["status"] = "AWAITING_REVIEW"
+        elif status == "COMPLETED" and updated["kind"] == "review":
+            parent = (updated.get("spec") or {}).get("parent")
+            if parent and items_now.get(parent):
+                parent_item = dict(items_now[parent])
+                parent_item["status"] = "CLOSED"
                 parent_item["updated_at"] = _now_iso(now)
                 parent_updates[parent] = parent_item
-        item["status"] = "FAILED"
-    elif status in ("FAILED", "TIMED_OUT") and int(item.get("attempt") or 0) < int(item.get("max_attempts") or 1):
-        item["status"] = "QUEUED"
-    elif status == "COMPLETED":
-        item["status"] = "CLOSED"
-    else:
-        item["status"] = status if status in TERMINAL_STATUSES else status
+            updated["status"] = "CLOSED"
+        elif status == "FAILED" and updated["kind"] == "review":
+            parent = (updated.get("spec") or {}).get("parent")
+            if parent and items_now.get(parent):
+                parent_item = dict(items_now[parent])
+                if int(parent_item.get("attempt") or 0) < int(parent_item.get("max_attempts") or 1):
+                    parent_item["status"] = "QUEUED"
+                    parent_item["updated_at"] = _now_iso(now)
+                    parent_updates[parent] = parent_item
+            updated["status"] = "FAILED"
+        elif status in ("FAILED", "TIMED_OUT") and int(updated.get("attempt") or 0) < int(updated.get("max_attempts") or 1):
+            updated["status"] = "QUEUED"
+        elif status == "COMPLETED":
+            updated["status"] = "CLOSED"
+        else:
+            updated["status"] = status if status in TERMINAL_STATUSES else status
+        updated["updated_at"] = _now_iso(now)
+        updated["last_result"] = status
+        return updated
 
-    item["updated_at"] = _now_iso(now)
-    item["last_result"] = status
-    latest = load_items()
-    latest[item["id"]] = item
-    for parent_id, prec in parent_updates.items():
-        latest[parent_id] = prec
-    save_items(latest)
+    ok, finished, reason = transition_item(
+        item_id,
+        expected_status=("RUNNING", "CLAIMED"),
+        expected_version=expected_version,
+        mutator=_apply_finish,
+        event="complete",
+        now=now,
+        extra={"worker": worker_id, "exit_code": exit_code},
+        parent_updates=parent_updates,
+    )
+    if not ok or not finished:
+        return {
+            "ok": False,
+            "status": status,
+            "error": reason,
+            "completion": rec,
+            "review_enqueued": review_id,
+            "elapsed_ms": elapsed_ms,
+            "exit_code": exit_code,
+            "pid": pid,
+            "worker": worker_id,
+        }
 
-    key = _lease_key(item["id"], attempt)
-    leases = load_leases()
-    leases.pop(key, None)
-    save_leases(leases)
+    key = _lease_key(item_id, attempt)
+    with _orch_exclusive_lock():
+        leases = load_leases()
+        leases.pop(key, None)
+        save_leases(leases)
     ledger_status = "completed" if status == "COMPLETED" else "failed"
-    _dispatch_ledger_entry(item["id"], attempt, status=ledger_status, worker=worker_id, now=now)
+    _dispatch_ledger_entry(item_id, attempt, status=ledger_status, worker=worker_id, now=now)
 
-    audit_transition(item["id"], "complete", before, item, now=now, extra={"worker": worker_id, "exit_code": exit_code})
-    terminal_fail = item["status"] in ("FAILED", "TIMED_OUT") and int(item.get("attempt") or 0) >= int(item.get("max_attempts") or 1)
+    terminal_fail = finished["status"] in ("FAILED", "TIMED_OUT", "FAILED_TERMINAL") and int(
+        finished.get("attempt") or 0
+    ) >= int(finished.get("max_attempts") or 1)
     if owner_action:
-        notify_owner(item["id"], owner_action, now=now)
+        notify_owner(item_id, owner_action, now=now)
     elif terminal_fail:
-        notify_owner(item["id"], f"terminally failed: {status}", now=now)
+        notify_owner(item_id, f"terminally failed: {status}", now=now)
 
     return {
-        "ok": status == "COMPLETED",
+        "ok": status == "COMPLETED" and ok,
         "status": status,
         "completion": rec,
         "review_enqueued": review_id,
@@ -1238,18 +1428,21 @@ def reevaluate_waiting_for_capacity(*, now: datetime | str | None = None) -> lis
         primary_pool.update(failover.FALLBACK_BY_CAPABILITY.get(capability, ()))
         if worker not in primary_pool:
             continue
-        before = dict(item)
-        item["status"] = "QUEUED"
-        item["updated_at"] = _now_iso(now)
-        items[item_id] = item
-        audit_transition(item_id, "capacity_resumed", before, item, now=now, extra=decision.get("audit"))
-        resumed.append(item_id)
-    if resumed:
-        save_items(items)
+        ok, updated, _reason = transition_item(
+            item_id,
+            expected_status="WAITING_FOR_CAPACITY",
+            expected_version=_item_version(item),
+            mutator=lambda rec: {**rec, "status": "QUEUED"},
+            event="capacity_resumed",
+            now=now,
+            extra=decision.get("audit"),
+        )
+        if ok:
+            resumed.append(item_id)
     return resumed
 
 
-def run_once(*, worktree: str | None = None, now: datetime | str | None = None) -> dict[str, Any]:
+def _run_once_impl(*, worktree: str | None = None, now: datetime | str | None = None) -> dict[str, Any]:
     ensure_dirs()
     ORCH_DIR.mkdir(parents=True, exist_ok=True)
     config = load_config()
@@ -1291,18 +1484,34 @@ def run_once(*, worktree: str | None = None, now: datetime | str | None = None) 
     return {"processed": processed, "queue_depth": sum(1 for i in items.values() if i.get("status") == "QUEUED")}
 
 
+def run_once(*, worktree: str | None = None, now: datetime | str | None = None) -> dict[str, Any]:
+    acquired, lock_fd, lock_reason = acquire_orchestrator_run_lock()
+    if not acquired:
+        return {"processed": [], "queue_depth": 0, "error": lock_reason}
+    try:
+        return _run_once_impl(worktree=worktree, now=now)
+    finally:
+        release_orchestrator_run_lock(lock_fd)
+
+
 def run_until_idle(*, worktree: str | None = None, max_rounds: int = 50, now: datetime | str | None = None) -> dict[str, Any]:
+    acquired, lock_fd, lock_reason = acquire_orchestrator_run_lock()
+    if not acquired:
+        return {"rounds": 0, "pending": 0, "items": load_items(), "history": [], "error": lock_reason}
     rounds: list[dict[str, Any]] = []
-    for _ in range(max_rounds):
-        out = run_once(worktree=worktree, now=now)
-        rounds.append(out)
-        if not out["processed"]:
-            break
-        if all(p.get("action") == "skipped" for p in out["processed"]):
-            break
-    items = load_items()
-    pending = [i for i in items.values() if i.get("status") not in NON_PENDING_STATUSES]
-    return {"rounds": len(rounds), "pending": len(pending), "items": items, "history": rounds}
+    try:
+        for _ in range(max_rounds):
+            out = _run_once_impl(worktree=worktree, now=now)
+            rounds.append(out)
+            if not out["processed"]:
+                break
+            if all(p.get("action") == "skipped" for p in out["processed"]):
+                break
+        items = load_items()
+        pending = [i for i in items.values() if i.get("status") not in NON_PENDING_STATUSES]
+        return {"rounds": len(rounds), "pending": len(pending), "items": items, "history": rounds}
+    finally:
+        release_orchestrator_run_lock(lock_fd)
 
 
 def status() -> dict[str, Any]:

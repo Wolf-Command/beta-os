@@ -38,6 +38,16 @@ def _mp_complete_ledger_entry(item_id: str, state_root: str) -> None:
     )
 
 
+def _mp_hold_orchestrator_lock(state_root: str) -> None:
+    os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = state_root
+    rebind_state_paths()
+    orch.rebind_orchestrator_paths()
+    ok, lock_fd, _ = orch.acquire_orchestrator_run_lock()
+    assert ok
+    time.sleep(2)
+    orch.release_orchestrator_run_lock(lock_fd)
+
+
 def _mp_try_in_flight_after_completed(state_root: str) -> str:
     os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = state_root
     rebind_state_paths()
@@ -320,6 +330,19 @@ class OrchestratorTestCase(unittest.TestCase):
         self.assertTrue(out["ok"])
         self.assertEqual(orch.show("wi-build-1")["status"], "AWAITING_REVIEW")
         self.assertIn("wi-build-1-review-1", orch.load_items())
+
+    def test_second_orchestrator_refused_without_concurrent_flag(self) -> None:
+        import multiprocessing as mp
+
+        proc = mp.get_context("spawn").Process(target=_mp_hold_orchestrator_lock, args=(self.state_root,))
+        proc.start()
+        time.sleep(0.3)
+        ok, _fd, reason = orch.acquire_orchestrator_run_lock()
+        proc.join(timeout=5)
+        self.assertFalse(ok)
+        self.assertEqual(reason, "orchestrator_lock_held")
+        audit = orch.AUDIT_PATH.read_text(encoding="utf-8")
+        self.assertIn("orchestrator_lock_refused", audit)
 
     def test_concurrent_claim_one_wins(self) -> None:
         import threading

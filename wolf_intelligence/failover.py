@@ -25,6 +25,7 @@ CAPABILITIES = frozenset(
         "review_architecture",
         "review_large_context",
         "redteam",
+        "daily_close_extraction",
     }
 )
 
@@ -62,6 +63,7 @@ PREFERRED_BY_CAPABILITY: dict[str, tuple[str, ...]] = {
     "review_architecture": ("claude_pro_sub", "codex_sub"),
     "review_large_context": ("claude_pro_sub", "codex_sub"),
     "redteam": ("claude_pro_sub", "codex_sub"),
+    "daily_close_extraction": ("claude_pro_sub", "codex_sub"),
 }
 
 FALLBACK_BY_CAPABILITY: dict[str, tuple[str, ...]] = {
@@ -75,9 +77,16 @@ FALLBACK_BY_CAPABILITY: dict[str, tuple[str, ...]] = {
     "review_architecture": ("codex_sub",),
     "review_large_context": ("codex_sub",),
     "redteam": ("codex_sub",),
+    "daily_close_extraction": ("claude_pro_sub", "codex_sub"),
 }
 
-INCLUDED_ENGINEERING = ("cursor_sub", "codex_sub", "ollama_local")
+INCLUDED_ENGINEERING = ("cursor_sub", "codex_sub")
+
+EXCLUDED_WORKERS_BY_CAPABILITY: dict[str, tuple[str, ...]] = {
+    "daily_close_extraction": ("ollama_local",),
+}
+
+LOCAL_FREE_WORKERS = frozenset({"ollama_local", "gemini_free"})
 
 SESSION_LIMIT_PATTERNS = (
     re.compile(r"session\s+limit", re.I),
@@ -171,7 +180,7 @@ def _default_commissioning(worker_id: str) -> str:
     if meta.get("gated"):
         return "not_commissioned"
     if meta.get("adapter"):
-        return "commissioned" if worker_id in ("gemini_free", "ollama_local") else "not_commissioned"
+        return "commissioned" if worker_id == "gemini_free" else "not_commissioned"
     return "not_commissioned"
 
 
@@ -203,8 +212,6 @@ def _default_capabilities(worker_id: str) -> list[str]:
         ]
     elif worker_id == "grok_bot_sub":
         caps = []
-    elif worker_id == "ollama_local":
-        caps = ["build", "debug", "test"]
     return caps
 
 
@@ -405,11 +412,15 @@ def _is_eligible(
             return False, ["no_command_builder"]
     if capability not in (worker.get("capabilities") or []):
         return False, ["missing_capability"]
+    if worker_id in EXCLUDED_WORKERS_BY_CAPABILITY.get(capability, ()):
+        return False, ["explicitly_excluded"]
     if worker.get("commissioning_state") != "commissioned":
         return False, [f"commissioning:{worker.get('commissioning_state')}"]
     score = _benchmark_score(worker, capability)
     if score < min_score:
         return False, [f"benchmark:{score:.3f}<{min_score}"]
+    if worker_id in LOCAL_FREE_WORKERS and capability not in (worker.get("benchmark_eligibility") or {}):
+        return False, ["no_benchmark_proof"]
     av = _availability_record(availability, worker_id)
     if av["state"] != "available":
         return False, [f"availability:{av['state']}"]
@@ -491,6 +502,24 @@ def _within_wait_window(reset_time: str | None, now: datetime, window_min: int) 
     return now < rt <= now + timedelta(minutes=window_min)
 
 
+def _proven_workers_for_capability(
+    capability: str,
+    registry: dict[str, Any],
+    min_score: float,
+) -> list[str]:
+    proven: list[str] = []
+    for wid, worker in sorted((registry.get("workers") or {}).items()):
+        if wid in EXCLUDED_WORKERS_BY_CAPABILITY.get(capability, ()):
+            continue
+        if worker.get("commissioning_state") != "commissioned":
+            continue
+        if capability not in (worker.get("capabilities") or []):
+            continue
+        if _benchmark_score(worker, capability) >= min_score:
+            proven.append(wid)
+    return proven
+
+
 def _candidate_worker_ids(
     capability: str,
     orch_config: dict[str, Any] | None = None,
@@ -501,6 +530,8 @@ def _candidate_worker_ids(
     cfg = orch_config or {}
     registry = registry or load_registry()
     spend_policy = spend_policy or load_spend_policy()
+    fo_cfg = load_failover_config()
+    min_score = float(fo_cfg.get("min_benchmark_score", 0.5))
     preferred = preferred_workers(capability, cfg)
     preferred_worker = preferred[0] if preferred else None
     fallback_order: list[str] = []
@@ -513,6 +544,9 @@ def _candidate_worker_ids(
         if w not in fallback_order:
             fallback_order.append(w)
     for w in INCLUDED_ENGINEERING:
+        if w not in fallback_order and w not in EXCLUDED_WORKERS_BY_CAPABILITY.get(capability, ()):
+            fallback_order.append(w)
+    for w in _proven_workers_for_capability(capability, registry, min_score):
         if w not in fallback_order:
             fallback_order.append(w)
     if spend_policy.get("owner_approved"):

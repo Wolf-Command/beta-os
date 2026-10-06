@@ -64,6 +64,10 @@ def main(argv: list[str] | None = None) -> int:
     o_submit = orch_sub.add_parser("submit")
     o_submit.add_argument("--file", required=True, help="JSON work item file")
     orch_sub.add_parser("run")
+    o_race = orch_sub.add_parser("race-proof")
+    o_race.add_argument("--trials", type=int, default=250)
+    o_race.add_argument("--state-root", required=True)
+    o_race.add_argument("--out", default=None)
     orch_sub.add_parser("status")
     o_show = orch_sub.add_parser("show")
     o_show.add_argument("item_id")
@@ -216,8 +220,15 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(orch.submit(item), indent=2))
             return 0
         if args.orch_cmd == "run":
-            print(json.dumps(orch.run_until_idle(), indent=2))
-            return 0
+            out = orch.run_until_idle()
+            print(json.dumps(out, indent=2))
+            return 1 if out.get("error") else 0
+        if args.orch_cmd == "race-proof":
+            from .race_proof import run_race_proof
+
+            result = run_race_proof(trials=args.trials, state_root=args.state_root, out_file=args.out)
+            print(json.dumps(result, indent=2))
+            return 0 if result.get("pass") else 1
         if args.orch_cmd == "status":
             print(json.dumps(orch.status(), indent=2))
             return 0

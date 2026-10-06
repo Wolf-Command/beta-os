@@ -131,6 +131,74 @@ class FailoverTestCase(unittest.TestCase):
         self.assertEqual(d["action"], "FAILOVER")
         self.assertEqual(d["worker_id"], "codex_sub")
 
+    def test_default_config_never_selects_ollama_unproven_class(self) -> None:
+        reg = failover.load_registry()
+        reg["workers"]["ollama_local"]["commissioning_state"] = "commissioned"
+        reg["workers"]["ollama_local"]["benchmark_eligibility"] = {}
+        reg["workers"]["cursor_sub"]["commissioning_state"] = "suspended"
+        reg["workers"]["codex_sub"]["commissioning_state"] = "suspended"
+        reg["workers"]["claude_pro_sub"]["commissioning_state"] = "suspended"
+        failover.save_registry(reg)
+        cfg = orch.load_config()
+        item = {"id": "build-unproven", "kind": "build", "spec": {}}
+        d = failover.decide_routing(
+            item,
+            capacity=self._capacity(cursor="EXHAUSTED", codex="EXHAUSTED", claude="EXHAUSTED"),
+            orch_config=cfg,
+            now="2026-10-06T12:00:00+08:00",
+        )
+        self.assertNotEqual(d.get("worker_id"), "ollama_local")
+        self.assertEqual(d["action"], "WAITING_FOR_CAPACITY")
+
+    def test_daily_close_extraction_never_ollama_when_all_unavailable(self) -> None:
+        reg = failover.load_registry()
+        reg["workers"]["ollama_local"]["commissioning_state"] = "commissioned"
+        reg["workers"]["ollama_local"]["capabilities"] = ["daily_close_extraction"]
+        reg["workers"]["ollama_local"]["benchmark_eligibility"] = {"daily_close_extraction": 1.0}
+        reg["workers"]["claude_pro_sub"]["commissioning_state"] = "suspended"
+        reg["workers"]["codex_sub"]["commissioning_state"] = "suspended"
+        reg["workers"]["cursor_sub"]["commissioning_state"] = "suspended"
+        failover.save_registry(reg)
+        failover.set_worker_availability("claude_pro_sub", "weekly_limit", evidence=["w"])
+        failover.set_worker_availability("codex_sub", "weekly_limit", evidence=["w"])
+        failover.set_worker_availability("cursor_sub", "weekly_limit", evidence=["w"])
+        item = {
+            "id": "dce-1",
+            "kind": "build",
+            "spec": {"capability": "daily_close_extraction"},
+        }
+        d = failover.decide_routing(
+            item,
+            capacity=self._capacity(claude="EXHAUSTED", codex="EXHAUSTED", cursor="EXHAUSTED"),
+            now="2026-10-06T12:00:00+08:00",
+        )
+        self.assertNotEqual(d.get("worker_id"), "ollama_local")
+        self.assertEqual(d["action"], "WAITING_FOR_CAPACITY")
+        audit = (Path(self.state_root) / "failover" / "audit.jsonl").read_text()
+        self.assertNotIn("metered", audit.lower())
+
+    def test_ollama_selected_only_with_explicit_proof_record(self) -> None:
+        reg = failover.load_registry()
+        reg["workers"]["ollama_local"]["commissioning_state"] = "commissioned"
+        reg["workers"]["ollama_local"]["capabilities"] = ["build"]
+        reg["workers"]["ollama_local"]["benchmark_eligibility"] = {"build": 0.9}
+        reg["workers"]["cursor_sub"]["commissioning_state"] = "suspended"
+        reg["workers"]["codex_sub"]["commissioning_state"] = "suspended"
+        failover.save_registry(reg)
+        cfg = orch.load_config()
+        cfg["worker_cmds"] = {
+            "ollama_local": ["python3", OK_WORKER, str(orch.ORCH_DIR / "runtime" / "{item_id}-{attempt}.completion.json"), "PASS", "ok"],
+        }
+        orch.save_config(cfg)
+        item = {"id": "build-ollama-proof", "kind": "build", "spec": {}}
+        d = failover.decide_routing(
+            item,
+            capacity=self._capacity(cursor="EXHAUSTED", codex="EXHAUSTED"),
+            orch_config=cfg,
+            now="2026-10-06T12:00:00+08:00",
+        )
+        self.assertEqual(d.get("worker_id"), "ollama_local")
+
     def test_ollama_without_command_builder_never_selected(self) -> None:
         reg = failover.load_registry()
         reg["workers"]["ollama_local"]["commissioning_state"] = "commissioned"

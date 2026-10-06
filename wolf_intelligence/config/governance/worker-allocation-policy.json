@@ -32,6 +32,7 @@
       "finance",
       "large_context",
       "structured_extraction",
+      "daily_close_extraction",
       "ux_product",
       "vision_document",
       "final_gate",
@@ -64,7 +65,8 @@
     "final_gate": "reasoning_planning",
     "routine_review": "reasoning_planning",
     "polling": "structured_extraction",
-    "status_poll": "structured_extraction"
+    "status_poll": "structured_extraction",
+    "daily_close_extraction": "structured_extraction"
   },
   "routing_policy_path": "routing-policy-real.json",
   "specialisation": {
@@ -155,8 +157,7 @@
     "claude_pro_sub",
     "codex_sub",
     "cursor_sub",
-    "gemini_free",
-    "ollama_local"
+    "gemini_free"
   ],
   "worker_execution_scope": {
     "isolated_sandbox_root": "~/wi-sandboxes",
