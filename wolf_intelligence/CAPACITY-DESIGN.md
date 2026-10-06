@@ -22,7 +22,7 @@ Owner directive 2026-10-06 09:49 WITA. Branch `build/wi-capacity-1` off `build/w
 - claude_pro_sub, api (claude CLI /usage) at 2026-10-06T09:45:00+08:00: {"session": 15, "week_all_models": 1},
   session reset 2026-10-06T12:50:00+08:00, week reset 2026-10-10T19:00:00+08:00, usage credits off, so on_demand "DISABLED".
 - codex_sub, api (codex rollout rate_limits) at 2026-10-06T09:45:00+08:00: plan "ChatGPT team", {"week": 2.0},
-  reset 2026-10-13T08:43:50+08:00, credits none, so on_demand "DISABLED".
+  reset 2026-10-13T07:23:50+08:00, credits none, so on_demand "DISABLED".
 - ollama_local: plan "local", remaining null, on_demand "DISABLED" (no billing).
 
 ## Capacity state
