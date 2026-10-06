@@ -83,7 +83,7 @@ def check_imbalance(
     tightening["grok_routing_penalty"] = new_penalty
     tightening["last_imbalance_at"] = now_dt.isoformat(timespec="seconds")
     tightening["last_grok_share"] = round(share, 4)
-    save_tightening(tightening)
+    save_tightening(tightening, policy)
 
     append_audit_event(
         "ROUTING_IMBALANCE",

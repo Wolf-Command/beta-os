@@ -77,14 +77,17 @@ def _ctx(now: str | None = None, grok_available: bool = True) -> dict:
     return {"policy_load": pl, "capacity": cap}
 
 
-def _decide(task_class: str, **kw) -> allocation.Decision:
+def _decide(task_class: str | None = None, **kw) -> allocation.Decision:
     ctx = _ctx(kw.pop("now", NOW), grok_available=kw.pop("grok_available", True))
-    wi = {
-        "id": kw.pop("id", f"wi-{task_class}"),
-        "task_class": task_class,
+    wi: dict = {
+        "id": kw.pop("id", f"wi-{task_class or 'none'}"),
         "grok_reason_code": kw.pop("grok_reason", None),
         "grok_justification": kw.pop("justification", None),
     }
+    if task_class is not None:
+        wi["task_class"] = task_class
+    if "requested_worker" in kw:
+        wi["requested_worker"] = kw.pop("requested_worker")
     return decide(
         wi,
         policy_load=ctx["policy_load"],
@@ -143,7 +146,7 @@ class TestCapacityGovernance(unittest.TestCase):
         if gov.exists():
             shutil.rmtree(gov)
         gov.mkdir(parents=True, exist_ok=True)
-        save_tightening({"grok_routing_penalty": 0.0})
+        save_tightening({"grok_routing_penalty": 0.0}, load_policy().policy)
 
     def test_a_engineering_does_not_default_to_grok_when_cursor_eligible(self) -> None:
         d = _decide("coding", id="eng-a")
@@ -158,53 +161,99 @@ class TestCapacityGovernance(unittest.TestCase):
         self.assertNotEqual(d.selected_worker, "grok_bot_sub")
 
     def test_c_grok_pressure_monotonic_delegation(self) -> None:
+        just = "x" * 25
+        # NORMAL + valid EXPLICIT_JUSTIFIED + requested grok -> Grok DISPATCH
+        _set_grok_pct(10.0)
+        d_normal = _decide(
+            "coding",
+            id="c-normal-grok",
+            requested_worker="grok_bot_sub",
+            grok_reason="EXPLICIT_JUSTIFIED",
+            justification=just,
+        )
+        self.assertEqual(d_normal.decision, "DISPATCH")
+        self.assertEqual(d_normal.selected_worker, "grok_bot_sub")
+        self.assertEqual(d_normal.grok_reason_verdict, "ACCEPTED")
+        self.assertIsNotNone(d_normal.quality_floor_waived_reason)
+
+        # CONSERVE + BENCHMARK_SELECTED -> rejected
+        _set_grok_pct(40.0)
+        d_conserve_bench = _decide(
+            "coding",
+            id="c-conserve-bench",
+            requested_worker="grok_bot_sub",
+            grok_reason="BENCHMARK_SELECTED",
+        )
+        self.assertNotEqual(d_conserve_bench.selected_worker, "grok_bot_sub")
+        self.assertEqual(d_conserve_bench.grok_reason_verdict, "REJECTED")
+
+        # RESERVE -> substantive never Grok but protected -> Grok
+        _set_grok_pct(70.0)
+        d_reserve_sub = _decide(
+            "coding",
+            id="c-reserve-sub",
+            requested_worker="grok_bot_sub",
+            grok_reason="EXPLICIT_JUSTIFIED",
+            justification=just,
+        )
+        self.assertNotEqual(d_reserve_sub.selected_worker, "grok_bot_sub")
+        d_reserve_prot = _decide("owner_conversation", id="c-reserve-prot")
+        self.assertEqual(d_reserve_prot.decision, "DISPATCH")
+        self.assertEqual(d_reserve_prot.selected_worker, "grok_bot_sub")
+
+        # EXHAUSTED -> protected QUEUE and substantive non-Grok
+        _set_grok_pct(96.0)
+        d_ex_prot = _decide("orchestration", id="c-exhaust-prot")
+        self.assertEqual(d_ex_prot.decision, "QUEUE")
+        self.assertIsNone(d_ex_prot.selected_worker)
+        d_ex_sub = _decide("coding", id="c-exhaust-sub")
+        self.assertEqual(d_ex_sub.decision, "DISPATCH")
+        self.assertNotEqual(d_ex_sub.selected_worker, "grok_bot_sub")
+
+        # Sweep pct 0..100 step 1: (class, code) pairs Grok may take is non-increasing
         pl = load_policy()
         policy = pl.policy or {}
         allowed = (policy.get("grok_reserve") or {}).get("allowed_reason_codes_by_state") or {}
-        states = ["NORMAL", "CONSERVE", "RESERVE", "EXHAUSTED"]
-        pct_map = {"NORMAL": 10, "CONSERVE": 40, "RESERVE": 70, "EXHAUSTED": 96}
-        prev_allowed: set[str] = set()
-        for st in states:
-            _set_grok_pct(pct_map[st])
-            codes = set(allowed.get(st, []))
-            if st == "RESERVE":
-                codes = set()  # substantive blocked; only protected
-            if st == "EXHAUSTED":
-                codes = set()
-            self.assertTrue(codes <= prev_allowed | codes)
-            if prev_allowed:
-                self.assertTrue(codes <= prev_allowed or st == "NORMAL")
-            prev_allowed = codes if st in ("NORMAL", "CONSERVE") else set()
-
-        # Sweep pct 0..100: Grok never re-allowed as pct rises (OTHERS_UNAVAILABLE with alternatives)
-        allowed_once = False
-        for pct in range(0, 101, 5):
+        codes_to_try = [
+            ("coding", "EXPLICIT_JUSTIFIED"),
+            ("coding", "OTHERS_UNAVAILABLE"),
+            ("coding", "BENCHMARK_SELECTED"),
+            ("owner_conversation", None),
+        ]
+        prev_grok_pairs: set[tuple[str, str | None]] | None = None
+        for pct in range(0, 101):
             _set_grok_pct(float(pct))
-            d = _decide(
-                "coding",
-                id=f"sweep-{pct}",
-                grok_reason="OTHERS_UNAVAILABLE",
-                justification="no others available verified check",
-            )
-            if d.selected_worker == "grok_bot_sub":
-                if allowed_once and pct > 30:
-                    self.fail("Grok re-allowed at higher pct")
-                allowed_once = True
-            if pct >= 95:
-                self.assertNotEqual(d.selected_worker, "grok_bot_sub")
+            grok_pairs: set[tuple[str, str | None]] = set()
+            for tc, code in codes_to_try:
+                kw = {"id": f"sweep-{pct}-{tc}-{code}", "justification": just}
+                if code:
+                    kw["grok_reason"] = code
+                    kw["requested_worker"] = "grok_bot_sub"
+                d = _decide(tc, **kw)
+                if d.selected_worker == "grok_bot_sub" and d.decision == "DISPATCH":
+                    grok_pairs.add((tc, code))
+            if prev_grok_pairs is not None:
+                self.assertTrue(
+                    grok_pairs <= prev_grok_pairs,
+                    f"Grok pairs grew at pct={pct}: {grok_pairs} not subset of {prev_grok_pairs}",
+                )
+            prev_grok_pairs = grok_pairs
 
     def test_d_grok_exhaustion_does_not_stop_non_grok_workers(self) -> None:
-        _set_grok_pct(96.0)
-        for tc in ("coding", "reasoning_planning", "state_update", "evidence_collection", "security"):
-            d = _decide(tc, id=f"failover-{tc}")
-            if tc in governance.load_policy().policy.get("protected_classes", []):
-                continue
-            if tc in ("state_update", "evidence_collection"):
-                self.assertIn(d.decision, ("DISPATCH", "QUEUE"))
-                if d.decision == "DISPATCH":
-                    self.assertNotEqual(d.selected_worker, "grok_bot_sub")
-            else:
-                self.assertEqual(d.decision, "DISPATCH")
+        pl = load_policy()
+        policy = pl.policy or {}
+        families = policy.get("task_families") or {}
+        non_protected = (
+            list(families.get("engineering", []))
+            + list(families.get("reasoning_review", []))
+            + list(families.get("operations", []))
+        )
+        for scenario, grok_avail in (("exhausted", True), ("outage", False)):
+            _set_grok_pct(96.0)
+            for tc in non_protected:
+                d = _decide(tc, id=f"failover-{scenario}-{tc}", grok_available=grok_avail)
+                self.assertEqual(d.decision, "DISPATCH", f"{tc} under {scenario}")
+                self.assertIsNotNone(d.selected_worker)
                 self.assertNotEqual(d.selected_worker, "grok_bot_sub")
 
     def test_e_process_restart_persistence(self) -> None:
@@ -242,8 +291,19 @@ class TestCapacityGovernance(unittest.TestCase):
                 self._wait_health(port, timeout=8)
                 status2 = self._api_status(port, token)
                 self.assertEqual(status1["policy_sha256"], status2["policy_sha256"])
+                cap_states1 = {
+                    w: rec.get("state")
+                    for w, rec in status1["capacity"]["workers"].items()
+                }
+                cap_states2 = {
+                    w: rec.get("state")
+                    for w, rec in status2["capacity"]["workers"].items()
+                }
+                self.assertEqual(cap_states1, cap_states2)
                 dec2 = self._api_decide(port, token, wi)
                 self.assertEqual(dec1["decision_hash"], dec2["decision_hash"])
+                self.assertEqual(dec1["decision"], dec2["decision"])
+                self.assertEqual(dec1["selected_worker"], dec2["selected_worker"])
             finally:
                 proc2.terminate()
                 proc2.wait(timeout=5)
@@ -342,7 +402,20 @@ class TestCapacityGovernance(unittest.TestCase):
 
     def test_i_imbalance_alarm_and_penalty(self) -> None:
         pl = load_policy()
-        save_tightening({"grok_routing_penalty": 0.0})
+        policy = pl.policy or {}
+        hard_block = float((policy.get("imbalance") or {}).get("penalty_hard_block_at", 0.6))
+        save_tightening({"grok_routing_penalty": 0.0}, policy)
+        just = "x" * 25
+        # Before alarm: Grok substantive with valid code is selected when requested
+        d_before = _decide(
+            "coding",
+            id="imbalance-before",
+            requested_worker="grok_bot_sub",
+            grok_reason="EXPLICIT_JUSTIFIED",
+            justification=just,
+        )
+        self.assertEqual(d_before.selected_worker, "grok_bot_sub")
+
         grok = "grok_bot_sub"
         for i in range(8):
             rec = {
@@ -357,12 +430,25 @@ class TestCapacityGovernance(unittest.TestCase):
                 f.write(json.dumps(rec) + "\n")
         result = check_imbalance(pl, LedgerView(), now=NOW)
         self.assertTrue(result.get("triggered"))
-        t = load_tightening()
+        t = load_tightening(policy)
         self.assertGreater(float(t.get("grok_routing_penalty", 0)), 0.0)
         audit = paths.GOVERNANCE_AUDIT_PATH.read_text()
         self.assertIn("ROUTING_IMBALANCE", audit)
-        # Protected work must not trigger
-        save_tightening({"grok_routing_penalty": 0.0})
+
+        # Raise penalty to hard-block: next decision shifts away from Grok
+        save_tightening({"grok_routing_penalty": hard_block}, policy)
+        d_after = _decide(
+            "coding",
+            id="imbalance-after",
+            grok_reason="EXPLICIT_JUSTIFIED",
+            justification=just,
+        )
+        self.assertNotEqual(d_after.selected_worker, "grok_bot_sub")
+        self.assertEqual(d_after.decision, "DISPATCH")
+        self.assertIn(d_after.selected_worker, ("cursor_sub", "claude_pro_sub", "codex_sub"))
+
+        # Protected work must not trigger imbalance
+        save_tightening({"grok_routing_penalty": 0.0}, policy)
         prot_rec = {
             "decision": "DISPATCH",
             "selected_worker": grok,
@@ -378,45 +464,87 @@ class TestCapacityGovernance(unittest.TestCase):
         self.assertFalse(r2.get("triggered"))
 
     def test_j_policy_fail_closed(self) -> None:
-        cases = [
-            ("missing", Path("/nonexistent/policy.json")),
-            ("corrupt", None),
-            ("schema_invalid", None),
-            ("invariant_flip", None),
-        ]
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, True)
         corrupt = Path(tmp) / "corrupt.json"
         corrupt.write_text("{not json", encoding="utf-8")
         bad_schema = Path(tmp) / "bad_schema.json"
         bad_schema.write_text(json.dumps({"version": 1}), encoding="utf-8")
-        flip = Path(tmp) / "flip.json"
         good = json.loads(POLICY_PATH.read_text())
-        flip_data = dict(good)
-        flip_data["metered_fallback"] = "ALLOWED"
-        flip.write_text(json.dumps(flip_data), encoding="utf-8")
+
+        def _flip(data: dict, **changes) -> Path:
+            p = Path(tmp) / f"flip-{len(list(Path(tmp).glob('flip-*')))}.json"
+            flipped = dict(data, **changes)
+            p.write_text(json.dumps(flipped), encoding="utf-8")
+            return p
+
+        flip_metered = _flip(good, metered_fallback="ALLOWED")
+        flip_grok_id = _flip(good, grok_worker_id="wrong_grok")
+        flip_conserve = _flip(good)
+        flip_conserve_data = json.loads(flip_conserve.read_text())
+        flip_conserve_data["grok_reserve"]["allowed_reason_codes_by_state"]["CONSERVE"] = list(
+            good["grok_reserve"]["allowed_reason_codes_by_state"]["NORMAL"]
+        )
+        flip_conserve.write_text(json.dumps(flip_conserve_data), encoding="utf-8")
+        flip_reserve = _flip(good)
+        flip_reserve_data = json.loads(flip_reserve.read_text())
+        flip_reserve_data["grok_reserve"]["allowed_reason_codes_by_state"]["RESERVE"] = ["EXPLICIT_JUSTIFIED"]
+        flip_reserve.write_text(json.dumps(flip_reserve_data), encoding="utf-8")
+        flip_neg_pen = _flip(good, grok_routing_penalty_default=-0.5)
 
         for label, path in [
             ("missing", Path("/nonexistent/wi-policy-missing.json")),
             ("corrupt", corrupt),
             ("schema_invalid", bad_schema),
-            ("invariant_flip", flip),
+            ("invariant_flip_metered", flip_metered),
+            ("invariant_flip_grok_id", flip_grok_id),
+            ("invariant_flip_conserve_loosened", flip_conserve),
+            ("invariant_flip_reserve_nonempty", flip_reserve),
+            ("invariant_flip_negative_penalty", flip_neg_pen),
         ]:
             pl = load_policy(path)
             self.assertEqual(pl.mode, "FAIL_CLOSED")
             self.assertFalse(pl.ok)
-            d = decide(
-                {"id": f"fc-{label}", "task_class": "coding", "grok_reason_code": "EXPLICIT_JUSTIFIED",
-                 "grok_justification": "x" * 30},
+            cap = capacity_snapshot(NOW, policy=pl.policy or {})
+            d_sub = decide(
+                {
+                    "id": f"fc-sub-{label}",
+                    "task_class": "coding",
+                    "grok_reason_code": "EXPLICIT_JUSTIFIED",
+                    "grok_justification": "x" * 30,
+                    "requested_worker": "grok_bot_sub",
+                },
                 policy_load=pl,
-                capacity=capacity_snapshot(NOW, policy=pl.policy or {}),
+                capacity=cap,
                 record=False,
             )
-            self.assertNotEqual(d.selected_worker, "grok_bot_sub")
-            self.assertTrue(d.owner_action_required)
-            self.assertEqual(d.owner_action_code, "OWNER_ACTION_REQUIRED")
+            self.assertNotEqual(d_sub.selected_worker, "grok_bot_sub")
+            self.assertTrue(d_sub.owner_action_required)
+            self.assertEqual(d_sub.owner_action_code, "OWNER_ACTION_REQUIRED")
+            d_prot = decide(
+                {"id": f"fc-prot-{label}", "task_class": "owner_conversation"},
+                policy_load=pl,
+                capacity=cap,
+                record=False,
+            )
+            self.assertEqual(d_prot.decision, "DISPATCH")
+            self.assertEqual(d_prot.selected_worker, "grok_bot_sub")
+            self.assertTrue(d_prot.owner_action_required)
 
     def test_k_invalid_grok_justification_rejected(self) -> None:
+        just_ok = "x" * 25
+        # Positive control: valid code ACCEPTED and Grok DISPATCH when requested
+        d_ok = _decide(
+            "coding",
+            id="k-valid",
+            requested_worker="grok_bot_sub",
+            grok_reason="EXPLICIT_JUSTIFIED",
+            justification=just_ok,
+        )
+        self.assertEqual(d_ok.grok_reason_verdict, "ACCEPTED")
+        self.assertEqual(d_ok.selected_worker, "grok_bot_sub")
+        self.assertEqual(d_ok.decision, "DISPATCH")
+
         cases = [
             ("missing", None, None),
             ("peaches_can_do_it", "peaches_can_do_it", None),
@@ -428,12 +556,36 @@ class TestCapacityGovernance(unittest.TestCase):
             d = _decide(
                 "coding",
                 id=f"k-{name}",
+                requested_worker="grok_bot_sub",
                 grok_reason=code,
                 justification=just,
             )
             self.assertNotEqual(d.selected_worker, "grok_bot_sub")
             if code:
                 self.assertEqual(d.grok_reason_verdict, "REJECTED")
+
+    def test_unclassified_task_class_queues(self) -> None:
+        d = _decide(task_class="not_a_real_class", id="unclassified-1")
+        self.assertEqual(d.decision, "QUEUE")
+        self.assertIsNone(d.selected_worker)
+        self.assertIn("unclassified", d.exclusion_notes)
+        d2 = _decide(task_class=None, id="unclassified-2")
+        self.assertEqual(d2.decision, "QUEUE")
+        self.assertIn("unclassified", d2.exclusion_notes)
+
+    def test_tightening_corrupt_uses_penalty_max(self) -> None:
+        pl = load_policy()
+        policy = pl.policy or {}
+        max_pen = float((policy.get("imbalance") or {}).get("penalty_max", 1.0))
+        paths.GOVERNANCE_TIGHTENING_PATH.write_text("not-json", encoding="utf-8")
+        t = load_tightening(policy)
+        self.assertEqual(float(t["grok_routing_penalty"]), max_pen)
+        audit = paths.GOVERNANCE_AUDIT_PATH.read_text()
+        self.assertIn("TIGHTENING_CORRUPT", audit)
+        paths.GOVERNANCE_TIGHTENING_PATH.write_text(json.dumps({"grok_routing_penalty": -0.5}), encoding="utf-8")
+        t2 = load_tightening(policy)
+        default_pen = float(policy.get("grok_routing_penalty_default", 0.0))
+        self.assertGreaterEqual(float(t2["grok_routing_penalty"]), default_pen)
 
     def test_capacity_seed_values_exact(self) -> None:
         seed = json.loads(SEED_PATH.read_text())

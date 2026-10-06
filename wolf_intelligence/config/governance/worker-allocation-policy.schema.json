@@ -25,7 +25,7 @@
     "metered_fallback": {"const": "NEVER"},
     "paid_spend": {"const": "OFF"},
     "on_demand_policy": {"const": "NEVER_ENABLE"},
-    "grok_worker_id": {"type": "string", "minLength": 1},
+    "grok_worker_id": {"const": "grok_bot_sub"},
     "grok_reason_codes": {
       "type": "array",
       "minItems": 4,
@@ -65,6 +65,10 @@
       }
     },
     "tie_band_quality_delta": {"type": "number", "minimum": 0, "maximum": 1},
+    "benchmark_class_map": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
     "capacity_thresholds": {
       "type": "object",
       "required": ["default"],
@@ -101,7 +105,8 @@
         "min_samples": {"type": "integer", "minimum": 1, "maximum": 10000},
         "max_grok_share_delegatable": {"type": "number", "minimum": 0, "maximum": 1},
         "penalty_step": {"type": "number", "minimum": 0, "maximum": 1},
-        "penalty_max": {"type": "number", "minimum": 0, "maximum": 10}
+        "penalty_max": {"type": "number", "minimum": 0, "maximum": 10},
+        "penalty_hard_block_at": {"type": "number", "minimum": 0, "maximum": 10}
       }
     },
     "grok_routing_penalty_default": {"type": "number", "minimum": 0, "maximum": 10},

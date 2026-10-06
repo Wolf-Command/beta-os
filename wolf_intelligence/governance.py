@@ -24,6 +24,43 @@ ALLOWED_GROK_REASON_CODES = frozenset({
 })
 
 CAPACITY_STATES = ("NORMAL", "CONSERVE", "RESERVE", "EXHAUSTED")
+GROK_WORKER_ID = "grok_bot_sub"
+
+HARDCODED_PROTECTED_CLASSES = frozenset({
+    "owner_conversation",
+    "orchestration",
+    "exception_handling",
+    "recovery_communication",
+    "critical_synthesis",
+})
+
+HARDCODED_FAIL_CLOSED_ORDER = (
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+)
+
+HARDCODED_TASK_FAMILIES: dict[str, list[str]] = {
+    "engineering": ["coding", "debugging", "refactor", "testing"],
+    "reasoning_review": [
+        "reasoning_planning", "review", "red_team", "security", "analysis", "research",
+        "finance", "large_context", "structured_extraction", "ux_product", "vision_document",
+    ],
+    "protected": list(HARDCODED_PROTECTED_CLASSES),
+    "operations": ["state_update", "evidence_collection", "recovery"],
+}
+
+HARDCODED_BENCHMARK_CLASS_MAP: dict[str, str] = {
+    "review": "reasoning_planning",
+    "analysis": "reasoning_planning",
+    "research": "reasoning_planning",
+    "red_team": "security",
+    "refactor": "coding",
+    "testing": "coding",
+    "state_update": "structured_extraction",
+    "evidence_collection": "structured_extraction",
+    "recovery": "structured_extraction",
+}
 
 
 @dataclass
@@ -151,8 +188,19 @@ def validate_policy_schema(policy: dict[str, Any], schema: dict[str, Any] | None
     return errors
 
 
+def _known_benchmark_classes() -> set[str]:
+    routing_path = CONFIG_DIR / "routing-policy-real.json"
+    try:
+        routing = json.loads(routing_path.read_text(encoding="utf-8"))
+        return set((routing.get("task_classes") or {}).keys())
+    except (OSError, json.JSONDecodeError):
+        return set()
+
+
 def validate_policy_invariants(policy: dict[str, Any]) -> list[str]:
     """Pin invariants beyond JSON Schema — monotonic thresholds, reason codes, etc."""
+    from . import worker_registry
+
     errors: list[str] = []
     if policy.get("metered_fallback") != "NEVER":
         errors.append("invariant: metered_fallback must be NEVER")
@@ -160,13 +208,51 @@ def validate_policy_invariants(policy: dict[str, Any]) -> list[str]:
         errors.append("invariant: paid_spend must be OFF")
     if policy.get("on_demand_policy") != "NEVER_ENABLE":
         errors.append("invariant: on_demand_policy must be NEVER_ENABLE")
+    if policy.get("grok_worker_id") != GROK_WORKER_ID:
+        errors.append(f"invariant: grok_worker_id must be {GROK_WORKER_ID!r}")
     codes = set(policy.get("grok_reason_codes") or [])
     if codes != ALLOWED_GROK_REASON_CODES:
         errors.append(f"invariant: grok_reason_codes must be exactly {sorted(ALLOWED_GROK_REASON_CODES)}")
-    protected = policy.get("protected_classes") or []
+    protected = set(policy.get("protected_classes") or [])
     if not protected:
         errors.append("invariant: protected_classes must be non-empty")
+    families = policy.get("task_families") or {}
+    family_protected = set(families.get("protected") or [])
+    grok_reserve = policy.get("grok_reserve") or {}
+    gr_classes = set(grok_reserve.get("protected_classes") or [])
+    if not gr_classes:
+        errors.append("invariant: grok_reserve.protected_classes must be non-empty")
+    if protected != gr_classes or protected != family_protected:
+        errors.append(
+            "invariant: grok_reserve.protected_classes, protected_classes, and "
+            "task_families.protected must be the same set"
+        )
+    allowed_by_state = grok_reserve.get("allowed_reason_codes_by_state") or {}
+    state_order = ["NORMAL", "CONSERVE", "RESERVE", "EXHAUSTED"]
+    prev_codes: set[str] | None = None
+    for st in state_order:
+        codes_st = set(allowed_by_state.get(st) or [])
+        if prev_codes is not None and not (codes_st <= prev_codes):
+            errors.append(
+                f"invariant: allowed_reason_codes_by_state must be monotonic non-increasing "
+                f"({st} not subset of prior state)"
+            )
+        prev_codes = codes_st
+    if allowed_by_state.get("RESERVE"):
+        errors.append("invariant: RESERVE allowed_reason_codes must be empty")
+    if allowed_by_state.get("EXHAUSTED"):
+        errors.append("invariant: EXHAUSTED allowed_reason_codes must be empty")
+    conserve_codes = set(allowed_by_state.get("CONSERVE") or [])
+    if "BENCHMARK_SELECTED" in conserve_codes:
+        errors.append("invariant: CONSERVE must not contain BENCHMARK_SELECTED")
     thresholds_root = policy.get("capacity_thresholds") or {}
+    default_th = thresholds_root.get("default") or {}
+    grok_th = thresholds_root.get(GROK_WORKER_ID) or {}
+    for key in ("conserve_at", "reserve_at", "exhausted_at"):
+        g_val = grok_th.get(key)
+        d_val = default_th.get(key)
+        if isinstance(g_val, (int, float)) and isinstance(d_val, (int, float)) and g_val > d_val:
+            errors.append(f"invariant: grok capacity {key} must be <= default {key}")
     for name, th in thresholds_root.items():
         if not isinstance(th, dict):
             continue
@@ -178,14 +264,38 @@ def validate_policy_invariants(policy: dict[str, Any]) -> list[str]:
             errors.append(
                 f"invariant: capacity_thresholds.{name} must be monotonic 0 <= conserve < reserve < exhausted <= 100"
             )
-    grok_reserve = policy.get("grok_reserve") or {}
-    gr_classes = grok_reserve.get("protected_classes") or []
-    if not gr_classes:
-        errors.append("invariant: grok_reserve.protected_classes must be non-empty")
+    for pen_key in ("grok_routing_penalty_default", "grok_routing_penalty_step", "grok_routing_penalty_max"):
+        val = policy.get(pen_key)
+        if val is not None and (not isinstance(val, (int, float)) or val < 0):
+            errors.append(f"invariant: {pen_key} must be >= 0")
     imb = policy.get("imbalance") or {}
     share = imb.get("max_grok_share_delegatable")
     if share is not None and not (0 <= share <= 1):
         errors.append("invariant: imbalance.max_grok_share_delegatable must be in [0, 1]")
+    for pen_key in ("penalty_step", "penalty_max", "penalty_hard_block_at"):
+        val = imb.get(pen_key)
+        if val is not None and (not isinstance(val, (int, float)) or val < 0):
+            errors.append(f"invariant: imbalance.{pen_key} must be >= 0")
+    known_bench = _known_benchmark_classes()
+    bcm = policy.get("benchmark_class_map") or {}
+    for src, target in bcm.items():
+        if target not in known_bench:
+            errors.append(f"invariant: benchmark_class_map.{src} target {target!r} not a known benchmark class")
+    forbidden_workers = {GROK_WORKER_ID}
+    forbidden_workers.update(w for w in worker_registry.WORKERS if worker_registry.is_metered(w))
+    for list_name, paths in (
+        ("fail_closed_conservative_order", [policy.get("fail_closed_conservative_order")]),
+        ("specialisation", [
+            (policy.get("specialisation") or {}).get(fam, {}).get("prefer_workers")
+            for fam in ("engineering", "reasoning_review")
+        ]),
+    ):
+        for workers in paths:
+            if not workers:
+                continue
+            for w in workers:
+                if w in forbidden_workers:
+                    errors.append(f"invariant: {list_name} must not contain {w!r}")
     return errors
 
 
@@ -227,24 +337,36 @@ def load_policy(path: Path | str | None = None) -> PolicyLoad:
 
 def metered_permitted(policy_load: PolicyLoad | None = None) -> bool:
     """Paid/metered spend is never permitted under governance."""
-    pl = policy_load or load_policy()
-    if pl.mode == "FAIL_CLOSED":
-        return False
-    policy = pl.policy or {}
-    return policy.get("paid_spend") == "ON" and policy.get("metered_fallback") == "ALLOWED"
+    return False
 
 
-def grok_worker_id(policy: dict[str, Any]) -> str:
-    return policy.get("grok_worker_id", "grok_bot_sub")
+def grok_worker_id(policy: dict[str, Any] | None) -> str:
+    if policy and policy.get("grok_worker_id"):
+        return policy["grok_worker_id"]
+    return GROK_WORKER_ID
 
 
-def is_protected_class(task_class: str, policy: dict[str, Any]) -> bool:
-    return task_class in (policy.get("protected_classes") or [])
+def protected_classes(policy: dict[str, Any] | None) -> frozenset[str]:
+    if policy and policy.get("protected_classes"):
+        return frozenset(policy["protected_classes"])
+    return HARDCODED_PROTECTED_CLASSES
 
 
-def task_family(task_class: str, policy: dict[str, Any]) -> str:
-    families = policy.get("task_families") or {}
+def is_protected_class(task_class: str, policy: dict[str, Any] | None) -> bool:
+    return task_class in protected_classes(policy)
+
+
+def task_family(task_class: str, policy: dict[str, Any] | None) -> str:
+    families = (policy or {}).get("task_families") or HARDCODED_TASK_FAMILIES
     for name, classes in families.items():
         if task_class in (classes or []):
             return name
     return "unknown"
+
+
+def benchmark_class_for(task_class: str, policy: dict[str, Any] | None) -> str | None:
+    """Resolve benchmark class for quality/latency; None if task is unclassified."""
+    if not task_class or task_family(task_class, policy) == "unknown":
+        return None
+    bcm = (policy or {}).get("benchmark_class_map") or HARDCODED_BENCHMARK_CLASS_MAP
+    return bcm.get(task_class, task_class)

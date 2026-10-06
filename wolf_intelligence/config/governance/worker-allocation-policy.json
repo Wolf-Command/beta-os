@@ -49,6 +49,17 @@
     "by_task_class": {}
   },
   "tie_band_quality_delta": 0.05,
+  "benchmark_class_map": {
+    "review": "reasoning_planning",
+    "analysis": "reasoning_planning",
+    "research": "reasoning_planning",
+    "red_team": "security",
+    "refactor": "coding",
+    "testing": "coding",
+    "state_update": "structured_extraction",
+    "evidence_collection": "structured_extraction",
+    "recovery": "structured_extraction"
+  },
   "routing_policy_path": "routing-policy-real.json",
   "specialisation": {
     "engineering": {
@@ -117,7 +128,8 @@
     "min_samples": 5,
     "max_grok_share_delegatable": 0.4,
     "penalty_step": 0.15,
-    "penalty_max": 1.0
+    "penalty_max": 1.0,
+    "penalty_hard_block_at": 0.6
   },
   "marginal_cost_order": ["subscription", "free", "local", "metered_api"],
   "fail_closed_conservative_order": [
