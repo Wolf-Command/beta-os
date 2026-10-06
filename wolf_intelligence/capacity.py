@@ -25,6 +25,7 @@ from .paths import (
 
 TZ = ZoneInfo("Asia/Makassar")
 SEED_PATH = CONFIG_DIR / "governance" / "capacity-observed.json"
+CLOCK_SKEW_TOLERANCE_S = 60
 
 STATE_RANK = {s: i for i, s in enumerate(CAPACITY_STATES)}
 
@@ -131,7 +132,7 @@ def _validate_observation_record(
     observed_at = _parse_dt(rec.get("observed_at"))
     if observed_at is None:
         return False, "invalid_observed_at"
-    if observed_at > now:
+    if observed_at > now + timedelta(seconds=CLOCK_SKEW_TOLERANCE_S):
         return False, "future_observed_at"
     pct_map = rec.get("included_usage_pct")
     if pct_map is not None:
@@ -472,7 +473,17 @@ def _newest_pool_record_issue(
         observed_at = _record_observed_dt(rec)
         if not ok:
             if reason == "future_observed_at":
-                continue
+                append_audit_event(
+                    "CAPACITY_OBSERVATION_REJECTED",
+                    {
+                        "worker_id": worker_id,
+                        "pool": pool,
+                        "reason": reason,
+                        "observed_at": rec.get("observed_at"),
+                        "fail_closed": True,
+                    },
+                )
+                return True, reason
             if observed_at is not None and observed_at < window_cutoff:
                 continue
             append_audit_event(

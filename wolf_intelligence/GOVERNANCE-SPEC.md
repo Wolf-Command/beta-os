@@ -163,3 +163,8 @@ The FULL existing suite must still pass: `python3 -m unittest discover -s wolf_i
 ## Docs
 Add `wolf_intelligence/GOVERNANCE.md` (short: what, where config lives, states, reason codes, how to run tests).
 Commit with clear messages. Do not push.
+
+## Accepted harness deviations
+Obsolete red-team / `run.sh` assertions kept for audit history only — do not re-enable in production code:
+- **P1.filler** — expected Grok `synthetic_cap` conserve-fallback to yield `grok_reason_verdict: ACCEPTED`. Owner decision (2026-10-06): Grok rejected with fallback is always `REJECTED`, including synthetic capacity records.
+- **P2.reserve.87** — superseded velocity/reserve thresholds; current seed progression 41@09:49 → 49@10:34 → 53@12:06 must yield RESERVE with `projected_exhaustion_before_reset: true`.

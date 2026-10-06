@@ -483,6 +483,57 @@ def _within_wait_window(reset_time: str | None, now: datetime, window_min: int) 
     return now < rt <= now + timedelta(minutes=window_min)
 
 
+def _candidate_worker_ids(
+    capability: str,
+    orch_config: dict[str, Any] | None = None,
+    *,
+    registry: dict[str, Any] | None = None,
+    spend_policy: dict[str, Any] | None = None,
+) -> list[str]:
+    cfg = orch_config or {}
+    registry = registry or load_registry()
+    spend_policy = spend_policy or load_spend_policy()
+    preferred = preferred_workers(capability, cfg)
+    preferred_worker = preferred[0] if preferred else None
+    fallback_order: list[str] = []
+    if preferred_worker:
+        fallback_order.append(preferred_worker)
+    for w in PREFERRED_BY_CAPABILITY.get(capability, ()):
+        if w != preferred_worker and w not in fallback_order:
+            fallback_order.append(w)
+    for w in FALLBACK_BY_CAPABILITY.get(capability, ()):
+        if w not in fallback_order:
+            fallback_order.append(w)
+    for w in INCLUDED_ENGINEERING:
+        if w not in fallback_order:
+            fallback_order.append(w)
+    if spend_policy.get("owner_approved"):
+        for wid, worker in sorted((registry.get("workers") or {}).items()):
+            if (
+                worker.get("billing_class") == "metered" or worker_registry.is_metered(wid)
+            ) and wid not in fallback_order:
+                fallback_order.append(wid)
+    return fallback_order
+
+
+def max_eligible_context(
+    item: dict[str, Any],
+    *,
+    capacity: dict[str, Any] | None = None,
+    orch_config: dict[str, Any] | None = None,
+    items: dict[str, dict[str, Any]] | None = None,
+) -> int:
+    registry = load_registry()
+    capability = capability_for_item(item)
+    candidates = _candidate_worker_ids(capability, orch_config, registry=registry)
+    max_limit = 0
+    for wid in candidates:
+        worker = _worker_record(registry, wid)
+        if worker:
+            max_limit = max(max_limit, int(worker.get("context_limit") or 0))
+    return max_limit
+
+
 def decide_routing(
     item: dict[str, Any],
     *,
@@ -539,20 +590,12 @@ def decide_routing(
         }
 
     # Preferred unavailable — evaluate failover candidates
-    fallback_order: list[str] = []
-    for w in PREFERRED_BY_CAPABILITY.get(capability, ()):
-        if w != preferred_worker and w not in fallback_order:
-            fallback_order.append(w)
-    for w in FALLBACK_BY_CAPABILITY.get(capability, ()):
-        if w not in fallback_order:
-            fallback_order.append(w)
-    for w in INCLUDED_ENGINEERING:
-        if w not in fallback_order:
-            fallback_order.append(w)
-    if spend_policy.get("owner_approved"):
-        for wid, worker in sorted((registry.get("workers") or {}).items()):
-            if (worker.get("billing_class") == "metered" or worker_registry.is_metered(wid)) and wid not in fallback_order:
-                fallback_order.append(wid)
+    fallback_order = _candidate_worker_ids(
+        capability,
+        orch_config,
+        registry=registry,
+        spend_policy=spend_policy,
+    )
 
     ranked = _rank_eligible(
         tuple(fallback_order),

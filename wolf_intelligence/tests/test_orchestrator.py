@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -12,12 +13,14 @@ from unittest import mock
 from wolf_intelligence import orchestrator as orch
 from wolf_intelligence.governance import GROK_WORKER_ID, load_policy
 from wolf_intelligence.paths import rebind_state_paths
+from wolf_intelligence import failover
 from wolf_intelligence.scope_guard import build_worker_env, check_invocation
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 OK_WORKER = str(FIXTURES / "orch_worker_ok.py")
 FAIL_WORKER = str(FIXTURES / "orch_worker_fail.py")
 SLOW_WORKER = str(FIXTURES / "orch_worker_slow.py")
+IGNORE_TERM_WORKER = str(FIXTURES / "orch_worker_ignore_term.py")
 
 
 class OrchestratorTestCase(unittest.TestCase):
@@ -84,13 +87,16 @@ class OrchestratorTestCase(unittest.TestCase):
         self.assertTrue(out["processed"][0]["ok"])
         item = orch.show("wi-build-1")
         self.assertEqual(item["status"], "CLOSED")
-        self.assertIn("wi-build-1-review", orch.load_items())
-        self.assertEqual(orch.show("wi-build-1-review")["status"], "CLOSED")
+        self.assertIn("wi-build-1-review-1", orch.load_items())
+        self.assertEqual(orch.show("wi-build-1-review-1")["status"], "CLOSED")
 
     def test_exactly_once_double_claim_refused(self) -> None:
         self._submit_build()
         claimed, key = orch.claim("wi-build-1", now="2026-10-06T12:00:01+08:00")
         self.assertIsNotNone(claimed)
+        second, reason = orch.claim("wi-build-1", now="2026-10-06T12:00:01+08:00")
+        self.assertIsNone(second)
+        self.assertEqual(reason, "lease_active")
         leases = orch.load_leases()
         leases[key]["dispatched"] = True
         orch.save_leases(leases)
@@ -104,6 +110,7 @@ class OrchestratorTestCase(unittest.TestCase):
         )
         self.assertFalse(out["ok"])
         self.assertEqual(out["error"], "already_dispatched")
+        self.assertEqual(out["idempotency_key"], "wi-build-1:1")
 
     def test_restart_mid_lease_no_double_dispatch(self) -> None:
         self._submit_build()
@@ -142,7 +149,7 @@ class OrchestratorTestCase(unittest.TestCase):
         orch.run_once(now="2026-10-06T12:00:01+08:00")
         orch.run_once(now="2026-10-06T12:00:02+08:00")
         self.assertEqual(orch.show("wi-build-1")["status"], "CLOSED")
-        self.assertEqual(orch.show("wi-build-1-review")["status"], "CLOSED")
+        self.assertEqual(orch.show("wi-build-1-review-1")["status"], "CLOSED")
 
         cfg = orch.load_config()
         cfg["worker_cmds"]["codex_sub"][3] = "FAIL"
@@ -162,11 +169,12 @@ class OrchestratorTestCase(unittest.TestCase):
         )
         orch.run_once(now="2026-10-06T12:10:01+08:00")
         self.assertEqual(orch.show("wi-build-2")["status"], "QUEUED")
-        self.assertEqual(orch.show("wi-build-2-review")["status"], "FAILED")
+        self.assertEqual(orch.show("wi-build-2-review-1")["status"], "FAILED")
         cfg["worker_cmds"]["codex_sub"][3] = "PASS"
         orch.save_config(cfg)
         orch.run_once(now="2026-10-06T12:10:02+08:00")
         self.assertEqual(orch.show("wi-build-2")["status"], "CLOSED")
+        self.assertEqual(orch.show("wi-build-2-review-2")["status"], "CLOSED")
 
     def test_completion_record_schema(self) -> None:
         self._submit_build(reviewer_gate=False)
@@ -252,7 +260,126 @@ class OrchestratorTestCase(unittest.TestCase):
         review = {"id": "wi-real-1-review", "kind": "review", "attempt": 1, "spec": {"parent": "wi-real-1"}, "acceptance": "ok"}
         rargv = orch._worker_cmd("codex_sub", cfg, review, self.worktree)
         self.assertEqual(rargv[0], "codex")
+        self.assertIn("read-only", rargv)
         self.assertIn("VERDICT", rargv[-1])
+        build_argv = orch._worker_cmd("codex_sub", cfg, item, self.worktree)
+        self.assertIn("workspace-write", build_argv)
+        claude_review = orch._worker_cmd("claude_pro_sub", cfg, review, self.worktree)
+        self.assertIn("--permission-mode", claude_review)
+        self.assertEqual(claude_review[claude_review.index("--permission-mode") + 1], "plan")
+        self.assertEqual(orch._worker_cmd("ollama_local", cfg, item, self.worktree), [])
+
+    def test_build_awaits_review_before_close(self) -> None:
+        self._submit_build()
+        orch.claim("wi-build-1", now="2026-10-06T12:00:01+08:00")
+        claimed = orch.show("wi-build-1")
+        out = orch.dispatch_item(
+            claimed,
+            "cursor_sub",
+            worktree=self.worktree,
+            config=orch.load_config(),
+            now="2026-10-06T12:00:01+08:00",
+        )
+        self.assertTrue(out["ok"])
+        self.assertEqual(orch.show("wi-build-1")["status"], "AWAITING_REVIEW")
+        self.assertIn("wi-build-1-review-1", orch.load_items())
+
+    def test_concurrent_claim_one_wins(self) -> None:
+        import threading
+
+        self._submit_build()
+        results: list[tuple[dict | None, str]] = []
+
+        def _claim_worker() -> None:
+            results.append(orch.claim("wi-build-1", now="2026-10-06T12:00:01+08:00"))
+
+        t1 = threading.Thread(target=_claim_worker)
+        t2 = threading.Thread(target=_claim_worker)
+        t1.start()
+        t2.start()
+        t1.join(timeout=10)
+        t2.join(timeout=10)
+        wins = [r for r in results if r[0] is not None]
+        self.assertEqual(len(wins), 1)
+        leases = orch.load_leases()
+        active = [k for k, v in leases.items() if v.get("work_item_id") == "wi-build-1"]
+        self.assertEqual(len(active), 1)
+
+    def test_timeout_sigkill_within_grace(self) -> None:
+        cfg = orch.load_config()
+        cfg["worker_cmds"]["cursor_sub"] = ["python3", IGNORE_TERM_WORKER]
+        cfg["timeout_kill_grace_s"] = 0.2
+        orch.save_config(cfg)
+        self._submit_build(timeout_s=1)
+        started = time.perf_counter()
+        out = orch.run_once(now="2026-10-06T12:00:01+08:00")
+        elapsed = time.perf_counter() - started
+        self.assertEqual(out["processed"][0]["status"], "TIMED_OUT")
+        self.assertLess(elapsed, 3.0)
+
+    def test_submit_preserves_context_and_urgent(self) -> None:
+        rec = orch.submit(
+            {
+                "id": "wi-ctx",
+                "kind": "build",
+                "spec": {"prompt": "x"},
+                "context_size": 120_000,
+                "urgent": True,
+                "acceptance": "ok",
+                "reviewer_gate": False,
+            },
+            now="2026-10-06T12:00:00+08:00",
+        )
+        self.assertEqual(rec["context_size"], 120_000)
+        self.assertTrue(rec["urgent"])
+
+    def test_oversized_context_refused(self) -> None:
+        orch.submit(
+            {
+                "id": "wi-huge",
+                "kind": "build",
+                "spec": {"prompt": "x"},
+                "context_size": 9_999_999,
+                "acceptance": "ok",
+                "reviewer_gate": False,
+            },
+            now="2026-10-06T12:00:00+08:00",
+        )
+        item = orch.show("wi-huge")
+        cap = orch.capacity_snapshot("2026-10-06T12:00:01+08:00", policy=load_policy().policy, policy_mode="ENFORCED")
+        worker, reason = orch.eligibility(item, orch.load_items(), cap, orch.load_config(), now="2026-10-06T12:00:01+08:00")
+        self.assertIsNone(worker)
+        self.assertEqual(reason, "context_exceeded")
+
+    def test_waiting_for_capacity_resumes_on_health(self) -> None:
+        orch.submit(
+            {
+                "id": "wi-wait",
+                "kind": "build",
+                "spec": {"prompt": "x"},
+                "acceptance": "ok",
+                "reviewer_gate": False,
+            },
+            now="2026-10-06T12:00:00+08:00",
+        )
+        items = orch.load_items()
+        items["wi-wait"]["status"] = "WAITING_FOR_CAPACITY"
+        orch.save_items(items)
+        with mock.patch.object(
+            orch.failover,
+            "decide_routing",
+            return_value={"action": "WAITING_FOR_CAPACITY", "worker_id": None},
+        ):
+            self.assertEqual(orch.reevaluate_waiting_for_capacity(), [])
+        self.assertEqual(orch.show("wi-wait")["status"], "WAITING_FOR_CAPACITY")
+        with mock.patch.object(
+            orch.failover,
+            "decide_routing",
+            return_value={"action": "DISPATCH", "worker_id": "cursor_sub"},
+        ):
+            resumed = orch.reevaluate_waiting_for_capacity(now="2026-10-06T12:00:06+08:00")
+        self.assertEqual(resumed, ["wi-wait"])
+        self.assertEqual(orch.show("wi-wait")["status"], "QUEUED")
 
 
 class DispatchEnvTests(unittest.TestCase):

@@ -1,6 +1,7 @@
 """Non-Grok control-plane orchestrator — deterministic, no LLM in the control loop."""
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import re
@@ -8,9 +9,10 @@ import shutil
 import signal
 import subprocess
 import time
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 from zoneinfo import ZoneInfo
 
 from . import failover, worker_registry
@@ -53,6 +55,9 @@ def rebind_orchestrator_paths() -> None:
     AUDIT_PATH = p["AUDIT_PATH"]
     NOTIFICATIONS_PATH = p["NOTIFICATIONS_PATH"]
     COMPLETIONS_DIR = p["COMPLETIONS_DIR"]
+
+CANONICAL_ITEM_FIELDS = ("context_size", "urgent")
+DEFAULT_TIMEOUT_KILL_GRACE_S = 5.0
 
 COMPLETION_FIELDS = (
     "WORK_ITEM_ID",
@@ -172,6 +177,43 @@ def _lease_key(item_id: str, attempt: int) -> str:
     return f"{item_id}:{attempt}"
 
 
+def _dispatch_idempotency_key(item_id: str, attempt: int) -> str:
+    return _lease_key(item_id, attempt)
+
+
+@contextmanager
+def _orch_exclusive_lock() -> Iterator[None]:
+    ORCH_DIR.mkdir(parents=True, exist_ok=True)
+    lock_path = ORCH_DIR / ".exclusive.lock"
+    with lock_path.open("w", encoding="utf-8") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
+def _active_item_lease(item_id: str, now: datetime | str | None = None) -> dict[str, Any] | None:
+    now_dt = _parse_now(now)
+    for lease in load_leases().values():
+        if lease.get("work_item_id") != item_id:
+            continue
+        exp = lease.get("expires_at")
+        if exp and datetime.fromisoformat(exp) > now_dt:
+            return lease
+    return None
+
+
+def _item_context_size(item: dict[str, Any]) -> int:
+    spec = item.get("spec") or {}
+    return int(item.get("context_size") or spec.get("context_size") or 0)
+
+
+def _item_urgent(item: dict[str, Any]) -> bool:
+    spec = item.get("spec") or {}
+    return bool(item.get("urgent") or spec.get("urgent"))
+
+
 def _truncate_summary(text: str, max_lines: int = 5) -> str:
     lines = (text or "").splitlines()
     if len(lines) <= max_lines:
@@ -257,6 +299,9 @@ def submit(item: dict[str, Any], *, now: datetime | str | None = None) -> dict[s
         "last_worker": None,
         "owner_action_required": "",
     }
+    for field in CANONICAL_ITEM_FIELDS:
+        if field in item:
+            record[field] = item[field]
     items[item_id] = record
     save_items(items)
     audit_transition(item_id, "submit", None, record, now=now)
@@ -323,6 +368,11 @@ def eligibility(
         return None, f"status:{item.get('status')}"
     if not _deps_satisfied(item, items):
         return None, "deps_unsatisfied"
+    ctx_size = _item_context_size(item)
+    if ctx_size:
+        max_ctx = failover.max_eligible_context(item, capacity=capacity, orch_config=config, items=items)
+        if max_ctx and ctx_size > max_ctx:
+            return None, "context_exceeded"
     failover.update_grok_capacity_flag(capacity)
     decision = failover.decide_routing(
         item,
@@ -340,7 +390,7 @@ def eligibility(
     if action == "WAIT":
         return None, "wait_for_preferred"
     if action == "WAITING_FOR_CAPACITY":
-        if decision.get("notify_owner"):
+        if decision.get("notify_owner") or _item_urgent(item):
             notify_owner(item["id"], "WAITING_FOR_CAPACITY: urgent item blocked", now=now)
         before = dict(item)
         item["status"] = "WAITING_FOR_CAPACITY"
@@ -359,37 +409,41 @@ def claim(
     now: datetime | str | None = None,
     force: bool = False,
 ) -> tuple[dict[str, Any] | None, str]:
-    items = load_items()
-    item = items.get(item_id)
-    if not item:
-        return None, "not_found"
-    attempt = int(item.get("attempt") or 0) + 1
-    key = _lease_key(item_id, attempt)
-    leases = load_leases()
-    existing = leases.get(key)
-    now_dt = _parse_now(now)
-    if existing and not force:
-        exp = existing.get("expires_at")
-        if exp and datetime.fromisoformat(exp) > now_dt:
+    with _orch_exclusive_lock():
+        items = load_items()
+        item = items.get(item_id)
+        if not item:
+            return None, "not_found"
+        now_dt = _parse_now(now)
+        if _active_item_lease(item_id, now_dt) and not force:
             return None, "lease_active"
-    before = dict(item)
-    item["attempt"] = attempt
-    item["status"] = "CLAIMED"
-    item["updated_at"] = _now_iso(now_dt)
-    items[item_id] = item
-    save_items(items)
-    lease = {
-        "work_item_id": item_id,
-        "attempt": attempt,
-        "worker": None,
-        "claimed_at": _now_iso(now_dt),
-        "expires_at": (now_dt + timedelta(seconds=int(item.get("timeout_s") or 300) + 30)).isoformat(),
-        "dispatched": False,
-    }
-    leases[key] = lease
-    save_leases(leases)
-    audit_transition(item_id, "claim", before, item, now=now_dt, extra={"lease_key": key})
-    return item, key
+        attempt = int(item.get("attempt") or 0) + 1
+        key = _lease_key(item_id, attempt)
+        leases = load_leases()
+        existing = leases.get(key)
+        if existing and not force:
+            exp = existing.get("expires_at")
+            if exp and datetime.fromisoformat(exp) > now_dt:
+                return None, "lease_active"
+        before = dict(item)
+        item["attempt"] = attempt
+        item["status"] = "CLAIMED"
+        item["updated_at"] = _now_iso(now_dt)
+        items[item_id] = item
+        save_items(items)
+        lease = {
+            "work_item_id": item_id,
+            "attempt": attempt,
+            "worker": None,
+            "claimed_at": _now_iso(now_dt),
+            "expires_at": (now_dt + timedelta(seconds=int(item.get("timeout_s") or 300) + 30)).isoformat(),
+            "dispatched": False,
+            "idempotency_key": _dispatch_idempotency_key(item_id, attempt),
+        }
+        leases[key] = lease
+        save_leases(leases)
+        audit_transition(item_id, "claim", before, item, now=now_dt, extra={"lease_key": key})
+        return item, key
 
 
 def refuse_double_claim(item_id: str, attempt: int) -> bool:
@@ -462,21 +516,28 @@ def _grade_build(worktree: str, exit_code: int | None) -> tuple[str, str, list[s
     return "COMPLETED", "fixture/hello.py present and unittest passed", exceptions
 
 
-def _grade_review(output_path: Path, exit_code: int | None) -> tuple[str, str, list[str]]:
-    text = output_path.read_text(encoding="utf-8") if output_path.is_file() else ""
-    verdict = None
+def _extract_review_verdict(text: str) -> str | None:
     for line in text.splitlines():
         match = VERDICT_RE.search(line)
         if match:
-            verdict = match.group(1).upper()
-            break
+            return match.group(1).upper()
+    return None
+
+
+def _grade_review_text(text: str, exit_code: int | None, *, worker_label: str = "review") -> tuple[str, str, list[str]]:
+    verdict = _extract_review_verdict(text)
     if exit_code not in (0, None) and exit_code != 0:
-        return "FAILED", f"codex exit {exit_code}", []
+        return "FAILED", f"{worker_label} exit {exit_code}", []
     if verdict == "FAIL":
         return "FAILED", _truncate_summary(text) or "review verdict FAIL", []
     if verdict == "PASS":
         return "COMPLETED", _truncate_summary(text) or "review verdict PASS", []
-    return "FAILED", "no VERDICT line in codex output", []
+    return "FAILED", f"no VERDICT line in {worker_label} output", []
+
+
+def _grade_review(output_path: Path, exit_code: int | None) -> tuple[str, str, list[str]]:
+    text = output_path.read_text(encoding="utf-8") if output_path.is_file() else ""
+    return _grade_review_text(text, exit_code, worker_label="codex")
 
 
 def _executed_by(argv: list[str], *, using_override: bool, worker_id: str) -> str:
@@ -552,13 +613,14 @@ def _worker_cmd(worker_id: str, config: dict[str, Any], item: dict[str, Any], wo
         prompt = _review_prompt(item) if item.get("kind") == "review" else json.dumps(
             {"acceptance": item.get("acceptance"), "spec": spec}
         )
+        sandbox = "read-only" if item.get("kind") == "review" else "workspace-write"
         return [
             "codex",
             "exec",
             "-c",
             "forced_login_method=chatgpt",
             "-s",
-            "read-only",
+            sandbox,
             "-C",
             worktree,
             "-o",
@@ -566,8 +628,16 @@ def _worker_cmd(worker_id: str, config: dict[str, Any], item: dict[str, Any], wo
             prompt,
         ]
     if worker_id == "claude_pro_sub":
-        return ["claude", "-p", "--output-format", "json", "--no-session-persistence"]
-    raise ValueError(f"unsupported worker: {worker_id}")
+        return [
+            "claude",
+            "-p",
+            "--output-format",
+            "json",
+            "--no-session-persistence",
+            "--permission-mode",
+            "plan",
+        ]
+    return []
 
 
 def _billing_class(worker_id: str) -> str:
@@ -580,11 +650,29 @@ def _billing_class(worker_id: str) -> str:
     return "none"
 
 
-def _kill_group(proc: subprocess.Popen) -> None:
+def _timeout_kill_grace_s(config: dict[str, Any]) -> float:
+    return float(config.get("timeout_kill_grace_s") or DEFAULT_TIMEOUT_KILL_GRACE_S)
+
+
+def _terminate_process_group(proc: subprocess.Popen, *, grace_s: float) -> None:
     try:
         os.killpg(proc.pid, signal.SIGTERM)
     except (ProcessLookupError, PermissionError, OSError):
+        return
+    if grace_s > 0:
+        deadline = time.perf_counter() + grace_s
+        while time.perf_counter() < deadline:
+            if proc.poll() is not None:
+                return
+            time.sleep(0.05)
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError, OSError):
         pass
+
+
+def _kill_group(proc: subprocess.Popen, *, grace_s: float = 0) -> None:
+    _terminate_process_group(proc, grace_s=grace_s)
 
 
 def dispatch_item(
@@ -598,24 +686,45 @@ def dispatch_item(
     item_id = item["id"]
     attempt = int(item.get("attempt") or 1)
     key = _lease_key(item_id, attempt)
-    leases = load_leases()
-    lease = leases.get(key)
-    if lease and lease.get("dispatched"):
-        return {"ok": False, "error": "already_dispatched", "lease_key": key}
-    items = load_items()
-    before = dict(items[item_id])
-    items[item_id]["status"] = "RUNNING"
-    items[item_id]["last_worker"] = worker_id
-    items[item_id]["updated_at"] = _now_iso(now)
-    save_items(items)
-    if lease:
-        lease["dispatched"] = True
-        lease["worker"] = worker_id
-        leases[key] = lease
-        save_leases(leases)
-    audit_transition(item_id, "dispatch", before, items[item_id], now=now, extra={"worker": worker_id})
+    idempotency_key = _dispatch_idempotency_key(item_id, attempt)
+
+    with _orch_exclusive_lock():
+        leases = load_leases()
+        lease = leases.get(key)
+        if lease and lease.get("dispatched"):
+            return {
+                "ok": False,
+                "error": "already_dispatched",
+                "lease_key": key,
+                "idempotency_key": idempotency_key,
+            }
+        items = load_items()
+        before = dict(items[item_id])
+        items[item_id]["status"] = "RUNNING"
+        items[item_id]["last_worker"] = worker_id
+        items[item_id]["updated_at"] = _now_iso(now)
+        save_items(items)
+        if lease:
+            lease["dispatched"] = True
+            lease["worker"] = worker_id
+            lease["idempotency_key"] = idempotency_key
+            leases[key] = lease
+            save_leases(leases)
+        audit_transition(item_id, "dispatch", before, items[item_id], now=now, extra={"worker": worker_id})
 
     argv = _worker_cmd(worker_id, config, items[item_id], worktree)
+    if not argv:
+        return _finish_dispatch(
+            items[item_id],
+            worker_id,
+            status="FAILED",
+            summary=f"unsupported worker or empty command: {worker_id}",
+            exceptions=["empty_argv"],
+            exit_code=None,
+            now=now,
+            argv=[worker_id],
+            using_override=False,
+        )
     pl = load_policy()
     policy = pl.policy if pl and pl.policy else None
     env, refused_env = build_worker_env(worktree, os.environ, policy=policy)
@@ -657,8 +766,13 @@ def dispatch_item(
     stdin_data = spec.get("stdin") if using_override else None
     if using_override and worker_id == "codex_sub" and stdin_data is None:
         stdin_data = json.dumps({"acceptance": items[item_id].get("acceptance"), "spec": spec})
+    elif not using_override and worker_id == "claude_pro_sub":
+        stdin_data = _review_prompt(items[item_id])
+    elif not using_override and worker_id == "codex_sub" and items[item_id].get("kind") != "review":
+        stdin_data = json.dumps({"acceptance": items[item_id].get("acceptance"), "spec": spec})
 
     timeout_s = float(items[item_id].get("timeout_s") or 300)
+    kill_grace_s = _timeout_kill_grace_s(config)
     started = time.perf_counter()
     try:
         proc = subprocess.Popen(
@@ -690,10 +804,11 @@ def dispatch_item(
         out, err_txt = proc.communicate(input=stdin_data, timeout=timeout_s)
     except subprocess.TimeoutExpired:
         err_kind = "TIMEOUT"
-        _kill_group(proc)
+        _terminate_process_group(proc, grace_s=kill_grace_s)
         out, err_txt = proc.communicate()
     finally:
-        _kill_group(proc)
+        if proc.poll() is None:
+            _kill_group(proc, grace_s=0)
 
     elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
     exit_code = proc.returncode if err_kind is None else None
@@ -767,6 +882,12 @@ def dispatch_item(
         exceptions.extend(grade_exc)
         if hello_path.is_file():
             evidence.append(str(hello_path))
+    elif item["kind"] == "review" and worker_id == "claude_pro_sub":
+        review_text = out or ""
+        if not review_text.strip() and err_txt.strip():
+            review_text = err_txt
+        status, summary, grade_exc = _grade_review_text(review_text, exit_code, worker_label="claude")
+        exceptions.extend(grade_exc)
     elif item["kind"] == "review":
         status, summary, grade_exc = _grade_review(codex_output_path, exit_code)
         exceptions.extend(grade_exc)
@@ -838,8 +959,9 @@ def _finish_dispatch(
     rec["EVIDENCE_PATHS"] = list(rec["EVIDENCE_PATHS"]) + [str(json_path), str(md_path)]
 
     review_id = None
+    parent_updates: dict[str, dict[str, Any]] = {}
     if status == "COMPLETED" and item["kind"] == "build" and item.get("reviewer_gate"):
-        review_id = f"{item['id']}-review"
+        review_id = f"{item['id']}-review-{attempt}"
         if review_id not in items:
             submit(
                 {
@@ -857,8 +979,7 @@ def _finish_dispatch(
             items = load_items()
             item["review_enqueued"] = review_id
         item["status"] = "AWAITING_REVIEW"
-    parent_updates: dict[str, dict[str, Any]] = {}
-    if status == "COMPLETED" and item["kind"] == "review":
+    elif status == "COMPLETED" and item["kind"] == "review":
         parent = (item.get("spec") or {}).get("parent")
         if parent and items.get(parent):
             parent_item = dict(items[parent])
@@ -914,6 +1035,43 @@ def _finish_dispatch(
     }
 
 
+def reevaluate_waiting_for_capacity(*, now: datetime | str | None = None) -> list[str]:
+    config = load_config()
+    pl = load_policy()
+    cap = capacity_snapshot(now, policy=pl.policy, policy_mode=pl.mode)
+    items = load_items()
+    resumed: list[str] = []
+    for item_id, item in list(items.items()):
+        if item.get("status") != "WAITING_FOR_CAPACITY":
+            continue
+        failover.update_grok_capacity_flag(cap)
+        decision = failover.decide_routing(
+            item,
+            capacity=cap,
+            orch_config=config,
+            items=items,
+            now=now,
+        )
+        action = decision.get("action")
+        worker = decision.get("worker_id")
+        if action not in ("DISPATCH", "FAILOVER") or not worker:
+            continue
+        capability = failover.capability_for_item(item)
+        primary_pool = set(failover.preferred_workers(capability, config))
+        primary_pool.update(failover.FALLBACK_BY_CAPABILITY.get(capability, ()))
+        if worker not in primary_pool:
+            continue
+        before = dict(item)
+        item["status"] = "QUEUED"
+        item["updated_at"] = _now_iso(now)
+        items[item_id] = item
+        audit_transition(item_id, "capacity_resumed", before, item, now=now, extra=decision.get("audit"))
+        resumed.append(item_id)
+    if resumed:
+        save_items(items)
+    return resumed
+
+
 def run_once(*, worktree: str | None = None, now: datetime | str | None = None) -> dict[str, Any]:
     ensure_dirs()
     ORCH_DIR.mkdir(parents=True, exist_ok=True)
@@ -928,7 +1086,7 @@ def run_once(*, worktree: str | None = None, now: datetime | str | None = None) 
     items = load_items()
     processed: list[dict[str, Any]] = []
     pending = sorted(
-        (iid for iid, it in items.items() if it.get("status") == "QUEUED"),
+        (iid for iid, it in items.items() if it.get("status") in ("QUEUED", "WAITING_FOR_CAPACITY")),
         key=lambda x: x,
     )
     seen = set(pending)
@@ -936,7 +1094,7 @@ def run_once(*, worktree: str | None = None, now: datetime | str | None = None) 
         item_id = pending.pop(0)
         items = load_items()
         item = items.get(item_id)
-        if not item or item.get("status") != "QUEUED":
+        if not item or item.get("status") not in ("QUEUED", "WAITING_FOR_CAPACITY"):
             continue
         worker, reason = eligibility(item, items, cap, config, now=now)
         if not worker:
@@ -1001,6 +1159,7 @@ def health(*, now: datetime | str | None = None) -> dict[str, Any]:
                 issues.append(f"corrupt:{path.name}")
 
     reclaimed = reclaim_stale_leases(now=now)
+    resumed = reevaluate_waiting_for_capacity(now=now)
     workers = {
         "cursor_sub": shutil.which("cursor-agent"),
         "codex_sub": shutil.which("codex"),
@@ -1039,6 +1198,7 @@ def health(*, now: datetime | str | None = None) -> dict[str, Any]:
         "grok_state": grok.get("state"),
         "items": len(items),
         "leases": len(load_leases()),
+        "resumed_from_capacity_wait": resumed,
     }
 
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -65,7 +66,9 @@ class ScopeGuardTests(unittest.TestCase):
         self.assertTrue(ok, reasons)
 
     def test_force_outside_sandbox_refused(self) -> None:
-        outside = tempfile.mkdtemp(prefix="wi-outside-", dir="/tmp")
+        outside = str(HOME / f".wi-scope-outside-{os.getpid()}")
+        Path(outside).mkdir(parents=True, exist_ok=True)
+        self.addCleanup(shutil.rmtree, outside, True)
         ok, reasons = check_invocation(
             "cursor_sub",
             ["cursor-agent", "--workspace", outside, "--force", "--mode", "ask"],
@@ -127,7 +130,9 @@ class ScopeGuardTests(unittest.TestCase):
         self.assertIn("ZDOTDIR_NOT_ISOLATED", reasons)
 
     def test_codex_workspace_write_outside_sandbox_refused(self) -> None:
-        outside = tempfile.mkdtemp(prefix="wi-codex-", dir="/tmp")
+        outside = str(HOME / f".wi-scope-codex-{os.getpid()}")
+        Path(outside).mkdir(parents=True, exist_ok=True)
+        self.addCleanup(shutil.rmtree, outside, True)
         ok, reasons = check_invocation(
             "codex_sub",
             ["codex", "exec", "-s", "workspace-write", "-C", outside],
@@ -150,7 +155,9 @@ class ScopeGuardTests(unittest.TestCase):
         self.assertTrue(ok, reasons)
 
     def test_mixed_cd_flags_last_wins(self) -> None:
-        denied = tempfile.mkdtemp(prefix="wi-denied-", dir="/tmp")
+        denied = str(HOME / f".wi-scope-denied-{os.getpid()}")
+        Path(denied).mkdir(parents=True, exist_ok=True)
+        self.addCleanup(shutil.rmtree, denied, True)
         ws = str(WORKTREE)
         ok, reasons = check_invocation(
             "codex_sub",

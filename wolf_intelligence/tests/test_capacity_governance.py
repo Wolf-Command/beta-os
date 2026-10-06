@@ -170,18 +170,19 @@ class TestCapacityGovernance(unittest.TestCase):
     def test_c_grok_pressure_monotonic_delegation(self) -> None:
         just = "x" * 25
         # NORMAL + valid EXPLICIT_JUSTIFIED + requested grok -> Grok DISPATCH
-        _set_grok_pct(10.0)
-        d_normal = _decide(
-            "coding",
-            id="c-normal-grok",
-            requested_worker="grok_bot_sub",
-            grok_reason="EXPLICIT_JUSTIFIED",
-            justification=just,
-        )
-        self.assertEqual(d_normal.decision, "DISPATCH")
-        self.assertEqual(d_normal.selected_worker, "grok_bot_sub")
-        self.assertEqual(d_normal.grok_reason_verdict, "ACCEPTED")
-        self.assertIsNotNone(d_normal.quality_floor_waived_reason)
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            _set_grok_pct(10.0)
+            d_normal = _decide(
+                "coding",
+                id="c-normal-grok",
+                requested_worker="grok_bot_sub",
+                grok_reason="EXPLICIT_JUSTIFIED",
+                justification=just,
+            )
+            self.assertEqual(d_normal.decision, "DISPATCH")
+            self.assertEqual(d_normal.selected_worker, "grok_bot_sub")
+            self.assertEqual(d_normal.grok_reason_verdict, "ACCEPTED")
+            self.assertIsNotNone(d_normal.quality_floor_waived_reason)
 
         # CONSERVE + BENCHMARK_SELECTED -> rejected
         _set_grok_pct(40.0)
@@ -486,48 +487,49 @@ class TestCapacityGovernance(unittest.TestCase):
         hard_block = float((policy.get("imbalance") or {}).get("penalty_hard_block_at", 0.6))
         save_tightening({"grok_routing_penalty": 0.0}, policy)
         just = "x" * 25
-        _set_grok_pct(10.0)
-        d_before = _decide(
-            "coding",
-            id="imbalance-before",
-            requested_worker="grok_bot_sub",
-            grok_reason="EXPLICIT_JUSTIFIED",
-            justification=just,
-        )
-        self.assertEqual(d_before.selected_worker, "grok_bot_sub")
-        self.assertEqual(d_before.grok_reason_verdict, "ACCEPTED")
-
-        grok = "grok_bot_sub"
-        for i in range(8):
-            wi = {
-                "id": f"imbalance-dispatch-{i}",
-                "task_class": "coding",
-                "requested_worker": grok,
-                "grok_reason_code": "EXPLICIT_JUSTIFIED",
-                "grok_justification": just,
-            }
-            decide(
-                wi,
-                policy_load=pl,
-                capacity=capacity_snapshot(NOW, policy=policy, policy_mode=pl.mode),
-                ledger_view=LedgerView(),
-                now=NOW,
-                record=True,
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            _set_grok_pct(10.0)
+            d_before = _decide(
+                "coding",
+                id="imbalance-before",
+                requested_worker="grok_bot_sub",
+                grok_reason="EXPLICIT_JUSTIFIED",
+                justification=just,
             )
-            check_imbalance(pl, LedgerView(), now=NOW)
-        t = load_tightening(policy)
-        self.assertGreaterEqual(float(t.get("grok_routing_penalty", 0)), hard_block)
-        audit = paths.GOVERNANCE_AUDIT_PATH.read_text()
-        self.assertIn("ROUTING_IMBALANCE", audit)
+            self.assertEqual(d_before.selected_worker, "grok_bot_sub")
+            self.assertEqual(d_before.grok_reason_verdict, "ACCEPTED")
 
-        d_after = _decide(
-            "coding",
-            id="imbalance-after",
-            requested_worker="grok_bot_sub",
-            grok_reason="EXPLICIT_JUSTIFIED",
-            justification=just,
-        )
-        self.assertNotEqual(d_after.selected_worker, "grok_bot_sub")
+            grok = "grok_bot_sub"
+            for i in range(8):
+                wi = {
+                    "id": f"imbalance-dispatch-{i}",
+                    "task_class": "coding",
+                    "requested_worker": grok,
+                    "grok_reason_code": "EXPLICIT_JUSTIFIED",
+                    "grok_justification": just,
+                }
+                decide(
+                    wi,
+                    policy_load=pl,
+                    capacity=capacity_snapshot(NOW, policy=policy, policy_mode=pl.mode),
+                    ledger_view=LedgerView(),
+                    now=NOW,
+                    record=True,
+                )
+                check_imbalance(pl, LedgerView(), now=NOW)
+            t = load_tightening(policy)
+            self.assertGreaterEqual(float(t.get("grok_routing_penalty", 0)), hard_block)
+            audit = paths.GOVERNANCE_AUDIT_PATH.read_text()
+            self.assertIn("ROUTING_IMBALANCE", audit)
+
+            d_after = _decide(
+                "coding",
+                id="imbalance-after",
+                requested_worker="grok_bot_sub",
+                grok_reason="EXPLICIT_JUSTIFIED",
+                justification=just,
+            )
+            self.assertNotEqual(d_after.selected_worker, "grok_bot_sub")
         self.assertEqual(d_after.grok_reason_verdict, "REJECTED")
 
         save_tightening({"grok_routing_penalty": 0.0}, policy)
@@ -669,15 +671,16 @@ class TestCapacityGovernance(unittest.TestCase):
 
     def test_k_invalid_grok_justification_rejected(self) -> None:
         just_ok = "x" * 25
-        _set_grok_pct(10.0)
-        # Positive control: valid code ACCEPTED and Grok DISPATCH when requested
-        d_ok = _decide(
-            "coding",
-            id="k-valid",
-            requested_worker="grok_bot_sub",
-            grok_reason="EXPLICIT_JUSTIFIED",
-            justification=just_ok,
-        )
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            _set_grok_pct(10.0)
+            # Positive control: valid code ACCEPTED and Grok DISPATCH when requested
+            d_ok = _decide(
+                "coding",
+                id="k-valid",
+                requested_worker="grok_bot_sub",
+                grok_reason="EXPLICIT_JUSTIFIED",
+                justification=just_ok,
+            )
         self.assertEqual(d_ok.grok_reason_verdict, "ACCEPTED")
         self.assertEqual(d_ok.selected_worker, "grok_bot_sub")
         self.assertEqual(d_ok.decision, "DISPATCH")
@@ -896,21 +899,22 @@ class TestCapacityGovernance(unittest.TestCase):
         policy = self._velocity_policy_fixture(conserve_at=60)
         if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
             paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
-        record_observation(
-            worker_id="grok_bot_sub",
-            included_usage_pct={"weekly": 41},
-            source="owner_observed",
-            observed_at="2026-10-02T10:34:00+08:00",
-        )
-        record_observation(
-            worker_id="grok_bot_sub",
-            included_usage_pct={"weekly": 49},
-            source="owner_observed",
-            observed_at="2026-10-06T10:34:00+08:00",
-            reset_at="2026-10-09T10:34:00+08:00",
-        )
-        now = "2026-10-06T10:35:00+08:00"
-        snap = capacity_snapshot(now, policy=policy, policy_mode="ENFORCED")
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 41},
+                source="owner_observed",
+                observed_at="2026-10-02T10:34:00+08:00",
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 49},
+                source="owner_observed",
+                observed_at="2026-10-06T10:34:00+08:00",
+                reset_at="2026-10-09T10:34:00+08:00",
+            )
+            now = "2026-10-06T10:35:00+08:00"
+            snap = capacity_snapshot(now, policy=policy, policy_mode="ENFORCED")
         grok = snap["workers"]["grok_bot_sub"]
         self.assertEqual(grok["state"], "NORMAL")
         self.assertIs(grok.get("projected_exhaustion_before_reset"), False)
@@ -1351,6 +1355,59 @@ class TestCapacityGovernance(unittest.TestCase):
         grok = snap["workers"]["grok_bot_sub"]
         self.assertEqual(grok["state"], "NORMAL")
         self.assertIs(grok.get("projected_exhaustion_before_reset"), False)
+
+    def test_future_observation_fail_closed_to_conserve(self) -> None:
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        now = "2026-10-06T12:00:00+08:00"
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            record_observation(
+                worker_id="cursor_sub",
+                included_usage_pct={"cursor_models": 10},
+                source="owner_observed",
+                observed_at="2026-10-06T11:00:00+08:00",
+            )
+            record_observation(
+                worker_id="cursor_sub",
+                included_usage_pct={"cursor_models": 99},
+                source="owner_observed",
+                observed_at="2026-10-06T13:00:00+08:00",
+            )
+            snap = capacity_snapshot(now, policy=load_policy().policy, policy_mode="ENFORCED")
+        cursor = snap["workers"]["cursor_sub"]
+        self.assertIn(cursor["state"], ("CONSERVE", "RESERVE", "EXHAUSTED"))
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+
+    def test_synthetic_cap_conserve_fallback_always_rejected(self) -> None:
+        just = "x" * 25
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        snap = capacity_snapshot("2026-10-06T10:35:00+08:00", policy=policy, policy_mode="ENFORCED")
+        grok_cap = dict(snap["workers"]["grok_bot_sub"])
+        grok_cap.pop("velocity", None)
+        grok_cap.pop("included_usage_pct", None)
+        grok_cap.pop("observed_at", None)
+        grok_cap.pop("plan", None)
+        snap = dict(snap)
+        snap["workers"] = dict(snap["workers"])
+        snap["workers"]["grok_bot_sub"] = grok_cap
+        save_tightening({"grok_routing_penalty": 0.0}, policy)
+        d = decide(
+            {
+                "id": "synthetic-cap-reject",
+                "task_class": "coding",
+                "requested_worker": "grok_bot_sub",
+                "grok_reason_code": "EXPLICIT_JUSTIFIED",
+                "grok_justification": just,
+            },
+            policy_load=load_policy(),
+            capacity=snap,
+            now="2026-10-06T10:35:00+08:00",
+            record=False,
+        )
+        self.assertEqual(d.decision, "DISPATCH")
+        self.assertNotEqual(d.selected_worker, "grok_bot_sub")
+        self.assertEqual(d.grok_reason_verdict, "REJECTED")
 
     def test_r1_first_decision_baseline_survives_restart(self) -> None:
         """Fresh install: first decision writes tightening baseline; restart keeps default penalty."""
