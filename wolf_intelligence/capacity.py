@@ -191,9 +191,19 @@ def _merge_pool_observations(
                     "source": rec.get("source"),
                 }
                 continue
-            if observed_at >= prev["observed_at"]:
+            if observed_at > prev["observed_at"]:
                 worker_pools[pool] = {
                     "pct": float(pct),
+                    "observed_at": observed_at,
+                    "plan": rec.get("plan") or prev.get("plan"),
+                    "remaining": rec.get("remaining") if "remaining" in rec else prev.get("remaining"),
+                    "reset_at": rec.get("reset_at") or prev.get("reset_at"),
+                    "on_demand": rec.get("on_demand") or prev.get("on_demand"),
+                    "source": rec.get("source") or prev.get("source"),
+                }
+            elif observed_at == prev["observed_at"]:
+                worker_pools[pool] = {
+                    "pct": max(float(pct), float(prev["pct"])),
                     "observed_at": observed_at,
                     "plan": rec.get("plan") or prev.get("plan"),
                     "remaining": rec.get("remaining") if "remaining" in rec else prev.get("remaining"),
@@ -416,7 +426,13 @@ def _pool_velocity_pairs(
             continue
         pairs.append((t, float(pct_map[pool])))
     pairs.sort(key=lambda x: x[0])
-    return pairs
+    deduped: list[tuple[datetime, float]] = []
+    for t, p in pairs:
+        if deduped and deduped[-1][0] == t:
+            deduped[-1] = (t, max(deduped[-1][1], p))
+        else:
+            deduped.append((t, p))
+    return deduped
 
 
 def _record_observed_dt(rec: dict[str, Any]) -> datetime | None:
@@ -491,27 +507,55 @@ def _newest_pool_record_issue(
     if earliest_at is None:
         return False, ""
 
-    span_h = (newest_at - earliest_at).total_seconds() / 3600.0
-    slow_velocity_series = len(valid_times) >= 2 and span_h > max(max_age_h * 2.0, 48.0)
-    if not slow_velocity_series:
-        for rec in records:
-            observed_at = _record_observed_dt(rec)
-            if observed_at is None or observed_at >= newest_at:
+    newest_pct = float((newest.get("included_usage_pct") or {}).get(pool, 0))
+
+    for rec in records:
+        observed_at = _record_observed_dt(rec)
+        if observed_at is None:
+            append_audit_event(
+                "CAPACITY_OBSERVATION_REJECTED",
+                {
+                    "worker_id": worker_id,
+                    "pool": pool,
+                    "observed_at": rec.get("observed_at"),
+                    "reason": "invalid_observed_at",
+                    "fail_closed": True,
+                },
+            )
+            return True, "invalid_observed_at"
+        if observed_at >= newest_at:
+            continue
+        age_h = (now - observed_at).total_seconds() / 3600.0
+        if age_h <= max_age_h:
+            continue
+        older_pct = (rec.get("included_usage_pct") or {}).get(pool)
+        if not _is_valid_pct(older_pct):
+            continue
+        if float(older_pct) < newest_pct:
+            continue
+        intervening_drop = False
+        for other in records:
+            other_at = _record_observed_dt(other)
+            if other_at is None or other_at <= observed_at or other_at >= newest_at:
                 continue
-            age_h = (now - observed_at).total_seconds() / 3600.0
-            if age_h > max_age_h:
-                append_audit_event(
-                    "CAPACITY_OBSERVATION_STALE",
-                    {
-                        "worker_id": worker_id,
-                        "pool": pool,
-                        "observed_at": rec.get("observed_at"),
-                        "age_hours": round(age_h, 4),
-                        "max_age_hours": max_age_h,
-                        "stale_pollution": True,
-                    },
-                )
-                return True, "stale_pollution"
+            other_pct = (other.get("included_usage_pct") or {}).get(pool)
+            if _is_valid_pct(other_pct) and float(other_pct) < float(older_pct):
+                intervening_drop = True
+                break
+        if intervening_drop:
+            continue
+        append_audit_event(
+            "CAPACITY_OBSERVATION_STALE",
+            {
+                "worker_id": worker_id,
+                "pool": pool,
+                "observed_at": rec.get("observed_at"),
+                "age_hours": round(age_h, 4),
+                "max_age_hours": max_age_h,
+                "stale_pollution": True,
+            },
+        )
+        return True, "stale_pollution"
 
     return False, ""
 
@@ -616,6 +660,13 @@ def _velocity_projection(
     if len(active) < cfg["min_points"]:
         active = pairs
 
+    post_drop_recovery_h = float(cfg.get("post_drop_recovery_hours", 24.0))
+    post_drop_recovery = False
+    if len(segments) > 1 and len(active) >= cfg["min_points"]:
+        active_span_h = (active[-1][0] - active[0][0]).total_seconds() / 3600.0
+        if active_span_h < post_drop_recovery_h:
+            post_drop_recovery = True
+
     recent_cutoff = now - timedelta(hours=cfg["short_slope_window_hours"])
     recent_active = [(t, p) for t, p in active if t >= recent_cutoff]
     slope_pairs = recent_active if len(recent_active) >= cfg["min_points"] else []
@@ -636,7 +687,7 @@ def _velocity_projection(
     if long_slope is not None and (pct_per_hour is None or long_slope > pct_per_hour):
         pct_per_hour = long_slope
     if pct_per_hour is None:
-        return vel, None, None
+        return vel, False, None
 
     vel["pct_per_hour"] = round(pct_per_hour, 4)
     vel["pct_per_day"] = round(pct_per_hour * 24.0, 4)
@@ -674,6 +725,9 @@ def _velocity_projection(
     else:
         projected = projected_short if projected_long is None else projected_long
 
+    if post_drop_recovery:
+        projected = False
+
     short_hours = _hours_for_slope(short_slope)
     long_hours = _hours_for_slope(long_slope)
     hour_candidates = [h for h in (short_hours, long_hours) if h is not None]
@@ -681,10 +735,13 @@ def _velocity_projection(
     if hours_to_exhaustion is not None:
         vel["hours_to_exhaustion"] = round(hours_to_exhaustion, 4)
 
-    vel["velocity_state"] = _max_state(
-        _velocity_state_from_projection(projected_short, short_hours, policy),
-        _velocity_state_from_projection(projected_long, long_hours, policy),
-    )
+    if post_drop_recovery:
+        vel["velocity_state"] = "NORMAL"
+    else:
+        vel["velocity_state"] = _max_state(
+            _velocity_state_from_projection(projected_short, short_hours, policy),
+            _velocity_state_from_projection(projected_long, long_hours, policy),
+        )
 
     return vel, projected, hours_to_exhaustion
 
@@ -736,7 +793,10 @@ def _peak_raw_pct(
     active_peak = max(p for _, p in active)
     if len(active) == 1 and len(segments) > 1:
         prev_peak = max(p for _, p in segments[-2])
-        return max(active_peak, prev_peak)
+        active_t, active_p = active[0]
+        drop_span_h = (active_t - segments[-2][-1][0]).total_seconds() / 3600.0
+        if drop_span_h < 24.0 and (prev_peak - active_p) >= 5.0:
+            return max(active_peak, prev_peak)
     return active_peak
 
 

@@ -324,7 +324,19 @@ def validate_hardcoded_safety_invariants(policy: dict[str, Any]) -> list[str]:
                 errors.append(f"invariant: worker_execution_scope.{key} is pinned")
         globs = scope.get("allowed_workspace_globs")
         if isinstance(globs, list):
+            import fnmatch
+
             home = str(Path.home())
+            home_path = Path.home()
+            widen_probe_paths = [
+                home,
+                "/",
+                str(home_path / "beta-os"),
+                str(home_path / "Documents"),
+                str(home_path / "Desktop"),
+                str(home_path / "Downloads"),
+                f"{home}/suffixx",
+            ]
             for pattern in globs:
                 pat = os.path.expanduser(str(pattern))
                 if pat in ("~", "/", home, str(Path("/"))):
@@ -342,6 +354,20 @@ def validate_hardcoded_safety_invariants(policy: dict[str, Any]) -> list[str]:
                         "invariant: worker_execution_scope.allowed_workspace_globs cannot widen scope"
                     )
                     break
+                resolved_pat = str(Path(pat).resolve()) if pat.startswith("/") or pat.startswith("~") else pat
+                for probe in widen_probe_paths:
+                    if (
+                        fnmatch.fnmatch(probe, pat)
+                        or fnmatch.fnmatch(probe, resolved_pat)
+                        or (pat.startswith("~/") and fnmatch.fnmatch(probe, pat.replace("~", home, 1)))
+                    ):
+                        errors.append(
+                            "invariant: worker_execution_scope.allowed_workspace_globs cannot widen scope"
+                        )
+                        break
+                else:
+                    continue
+                break
         denied = scope.get("denied_paths") or []
         beta = str(Path.home() / "beta-os")
         if beta not in [str(Path(os.path.expanduser(str(p)))) for p in denied]:

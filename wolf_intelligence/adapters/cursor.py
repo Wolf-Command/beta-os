@@ -69,8 +69,8 @@ class CursorAdapter(WorkerAdapter):
         )
 
     def _live(self, job: dict[str, Any]) -> AdapterResult:
-        from ..scope_guard import check_invocation
-        from .subscription_cli import scrubbed_env
+        from . import subscription_cli
+        from .subscription_cli import safe_workspace, scrubbed_env
 
         binary = _cursor_bin()
         if not binary:
@@ -78,24 +78,32 @@ class CursorAdapter(WorkerAdapter):
         prompt = str(job.get("prompt") or "")
         model_id = str(job.get("model") or cursor_selected_model())
         timeout = float(job.get("timeout_s") or 180)
-        workspace = str(job.get("workspace") or "").strip()
-        created = None
-        if not workspace:
-            created = tempfile.mkdtemp(prefix="wi-cursor-ask-")
-            workspace = created
-        workspace_path = Path(workspace).resolve()
-        cwd = str(workspace_path)
-        argv = [binary, "--print", "--mode", "ask", "--trust", "--workspace", cwd, prompt]
-        inherited = dict(os.environ)
-        ok, reasons = check_invocation("cursor", argv, cwd, inherited)
-        if not ok:
+        workspace_arg = str(job.get("workspace") or "").strip() or None
+        try:
+            workspace, created = safe_workspace(workspace_arg, "wi-cursor-ask-")
+        except ValueError as exc:
             return AdapterResult(
                 False,
                 "GATED",
-                "scope refused: " + ",".join(reasons),
-                {"provider_called": False, "scope_reasons": reasons},
+                str(exc),
+                {"provider_called": False},
+            )
+        cwd = workspace
+        argv = [binary, "--print", "--mode", "ask", "--trust", "--workspace", cwd, prompt]
+        inherited = dict(os.environ)
+        from ..scope_guard import _env_secret_violation
+
+        if _env_secret_violation(inherited):
+            return AdapterResult(
+                False,
+                "GATED",
+                "scope refused: METERED_KEY_IN_ENV",
+                {"provider_called": False, "scope_reasons": ["METERED_KEY_IN_ENV"]},
             )
         child_env = scrubbed_env()
+        scope_block = subscription_cli._enforce_scope("cursor", argv, cwd, child_env)
+        if scope_block is not None:
+            return scope_block
         started = time.perf_counter()
         try:
             try:
@@ -154,7 +162,7 @@ class CursorAdapter(WorkerAdapter):
             )
         finally:
             if created:
-                shutil.rmtree(created, ignore_errors=True)
+                shutil.rmtree(workspace, ignore_errors=True)
 
     def status(self, handle: str) -> AdapterResult:
         return AdapterResult(True, "SHADOW_OK", "shadow", {"handle": handle})

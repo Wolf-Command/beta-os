@@ -57,11 +57,7 @@ def _detect_cli(argv: list[str]) -> str | None:
     if not argv:
         return None
     name = Path(argv[0]).name.lower()
-    if name in _CLI_ALLOWLIST:
-        return _CLI_ALLOWLIST[name]
-    if "cursor-agent" in name:
-        return "cursor"
-    return None
+    return _CLI_ALLOWLIST.get(name)
 
 
 def _all_flag_values(argv: list[str], flag: str) -> list[str]:
@@ -88,20 +84,65 @@ def _last_flag_value(argv: list[str], flag: str) -> str | None:
 _CWD_FLAGS = ("-C", "--cd", "--cwd")
 
 
-def _last_cwd_flag_value(argv: list[str]) -> str | None:
-    last: str | None = None
+def _all_cwd_flag_values(argv: list[str]) -> list[str]:
+    vals: list[str] = []
     i = 0
     while i < len(argv):
         part = argv[i]
         if part in _CWD_FLAGS and i + 1 < len(argv):
-            last = argv[i + 1]
+            vals.append(argv[i + 1])
             i += 2
             continue
         for flag in _CWD_FLAGS:
             if part.startswith(flag + "="):
-                last = part.split("=", 1)[1]
+                vals.append(part.split("=", 1)[1])
         i += 1
-    return last
+    return vals
+
+
+def _last_cwd_flag_value(argv: list[str]) -> str | None:
+    vals = _all_cwd_flag_values(argv)
+    return vals[-1] if vals else None
+
+
+def _resolve_workspace_target(raw: str, cwd: Path) -> Path:
+    expanded = os.path.expanduser(raw)
+    base = cwd if not Path(expanded).is_absolute() else None
+    return _expand(raw, base)
+
+
+def _flag_workspace_targets(argv: list[str], cli: str | None, cwd: Path) -> list[Path]:
+    if cli == "cursor":
+        raw_vals = _all_flag_values(argv, "--workspace")
+        if len(raw_vals) > 1:
+            raw_vals = [raw_vals[-1]]
+    elif cli == "codex":
+        raw_vals = _all_cwd_flag_values(argv)
+    else:
+        raw_vals = []
+    return [_resolve_workspace_target(v, cwd) for v in raw_vals]
+
+
+def _all_resolved_workspace_targets(argv: list[str], cli: str | None, cwd: Path) -> list[Path]:
+    if cli == "cursor":
+        raw_vals = _all_flag_values(argv, "--workspace")
+    elif cli == "codex":
+        raw_vals = _all_cwd_flag_values(argv)
+    else:
+        raw_vals = []
+    return [_resolve_workspace_target(v, cwd) for v in raw_vals]
+
+
+def _derive_worktree(flag_targets: list[Path], cwd: Path, sandbox_root: Path) -> Path | None:
+    """Strict worktree from sandbox workspace flags, not ambient cwd alone."""
+    candidates = [
+        p for p in flag_targets if _under_sandbox(p, sandbox_root) and p != sandbox_root
+    ]
+    if candidates:
+        return max(candidates, key=lambda p: len(p.parts))
+    if _under_sandbox(cwd, sandbox_root):
+        return cwd
+    return None
 
 
 def _collect_add_dirs(argv: list[str], base: Path) -> list[Path]:
@@ -122,16 +163,9 @@ def _collect_add_dirs(argv: list[str], base: Path) -> list[Path]:
 
 
 def _workspace_paths(argv: list[str], cwd: Path) -> list[Path]:
-    paths: list[Path] = []
     cli = _detect_cli(argv)
-    if cli == "cursor":
-        ws = _last_flag_value(argv, "--workspace")
-        paths.append(_expand(ws or str(cwd), cwd if ws and not Path(os.path.expanduser(ws)).is_absolute() else None))
-    elif cli == "codex":
-        ws = _last_cwd_flag_value(argv)
-        paths.append(_expand(ws or str(cwd), cwd if ws and not Path(os.path.expanduser(ws)).is_absolute() else None))
-    else:
-        paths.append(cwd)
+    flag_targets = _flag_workspace_targets(argv, cli, cwd)
+    paths: list[Path] = list(flag_targets) if flag_targets else [cwd]
     paths.extend(_collect_add_dirs(argv, cwd))
     return paths
 
@@ -241,6 +275,8 @@ def _path_allowed(
 ) -> bool:
     if path == sandbox_root:
         return worktree == sandbox_root
+    if worktree is None:
+        return _glob_allowed(path, globs)
     if _strict_worktree(path, worktree, sandbox_root, zdotdir_empty):
         return True
     if allow_temp and _under_sandbox(path, sandbox_root) and path != sandbox_root:
@@ -325,12 +361,25 @@ def check_invocation(
     bypass = _has_bypass(argv)
     zdot = env.get("ZDOTDIR", "")
     zdot_ok = _zdotdir_isolated(zdot, zdotdir_empty)
-    worktree = cwd_path if cwd_path is not None else sandbox_root
 
     reasons.extend(_unknown_bypass_flags(argv, cli))
 
     if cwd_path is not None:
-        for ws in _workspace_paths(argv, cwd_path):
+        flag_targets = _flag_workspace_targets(argv, cli, cwd_path)
+        worktree = _derive_worktree(flag_targets, cwd_path, sandbox_root)
+        paths_to_check: list[Path] = [cwd_path]
+        audit_targets = (
+            _all_resolved_workspace_targets(argv, cli, cwd_path)
+            if cli == "codex"
+            else flag_targets
+        )
+        for ws in audit_targets:
+            if ws not in paths_to_check:
+                paths_to_check.append(ws)
+        for ws in _collect_add_dirs(argv, cwd_path):
+            if ws not in paths_to_check:
+                paths_to_check.append(ws)
+        for ws in paths_to_check:
             if ws == HOME or ws == Path("/"):
                 reasons.append("SCOPE_HOME_GLOBAL")
             if ws == BETA or BETA in ws.parents:
@@ -347,7 +396,7 @@ def check_invocation(
                 sandbox_root=sandbox_root,
                 zdotdir_empty=zdotdir_empty,
                 globs=globs,
-                allow_temp=allow_temp,
+                allow_temp=allow_temp and not bypass,
             ):
                 reasons.append("SCOPE_WORKSPACE_NOT_ALLOWED")
 
@@ -364,25 +413,26 @@ def check_invocation(
         reasons.append("SCOPE_FLAG_CONFLICT")
 
     codex_modes = _codex_sandbox_modes(argv)
-    if cli == "codex" and "workspace-write" in codex_modes and cwd_path is not None:
-        if not all(
-            _strict_worktree(p, worktree, sandbox_root, zdotdir_empty)
-            for p in _workspace_paths(argv, cwd_path)
-        ):
-            reasons.append("BYPASS_OUTSIDE_SANDBOX")
-
-    if bypass and cwd_path is not None:
-        if not all(
-            _strict_worktree(p, worktree, sandbox_root, zdotdir_empty)
-            or (allow_temp and _under_sandbox(p, sandbox_root) and p != sandbox_root)
-            for p in _workspace_paths(argv, cwd_path)
-        ):
-            reasons.append("BYPASS_OUTSIDE_SANDBOX")
-        ok_env, env_reasons = _env_allowed(env, env_allowlist)
-        if not ok_env:
-            reasons.extend(env_reasons)
-        if not zdot_ok:
-            reasons.append("ZDOTDIR_NOT_ISOLATED")
+    if cwd_path is not None:
+        flag_targets = _flag_workspace_targets(argv, cli, cwd_path)
+        strict_tree = _derive_worktree(flag_targets, cwd_path, sandbox_root)
+        bypass_paths: list[Path] = [cwd_path]
+        for p in _workspace_paths(argv, cwd_path):
+            if p not in bypass_paths:
+                bypass_paths.append(p)
+        needs_strict = bypass or (cli == "codex" and "workspace-write" in codex_modes)
+        if needs_strict:
+            if strict_tree is None or not all(
+                _strict_worktree(p, strict_tree, sandbox_root, zdotdir_empty)
+                for p in bypass_paths
+            ):
+                reasons.append("BYPASS_OUTSIDE_SANDBOX")
+        if bypass:
+            ok_env, env_reasons = _env_allowed(env, env_allowlist)
+            if not ok_env:
+                reasons.extend(env_reasons)
+            if not zdot_ok:
+                reasons.append("ZDOTDIR_NOT_ISOLATED")
 
     return (len(reasons) == 0, sorted(set(reasons)))
 

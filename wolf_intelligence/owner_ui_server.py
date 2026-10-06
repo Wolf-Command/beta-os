@@ -117,7 +117,7 @@ def allowed_hosts(port: int) -> frozenset[str]:
 def host_allowed(headers, port: int) -> bool:
     host = (headers.get("Host") or "").strip().lower()
     if not host:
-        return True
+        return False
     return host in allowed_hosts(port)
 
 
@@ -322,8 +322,14 @@ class ReuseHTTPServer(_ThreadingHTTPServer):
 
     def server_bind(self) -> None:
         state_root = os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
-        if state_root and ".tmp" in Path(state_root).resolve().parts:
-            raise PermissionError("refuse UI bind with scratch state root")
+        tmpdir = os.environ.get("TMPDIR", "")
+        if state_root and tmpdir:
+            try:
+                scratch = Path(state_root).resolve().is_relative_to(Path(tmpdir).resolve())
+            except (ValueError, OSError):
+                scratch = False
+            if scratch:
+                raise PermissionError("refuse UI bind with scratch state root")
         super().server_bind()
 
 

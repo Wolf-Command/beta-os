@@ -25,6 +25,7 @@ if not _os.environ.get("WI_TEST_STATE_ISOLATED"):
 import http.client
 import json
 import os
+import socket
 import re
 import tempfile
 import threading
@@ -737,6 +738,19 @@ class OwnerUiAuthTests(unittest.TestCase):
         os.environ.clear()
         os.environ.update(self._env)
         self.tmp.cleanup()
+
+    def test_missing_host_header_refused(self) -> None:
+        host, port = self.server.server_address
+        sock = socket.create_connection((host, port))
+        sock.sendall(b"GET /api/health HTTP/1.0\r\n\r\n")
+        resp = sock.recv(4096)
+        sock.close()
+        self.assertIn(b"403", resp.split(b"\r\n", 1)[0])
+
+    def test_host_allowed_requires_loopback_pin(self) -> None:
+        port = 18765
+        self.assertFalse(self.ui.host_allowed({}, port))
+        self.assertTrue(self.ui.host_allowed({"Host": f"127.0.0.1:{port}"}, port))
 
     def _post(self, body: dict, headers: dict | None = None):
         host, port = self.server.server_address

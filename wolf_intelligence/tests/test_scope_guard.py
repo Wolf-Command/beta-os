@@ -200,6 +200,89 @@ class ScopeGuardTests(unittest.TestCase):
                 f"expected rejection for {bad_globs}: {errors}",
             )
 
+    def test_codex_bypass_with_home_cwd_refused(self) -> None:
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["codex", "exec", "--full-auto", "-C", ws],
+            str(HOME),
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("SCOPE_HOME_GLOBAL", reasons)
+
+    def test_codex_bypass_with_live_repo_cwd_refused(self) -> None:
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["codex", "exec", "--full-auto", "-C", ws],
+            "/Users/wolfterminal/beta-os",
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("SCOPE_LIVE_REPO", reasons)
+
+    def test_cursor_force_with_home_cwd_refused(self) -> None:
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "cursor_sub",
+            ["cursor-agent", "--workspace", ws, "--force"],
+            str(HOME),
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("SCOPE_HOME_GLOBAL", reasons)
+
+    def test_mixed_cd_denied_first_refused(self) -> None:
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["codex", "exec", "-s", "read-only", "-C", "/Users/wolfterminal/beta-os", "--cd", ws],
+            ws,
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("SCOPE_LIVE_REPO", reasons)
+
+    def test_unknown_cursor_substring_refused(self) -> None:
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "cursor_sub",
+            ["qa-unknown-cursor-agent", "--workspace", ws],
+            ws,
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("SCOPE_CLI_UNRECOGNIZED", reasons)
+
+    def test_sandbox_root_cwd_with_flag_worktree_refused_on_bypass(self) -> None:
+        ws = str(WORKTREE)
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["codex", "exec", "--full-auto", "-C", ws],
+            str(SANDBOX),
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("BYPASS_OUTSIDE_SANDBOX", reasons)
+
+    def test_scope_glob_invariant_rejects_fnmatch_widening(self) -> None:
+        base = json.loads((GOVERNANCE_CONFIG_DIR / "worker-allocation-policy.json").read_text())
+        for bad_globs in (["~/**"], ["~/D*"]):
+            policy = json.loads(json.dumps(base))
+            policy["worker_execution_scope"]["allowed_workspace_globs"] = bad_globs
+            errors = validate_policy_invariants(policy)
+            self.assertTrue(
+                any("allowed_workspace_globs cannot widen scope" in e for e in errors),
+                f"expected rejection for {bad_globs}: {errors}",
+            )
+
     def test_missing_policy_section_fail_closed(self) -> None:
         policy = dict(self.policy or {})
         policy.pop("worker_execution_scope", None)
