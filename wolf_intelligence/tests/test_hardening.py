@@ -105,8 +105,19 @@ class StateIsolationTests(unittest.TestCase):
             events.EVENTS_PATH, events.AUDIT_DIR, learning.OUTCOMES_PATH, learning.WEIGHTS_PATH,
             stats_store.STATS_PATH, stats_store.SUMMARY_PATH, owner_ui_server.AUDIT_DIR,
             ledger._ledger_path() if hasattr(ledger, "_ledger_path") else paths.LEDGER_DIR,
+            ledger.SNAPSHOT_PATH, ledger.LEDGER_PATH,
         ):
             self.assertTrue(Path(p).resolve().is_relative_to(root), str(p))
+
+    def test_ledger_snapshot_never_writes_live_state(self) -> None:
+        snap_path = ledger.SNAPSHOT_PATH.resolve()
+        live_snap = (paths.LIVE_STATE_ROOT / "ledger" / "snapshot.json").resolve()
+        self.assertTrue(snap_path.is_relative_to(paths.STATE_ROOT))
+        self.assertNotEqual(snap_path, live_snap)
+        ledger.snapshot()
+        self.assertTrue(snap_path.exists())
+        self.assertTrue(snap_path.is_relative_to(paths.STATE_ROOT))
+        self.assertNotEqual(snap_path, live_snap)
 
     def test_work_item_create_lands_in_temp_store(self) -> None:
         from wolf_intelligence import work_items

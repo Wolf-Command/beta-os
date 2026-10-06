@@ -92,6 +92,11 @@ def _propagate_state_paths() -> None:
         learning.OUTCOMES_PATH = LEARNING_DIR / "outcomes.jsonl"
         learning.WEIGHTS_PATH = LEARNING_DIR / "weights.json"
 
+    ledger = sys.modules.get("wolf_intelligence.ledger")
+    if ledger is not None:
+        ledger.LEDGER_PATH = LEDGER_DIR / "ledger.jsonl"
+        ledger.SNAPSHOT_PATH = LEDGER_DIR / "snapshot.json"
+
     stats = sys.modules.get("wolf_intelligence.stats_store")
     if stats is not None:
         stats.STATS_PATH = LEARNING_DIR / "stats.json"

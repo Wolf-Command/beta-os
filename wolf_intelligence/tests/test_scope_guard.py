@@ -309,6 +309,17 @@ class ScopeGuardTests(unittest.TestCase):
                 f"expected rejection for {bad_globs}: {errors}",
             )
 
+    def test_scope_glob_invariant_rejects_wildcard_above_sandbox_root(self) -> None:
+        base = json.loads((GOVERNANCE_CONFIG_DIR / "worker-allocation-policy.json").read_text())
+        for bad_globs in (["~/wi-good-wt*/**"], ["~/wi-sandboxes*/*"], ["~/wi-sandbox*/**"]):
+            policy = json.loads(json.dumps(base))
+            policy["worker_execution_scope"]["allowed_workspace_globs"] = bad_globs
+            errors = validate_policy_invariants(policy)
+            self.assertTrue(
+                any("allowed_workspace_globs cannot widen scope" in e for e in errors),
+                f"expected rejection for {bad_globs}: {errors}",
+            )
+
     def test_wi_secret_outside_allowed_globs_refused(self) -> None:
         secret = HOME / "wi-secret"
         ok, reasons = check_invocation(

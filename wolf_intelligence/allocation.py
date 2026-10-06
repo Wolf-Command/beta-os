@@ -664,7 +664,7 @@ def decide(
             routing_policy_sha256=routing_sha,
         )
         if record:
-            record_decision(dec, now=datetime.now(TZ))
+            record_decision(dec, now=now)
         return dec
 
     bench_class = benchmark_class_for(task_class, effective_policy)
@@ -925,19 +925,15 @@ def decide(
     elif grok_code or requested == grok_id:
         grok_row = next((c for c in candidates_scored if c["worker"] == grok_id), None)
         grok_excl = (grok_row or {}).get("exclusion_reason")
-        grok_rec = workers_cap.get(grok_id) or {}
         grok_ineligible = bool(grok_row and not grok_row.get("eligible"))
         grok_conserve_rejected = bool(grok_excl and grok_excl.startswith("GROK_CONSERVE_CONDUCT:"))
-        synthetic_cap = set(grok_rec.keys()).issubset(
-            {"state", "grok_available", "on_demand", "worker_id"}
-        )
         conserve_fallback = (
             grok_conserve_rejected
             and decision_type == "DISPATCH"
             and selected != grok_id
             and requested == grok_id
         )
-        if conserve_fallback and not synthetic_cap:
+        if conserve_fallback:
             grok_verdict = "REJECTED"
         elif requested == grok_id and grok_ineligible and not grok_conserve_rejected:
             grok_verdict = "REJECTED"
@@ -1043,7 +1039,7 @@ def decide(
     )
 
     if record:
-        record_decision(dec, now=datetime.now(TZ))
+        record_decision(dec, now=now)
     return dec
 
 

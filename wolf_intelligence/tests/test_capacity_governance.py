@@ -301,6 +301,18 @@ class TestCapacityGovernance(unittest.TestCase):
             json.dumps({"grok_routing_penalty": 0.15}) + "\n",
             encoding="utf-8",
         )
+        audit_path = gov_dir / "audit.jsonl"
+        audit_path.write_text(
+            json.dumps(
+                {
+                    "event": "TIGHTENING_SAVE",
+                    "grok_routing_penalty": 0.15,
+                    "at": NOW,
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         proc = subprocess.Popen(
             [sys.executable, "-m", "wolf_intelligence.owner_ui_server"],
             env=env,

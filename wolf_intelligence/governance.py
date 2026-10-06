@@ -320,7 +320,41 @@ def _home_relative_glob_pattern(pattern: str) -> str | None:
     return None
 
 
-def _glob_covered_by_allowed_roots(pattern: str, allowed_roots: list[str]) -> bool:
+def _expanded_glob(pattern: str) -> str:
+    return os.path.expanduser(str(pattern))
+
+
+def _glob_exactly_allowed(pattern: str, allowed_roots: list[str]) -> bool:
+    exp = _expanded_glob(pattern)
+    return any(exp == _expanded_glob(root) for root in allowed_roots)
+
+
+def _wildcard_at_or_above_sandbox_root(pattern: str, sandbox_root: str) -> bool:
+    """True when a wildcard appears in a path component at/above isolated_sandbox_root."""
+    rel = _home_relative_glob_pattern(pattern)
+    if rel is None:
+        return True
+    root_rel = _home_relative_glob_pattern(sandbox_root)
+    if root_rel is None:
+        return True
+    root_parts = root_rel.rstrip("/").split("/")
+    for i, comp in enumerate(rel.split("/")):
+        if i >= len(root_parts):
+            break
+        if any(ch in comp for ch in "*?["):
+            return True
+        if comp != root_parts[i]:
+            return True
+    return False
+
+
+def _glob_covered_by_allowed_roots(
+    pattern: str, allowed_roots: list[str], sandbox_root: str | None = None
+) -> bool:
+    if _glob_exactly_allowed(pattern, allowed_roots):
+        return True
+    if sandbox_root and _wildcard_at_or_above_sandbox_root(pattern, sandbox_root):
+        return False
     rel = _home_relative_literal_prefix(pattern)
     if rel is None:
         return False
@@ -332,9 +366,6 @@ def _glob_covered_by_allowed_roots(pattern: str, allowed_roots: list[str]) -> bo
         if root_lit and _path_component_prefix_match(rel, root_lit):
             return True
         if fnmatch.fnmatch(rel, root_rel) or fnmatch.fnmatch(rel.rstrip("/"), root_rel.rstrip("/")):
-            return True
-        head = rel.split("/", 1)[0]
-        if fnmatch.fnmatch(head, root_rel.rstrip("/")) or fnmatch.fnmatch(head, root_lit):
             return True
     return False
 
@@ -353,7 +384,13 @@ def _scope_glob_widens_scope(pattern: str, allowed_roots: list[str]) -> bool:
         return True
     if not allowed_roots:
         return True
-    return not _glob_covered_by_allowed_roots(pattern, allowed_roots)
+    hardcoded = fail_closed_policy().get("worker_execution_scope") or {}
+    sandbox_root = str(hardcoded.get("isolated_sandbox_root") or "")
+    if _glob_exactly_allowed(pattern, allowed_roots):
+        return False
+    if sandbox_root and _wildcard_at_or_above_sandbox_root(pattern, sandbox_root):
+        return True
+    return not _glob_covered_by_allowed_roots(pattern, allowed_roots, sandbox_root)
 
 
 def validate_hardcoded_safety_invariants(policy: dict[str, Any]) -> list[str]:
