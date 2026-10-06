@@ -8,14 +8,21 @@ import shutil as _shutil
 import sys as _sys
 import tempfile as _tempfile
 
-if not _os.environ.get("WI_TEST_STATE_ISOLATED"):
-    if "wolf_intelligence.paths" in _sys.modules:
-        raise RuntimeError("wolf_intelligence.paths imported before test state isolation")
-    # Remember the configured (live) root so the guard can refuse it even if it moves out of beta-os.
+
+def _isolate_test_state() -> None:
+    if _os.environ.get("WI_TEST_STATE_ISOLATED"):
+        return
     _os.environ["WI_TEST_CONFIGURED_STATE_ROOT"] = _os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
     _TEST_STATE_ROOT = _tempfile.mkdtemp(prefix="wi-test-state-")
     _os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = _TEST_STATE_ROOT
     _os.environ["WI_TEST_STATE_ISOLATED"] = _TEST_STATE_ROOT
     _os.environ.pop("WOLF_INTELLIGENCE_CONFIG_MIRROR", None)
     _atexit.register(_shutil.rmtree, _TEST_STATE_ROOT, True)
+    if "wolf_intelligence.paths" in _sys.modules:
+        from wolf_intelligence.paths import rebind_state_paths
+
+        rebind_state_paths()
+
+
+_isolate_test_state()
 # ---------------------------------------------------------------------------

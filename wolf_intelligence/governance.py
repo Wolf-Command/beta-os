@@ -1,6 +1,7 @@
 """Governance policy loader — versioned config, FAIL CLOSED on any invalid state."""
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
 import math
@@ -300,16 +301,42 @@ def _home_relative_literal_prefix(pattern: str) -> str | None:
     return None
 
 
-def _allowed_glob_prefixes(roots: list[str]) -> list[str]:
-    prefixes: list[str] = []
+def _path_component_prefix_match(path: str, prefix: str) -> bool:
+    """True when path equals prefix or is a strict subdirectory (never string-prefix)."""
+    path = path.rstrip("/")
+    prefix = prefix.rstrip("/")
+    if not prefix:
+        return False
+    return path == prefix or path.startswith(prefix + "/")
+
+
+def _home_relative_glob_pattern(pattern: str) -> str | None:
+    pat = os.path.expanduser(str(pattern))
     home = str(Path.home())
-    for root in roots:
-        lit = _glob_literal_prefix(os.path.expanduser(str(root)))
-        if lit.startswith(home + "/"):
-            prefixes.append(lit[len(home) + 1 :])
-        elif lit.startswith("~/"):
-            prefixes.append(lit[2:])
-    return prefixes
+    if pat.startswith(home + "/"):
+        return pat[len(home) + 1 :]
+    if pat.startswith("~/"):
+        return pat[2:]
+    return None
+
+
+def _glob_covered_by_allowed_roots(pattern: str, allowed_roots: list[str]) -> bool:
+    rel = _home_relative_literal_prefix(pattern)
+    if rel is None:
+        return False
+    for root in allowed_roots:
+        root_rel = _home_relative_glob_pattern(root)
+        if root_rel is None:
+            continue
+        root_lit = _glob_literal_prefix(root_rel).rstrip("/")
+        if root_lit and _path_component_prefix_match(rel, root_lit):
+            return True
+        if fnmatch.fnmatch(rel, root_rel) or fnmatch.fnmatch(rel.rstrip("/"), root_rel.rstrip("/")):
+            return True
+        head = rel.split("/", 1)[0]
+        if fnmatch.fnmatch(head, root_rel.rstrip("/")) or fnmatch.fnmatch(head, root_lit):
+            return True
+    return False
 
 
 def _scope_glob_widens_scope(pattern: str, allowed_roots: list[str]) -> bool:
@@ -324,10 +351,9 @@ def _scope_glob_widens_scope(pattern: str, allowed_roots: list[str]) -> bool:
     rel = _home_relative_literal_prefix(pattern)
     if rel is None:
         return True
-    prefixes = _allowed_glob_prefixes(allowed_roots)
-    if not prefixes:
+    if not allowed_roots:
         return True
-    return not any(rel.startswith(p) for p in prefixes)
+    return not _glob_covered_by_allowed_roots(pattern, allowed_roots)
 
 
 def validate_hardcoded_safety_invariants(policy: dict[str, Any]) -> list[str]:

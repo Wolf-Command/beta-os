@@ -673,15 +673,26 @@ def _established_plateau_start(
     min_span_minutes: float,
     *,
     min_plateau_points: int = 3,
+    sparse_min_points: int = 2,
+    max_sparse_ramp_delta: float = 5.0,
 ) -> int:
-    if len(pairs) < min_plateau_points:
+    if len(pairs) < sparse_min_points:
         return 0
     latest = pairs[-1][1]
     run_start = len(pairs) - 1
     while run_start > 0 and pairs[run_start - 1][1] == latest:
         run_start -= 1
     run_len = len(pairs) - run_start
+    required_points = min_plateau_points
     if run_len < min_plateau_points:
+        if run_len < sparse_min_points:
+            return 0
+        if run_start > 0:
+            ramp_delta = abs(pairs[run_start][1] - pairs[run_start - 1][1])
+            if ramp_delta > max_sparse_ramp_delta:
+                return 0
+        required_points = sparse_min_points
+    if run_len < required_points:
         return 0
     span_h = (pairs[-1][0] - pairs[run_start][0]).total_seconds() / 3600.0
     if span_h * 60.0 < min_span_minutes:

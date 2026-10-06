@@ -11,8 +11,6 @@ import sys as _sys
 import tempfile as _tempfile
 
 if not _os.environ.get("WI_TEST_STATE_ISOLATED"):
-    if "wolf_intelligence.paths" in _sys.modules:
-        raise RuntimeError("wolf_intelligence.paths imported before test state isolation")
     # Remember the configured (live) root so the guard can refuse it even if it moves out of beta-os.
     _os.environ["WI_TEST_CONFIGURED_STATE_ROOT"] = _os.environ.get("WOLF_INTELLIGENCE_STATE_ROOT", "")
     _TEST_STATE_ROOT = _tempfile.mkdtemp(prefix="wi-test-state-")
@@ -20,6 +18,10 @@ if not _os.environ.get("WI_TEST_STATE_ISOLATED"):
     _os.environ["WI_TEST_STATE_ISOLATED"] = _TEST_STATE_ROOT
     _os.environ.pop("WOLF_INTELLIGENCE_CONFIG_MIRROR", None)
     _atexit.register(_shutil.rmtree, _TEST_STATE_ROOT, True)
+    if "wolf_intelligence.paths" in _sys.modules:
+        from wolf_intelligence.paths import rebind_state_paths
+
+        rebind_state_paths()
 # ---------------------------------------------------------------------------
 
 import http.client
@@ -702,6 +704,8 @@ class OwnerUiAuthTests(unittest.TestCase):
     TOKEN = "ui-test-tok"
 
     def setUp(self) -> None:
+        from wolf_intelligence import owner_ui_server
+
         self._env = os.environ.copy()
         os.environ.pop(paths.UI_TOKEN_ENV, None)
         self.tmp = tempfile.TemporaryDirectory()
@@ -710,26 +714,35 @@ class OwnerUiAuthTests(unittest.TestCase):
         self._weights = learning.WEIGHTS_PATH
         self._stats = stats_store.STATS_PATH
         self._summary = stats_store.SUMMARY_PATH
-        self._audit = __import__("wolf_intelligence.owner_ui_server", fromlist=["AUDIT_DIR"])
-        from wolf_intelligence import owner_ui_server
-        self.ui = owner_ui_server
         self._audit_dir = owner_ui_server.AUDIT_DIR
+        self.ui = owner_ui_server
         learning.OUTCOMES_PATH = base / "outcomes.jsonl"
         learning.WEIGHTS_PATH = base / "weights.json"
         stats_store.STATS_PATH = base / "stats.json"
         stats_store.SUMMARY_PATH = base / "stats-summary.json"
         owner_ui_server.AUDIT_DIR = base / "audit"
         owner_ui_server.AUDIT_DIR.mkdir()
+        self.addCleanup(self._restore_ui_globals)
         from wolf_intelligence.owner_ui_server import Handler, ReuseHTTPServer
-        self.server = ReuseHTTPServer(("127.0.0.1", 0), Handler)
+
+        try:
+            self.server = ReuseHTTPServer(("127.0.0.1", 0), Handler)
+        except OSError as exc:
+            raise unittest.SkipTest(f"socket bind denied: {exc}") from exc
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
+        self.addCleanup(self._shutdown_server)
         self.assertEqual(self.server.server_address[0], "127.0.0.1")
 
-    def tearDown(self) -> None:
+    def _shutdown_server(self) -> None:
+        if not hasattr(self, "server"):
+            return
         self.server.shutdown()
         self.server.server_close()
-        self.thread.join(timeout=3)
+        if hasattr(self, "thread"):
+            self.thread.join(timeout=3)
+
+    def _restore_ui_globals(self) -> None:
         learning.OUTCOMES_PATH = self._outcomes
         learning.WEIGHTS_PATH = self._weights
         stats_store.STATS_PATH = self._stats
@@ -737,7 +750,8 @@ class OwnerUiAuthTests(unittest.TestCase):
         self.ui.AUDIT_DIR = self._audit_dir
         os.environ.clear()
         os.environ.update(self._env)
-        self.tmp.cleanup()
+        if hasattr(self, "tmp"):
+            self.tmp.cleanup()
 
     def test_missing_host_header_refused(self) -> None:
         host, port = self.server.server_address

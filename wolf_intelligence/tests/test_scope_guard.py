@@ -300,7 +300,7 @@ class ScopeGuardTests(unittest.TestCase):
 
     def test_scope_glob_invariant_rejects_fnmatch_widening(self) -> None:
         base = json.loads((GOVERNANCE_CONFIG_DIR / "worker-allocation-policy.json").read_text())
-        for bad_globs in (["~/**"], ["~/D*"], ["~/Pictures/**"]):
+        for bad_globs in (["~/**"], ["~/D*"], ["~/Pictures/**"], ["~/wi-secret/**"]):
             policy = json.loads(json.dumps(base))
             policy["worker_execution_scope"]["allowed_workspace_globs"] = bad_globs
             errors = validate_policy_invariants(policy)
@@ -308,6 +308,18 @@ class ScopeGuardTests(unittest.TestCase):
                 any("allowed_workspace_globs cannot widen scope" in e for e in errors),
                 f"expected rejection for {bad_globs}: {errors}",
             )
+
+    def test_wi_secret_outside_allowed_globs_refused(self) -> None:
+        secret = HOME / "wi-secret"
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["codex", "exec", "-s", "read-only", "-C", str(secret)],
+            str(secret),
+            ALLOWED_ENV,
+            policy=self.policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("SCOPE_WORKSPACE_NOT_ALLOWED", reasons)
 
     def test_sandbox_root_default_globs_workspace_write_refused(self) -> None:
         ok, reasons = check_invocation(

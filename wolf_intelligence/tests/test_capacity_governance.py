@@ -19,12 +19,14 @@ from unittest import mock
 from zoneinfo import ZoneInfo
 
 if not _os.environ.get("WI_TEST_STATE_ISOLATED"):
-    if "wolf_intelligence.paths" in _sys.modules:
-        raise RuntimeError("wolf_intelligence.paths imported before test state isolation")
     _TEST_STATE_ROOT = _tempfile.mkdtemp(prefix="wi-gov-test-state-")
     _os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = _TEST_STATE_ROOT
     _os.environ["WI_TEST_STATE_ISOLATED"] = _TEST_STATE_ROOT
     _atexit.register(_shutil.rmtree, _TEST_STATE_ROOT, True)
+    if "wolf_intelligence.paths" in _sys.modules:
+        from wolf_intelligence.paths import rebind_state_paths
+
+        rebind_state_paths()
 _REAL_TMP = _tempfile.mkdtemp(prefix="wi-gov-test-real-")
 _os.environ["WOLF_INTELLIGENCE_REAL_EVIDENCE_ROOT"] = _REAL_TMP
 _atexit.register(_shutil.rmtree, _REAL_TMP, True)
@@ -200,7 +202,7 @@ class TestCapacityGovernance(unittest.TestCase):
             justification=just,
         )
         self.assertNotEqual(d_conserve_explicit.selected_worker, "grok_bot_sub")
-        self.assertEqual(d_conserve_explicit.grok_reason_verdict, "ACCEPTED")
+        self.assertEqual(d_conserve_explicit.grok_reason_verdict, "REJECTED")
 
         # RESERVE -> substantive never Grok but protected -> Grok
         _set_grok_pct(70.0)
@@ -1171,6 +1173,70 @@ class TestCapacityGovernance(unittest.TestCase):
         d = decide(
             {
                 "id": "vel-k2-penalty-0",
+                "task_class": "coding",
+                "requested_worker": "grok_bot_sub",
+                "grok_reason_code": "EXPLICIT_JUSTIFIED",
+                "grok_justification": just,
+            },
+            policy_load=load_policy(),
+            capacity=snap,
+            now="2026-10-06T10:35:00+08:00",
+            record=False,
+        )
+        self.assertEqual(d.decision, "DISPATCH")
+        self.assertNotEqual(d.selected_worker, "grok_bot_sub")
+        self.assertEqual(d.grok_reason_verdict, "REJECTED")
+        self.assertIsNotNone(d.requested_worker_rejected)
+
+    def test_velocity_sparse_flat_plateau_does_not_reserve(self) -> None:
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        future_reset = "2026-10-13T10:00:00+08:00"
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 41},
+                source="owner_observed",
+                observed_at="2026-10-06T10:00:00+08:00",
+                reset_at=future_reset,
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 46},
+                source="owner_observed",
+                observed_at="2026-10-06T10:01:00+08:00",
+                reset_at=future_reset,
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 46},
+                source="owner_observed",
+                observed_at="2026-10-06T20:01:00+08:00",
+                reset_at=future_reset,
+            )
+            snap = capacity_snapshot("2026-10-06T20:05:00+08:00", policy=policy, policy_mode="ENFORCED")
+        grok = snap["workers"]["grok_bot_sub"]
+        self.assertEqual(grok["state"], "NORMAL")
+        self.assertIs(grok.get("projected_exhaustion_before_reset"), False)
+        self.assertEqual((grok.get("velocity") or {}).get("pct_per_hour"), 0.0)
+
+    def test_conserve_conduct_grok_verdict_rejected_without_velocity(self) -> None:
+        just = "x" * 25
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            snap = capacity_snapshot("2026-10-06T10:35:00+08:00", policy=policy, policy_mode="ENFORCED")
+        grok_cap = snap["workers"]["grok_bot_sub"]
+        grok_cap.pop("velocity", None)
+        snap = dict(snap)
+        snap["workers"] = dict(snap["workers"])
+        snap["workers"]["grok_bot_sub"] = grok_cap
+        save_tightening({"grok_routing_penalty": 0.0}, policy)
+        d = decide(
+            {
+                "id": "vel-k2-no-velocity",
                 "task_class": "coding",
                 "requested_worker": "grok_bot_sub",
                 "grok_reason_code": "EXPLICIT_JUSTIFIED",

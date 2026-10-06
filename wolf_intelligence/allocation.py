@@ -925,16 +925,9 @@ def decide(
     elif grok_code or requested == grok_id:
         grok_row = next((c for c in candidates_scored if c["worker"] == grok_id), None)
         grok_excl = (grok_row or {}).get("exclusion_reason")
-        grok_rec = workers_cap.get(grok_id) or {}
-        velocity_pressure = (
-            grok_excl
-            and grok_excl.startswith("GROK_CONSERVE_CONDUCT:")
-            and (grok_rec.get("velocity") or {}).get("pct_per_hour") is not None
-            and decision_type == "DISPATCH"
-            and selected != grok_id
-            and requested == grok_id
-        )
-        if velocity_pressure:
+        grok_ineligible = bool(grok_row and not grok_row.get("eligible"))
+        grok_conserve_rejected = bool(grok_excl and grok_excl.startswith("GROK_CONSERVE_CONDUCT:"))
+        if requested == grok_id and (grok_ineligible or grok_conserve_rejected):
             grok_verdict = "REJECTED"
         elif grok_verdict is None:
             grok_verdict, detail = _verify_grok_reason(
