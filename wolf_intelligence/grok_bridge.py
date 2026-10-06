@@ -259,6 +259,26 @@ def ring(wid: str, *, doorbell: Any = "env", actor: str = "wi") -> dict[str, Any
     return _result(False, "DOORBELL_FAILED", wid, error=err, state="AVAILABLE")
 
 
+def rering(wid: str, *, doorbell: Any = "env", actor: str = "wi") -> dict[str, Any]:
+    """WI-side: rotate the nonce of an AVAILABLE item, close its current doorbell as SUPERSEDED, ring a new one.
+
+    Used when a doorbell was delivered but never answered. Never called by the Grok routine.
+    """
+    _check_wid(wid)
+    bell = _doorbell_default() if doorbell == "env" else doorbell
+    with _Tx() as conn:
+        row = _row(conn, wid)
+        if row is None or row["state"] != "AVAILABLE":
+            return _result(False, "NOT_AVAILABLE", wid, state=row and row["state"])
+        old_ref = row["doorbell_ref"]
+        conn.execute("""UPDATE grok_leases SET nonce=?, doorbell_state='PENDING', doorbell_ref=NULL, updated_at=?
+                        WHERE work_item_id=? AND state='AVAILABLE'""", (secrets.token_hex(16), now(), wid))
+        _audit(conn, wid, "rering", actor, "NONCE_ROTATED", attempt=row["attempt"], from_state="AVAILABLE",
+               to_state="AVAILABLE", detail={"old_ref": old_ref})
+    _close_ref(wid, old_ref, "SUPERSEDED", bell, actor)
+    return ring(wid, doorbell=bell, actor=actor)
+
+
 def _close_ref(wid: str, ref: str | None, outcome: str, bell: Any, actor: str) -> None:
     if not ref or bell is None:
         return

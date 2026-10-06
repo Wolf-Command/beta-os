@@ -421,8 +421,11 @@ class DoorbellTests(_Base):
         self.assertEqual(create[1:3], ["issue", "create"])
         args = dict(zip(create[3::2], create[4::2]))
         self.assertEqual(args["--repo"], "wolfcommand/wolf-grok-bridge")
-        self.assertEqual(args["--assignee"], "wolfcommand")
+        self.assertNotIn("--assignee", args)  # created unassigned ...
         self.assertEqual(args["--label"], "wi-doorbell")
+        assign = seen[1]  # ... then assigned in a separate call (standalone issues.assigned event)
+        self.assertEqual(assign[1:4], ["issue", "edit", "https://github.com/wolfcommand/wolf-grok-bridge/issues/7"])
+        self.assertEqual(dict(zip(assign[4::2], assign[5::2]))["--add-assignee"], "wolfcommand")
         self.assertEqual(gd.parse_body(args["--body"])["work_item_id"], wid)
         self.assertNotIn(TASK_TEXT, " ".join(create))
         close = seen[-1]

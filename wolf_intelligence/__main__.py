@@ -65,6 +65,8 @@ def main(argv: list[str] | None = None) -> int:
     fa.add_argument("--reason", required=True)
     fa.add_argument("--retryable", action="store_true")
     gbs.add_parser("release-expired")
+    rr = gbs.add_parser("rering")
+    rr.add_argument("work_item_id")
     st = gbs.add_parser("status")
     st.add_argument("work_item_id")
     au = gbs.add_parser("audit")
@@ -216,6 +218,8 @@ def _grok_bridge(args) -> int:
             out = gb.fail(args.work_item_id, lease_id=args.lease, reason=args.reason, retryable=args.retryable)
         elif c == "release-expired":
             out = gb.release_expired(actor="cli")
+        elif c == "rering":
+            out = gb.rering(args.work_item_id, actor="cli")
         elif c == "status":
             out = gb.status(args.work_item_id)
         elif c == "audit":

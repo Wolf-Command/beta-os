@@ -91,13 +91,28 @@ class GitHubIssueDoorbell:
         return proc.stdout.strip()
 
     def ring(self, work_item_id: str, nonce: str) -> dict[str, Any]:
+        """Create the issue WITHOUT an assignee, then assign it in a separate call.
+
+        The separate call guarantees a standalone `issues.assigned` webhook event (the event the Grok
+        routine listens for), instead of relying on an assignee set at creation time.
+        """
         out = self._run(["issue", "create", "--repo", self.repo, "--title", issue_title(work_item_id),
-                         "--body", issue_body(work_item_id, nonce), "--assignee", self.assignee, "--label", LABEL])
+                         "--body", issue_body(work_item_id, nonce), "--label", LABEL])
         url = out.splitlines()[-1].strip() if out else ""
         m = _ISSUE_URL.match(url)
         if not m or m.group(1).lower() != self.repo.lower():
             raise DoorbellError("gh did not return an issue URL in the bridge repo")
-        return {"ref": url, "number": int(m.group(2)), "repo": self.repo, "assignee": self.assignee}
+        try:
+            self._run(["issue", "edit", url, "--repo", self.repo, "--add-assignee", self.assignee])
+        except DoorbellError as exc:
+            # An unassigned doorbell never wakes Grok: close it so it cannot linger, then report failure.
+            try:
+                self.close(url, "ASSIGN_FAILED")
+            except DoorbellError:
+                pass
+            raise DoorbellError(f"assign failed: {exc}") from None
+        return {"ref": url, "number": int(m.group(2)), "repo": self.repo, "assignee": self.assignee,
+                "assigned": "separate_call"}
 
     def close(self, ref: str, outcome: str) -> None:
         m = _ISSUE_URL.match(ref or "")
