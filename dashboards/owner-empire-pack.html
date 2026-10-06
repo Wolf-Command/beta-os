@@ -157,6 +157,23 @@
   <h1>Owner Home</h1>
   <p class="lede">How are the businesses. What is wrong. What needs you. What money or risk. What is blocked.</p>
 
+  <h2>Pulse</h2>
+  <div id="owner-pulse" aria-live="polite"><p class="meta">Loading pulse…</p></div>
+
+  <h2>Ask Wolf</h2>
+  <form id="ask-wolf-form" class="card">
+    <label for="ask-wolf-q">Ask Wolf</label>
+    <input id="ask-wolf-q" name="question" type="text" autocomplete="off" placeholder="What happened overnight?" style="width:100%;min-height:44px;margin:8px 0;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
+    <button type="submit" class="action primary" style="cursor:pointer">Ask</button>
+    <div id="ask-wolf-answer" class="lede" style="margin-top:10px"></div>
+  </form>
+
+  <h2>Running</h2>
+  <div id="running-now" aria-live="polite"><p class="meta">Loading running work…</p></div>
+
+  <h2>Needs you</h2>
+  <div id="owner-needs-you" aria-live="polite"><p class="meta">Loading decisions…</p></div>
+
   <a class="gm-headline" id="gm-headline" href="/owner/god-mode" aria-label="God Mode completion register">
     <span class="gm-label">God Mode</span>
     <span class="gm-score" id="gm-score">—</span>
@@ -582,7 +599,7 @@
 
   function paintLivePulse(data) {
     const box = document.getElementById("live-pulse");
-    if (!box) return;
+    if (!box || document.body.getAttribute("data-front-door") === "1") return;
     if (!data || !data.ok || !Array.isArray(data.tiles)) {
       box.innerHTML = `<article class="pulse-tile loud"><p class="pulse-what">Pulse</p><p class="pulse-value">EMPTY</p><p class="pulse-why">Pulse RO did not load. No figures were filled in.</p></article>`;
       document.body.setAttribute("data-live-pulse", "empty");
@@ -869,6 +886,115 @@
 
   loadGodModeHeadline();
 
+})();
+</script>
+<script>
+(function () {
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+  const answer = document.getElementById("ask-wolf-answer");
+  const running = document.getElementById("running-now");
+  const form = document.getElementById("ask-wolf-form");
+
+  function paintTiles(box, data) {
+    if (!box) return;
+    const tiles = (data.pulse && data.pulse.tiles) || [];
+    if (!tiles.length) return;
+    document.body.setAttribute("data-front-door", "1");
+    const priorities = (data.pulse.priorities || []).map((p) => `<p class="meta">${esc(p)}</p>`).join("");
+    box.innerHTML = tiles.map((tile) => `<article class="pulse-tile" data-pulse-id="${esc(tile.id)}">
+      <p class="pulse-what">${esc(tile.what)}</p>
+      <p class="pulse-value">${esc(tile.value)}</p>
+      <p class="pulse-why">${esc(tile.why || "")}</p>
+      ${tile.href ? `<a class="action" href="${esc(tile.href)}">Open</a>` : ""}
+    </article>`).join("") + priorities;
+  }
+
+  function ownerAction(action, id, worker) {
+    fetch("/api/owner/ask", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ action: action, work_item_id: id, worker: worker || "" })
+    }).then((res) => res.json())
+      .then((body) => {
+        if (answer) answer.textContent = (body && body.answer) || "Wolf recorded nothing.";
+        loadDoor();
+      })
+      .catch(() => { if (answer) answer.textContent = "Wolf could not record that. Nothing was changed."; });
+  }
+
+  function paintDoor(data) {
+    if (!running) return;
+    const items = (data.running && data.running.items) || [];
+    if (!items.length) {
+      running.innerHTML = `<p class="meta">${esc((data.running && data.running.empty_message) || "Nothing is running.")}</p>`;
+    } else {
+      running.innerHTML = items.map((item) => `<article class="card" data-work-item="${esc(item.id)}">
+        <p><strong>${esc(item.what)}</strong></p>
+        <p>Status ${esc(item.status)} · Step ${esc(item.current_step || "—")}</p>
+        <p class="meta">Worker ${esc(item.worker || "—")} · Started ${esc(item.started || "—")} · Last real change ${esc(item.last_change || "—")}</p>
+        <p class="meta">Next ${esc(item.next_step || "—")} · Blocker ${esc(item.blocker || "—")} · Owner needed ${esc(String(!!item.owner_needed))}${item.eta ? " · ETA " + esc(item.eta) : ""}</p>
+        <p>
+          <button type="button" data-action="fix" data-id="${esc(item.id)}">Fix</button>
+          <button type="button" data-action="reassign" data-id="${esc(item.id)}">Reassign local</button>
+          <button type="button" data-action="stop" data-id="${esc(item.id)}">Stop</button>
+        </p>
+      </article>`).join("");
+      running.querySelectorAll("button[data-action]").forEach((btn) => {
+        btn.addEventListener("click", () => ownerAction(btn.getAttribute("data-action"), btn.getAttribute("data-id"), btn.getAttribute("data-action") === "reassign" ? "local-deterministic" : ""));
+      });
+    }
+    const needs = document.getElementById("owner-needs-you");
+    const ny = (data.needs_you && data.needs_you.items) || [];
+    if (needs && data.needs_you) {
+      needs.innerHTML = ny.length
+        ? ny.map((item) => `<article class="card loud"><h3>${esc(item.what)}</h3><p>${esc(item.why || "")}</p>${item.href ? `<a class="action" href="${esc(item.href)}">Open</a>` : ""}</article>`).join("")
+        : `<p class="meta">${esc(data.needs_you.empty_message || "Nothing needs you.")}</p>`;
+    }
+    paintTiles(document.getElementById("owner-pulse"), data);
+    paintTiles(document.getElementById("live-pulse"), data);
+    const finance = data.ggv_finance;
+    if (finance && needs) {
+      const links = (finance.remaining_tests || []).map((row) => `<a class="action" href="${esc(row.href)}">${esc(row.what)}</a>`).join(" ");
+      needs.insertAdjacentHTML("beforeend", `<article class="card"><p>${esc(finance.truth || "")}</p><p class="meta">${esc(finance.why || "")}</p><p>${links}</p></article>`);
+    }
+  }
+
+  function loadDoor() {
+    fetch("/api/owner/front-door", { headers: { Accept: "application/json" }, credentials: "same-origin" })
+      .then((res) => res.json().then((body) => ({ ok: res.ok, body })))
+      .then(({ ok, body }) => { if (ok && body && body.ok) paintDoor(body); })
+      .catch(() => {});
+  }
+
+  if (form) {
+    form.addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const q = (document.getElementById("ask-wolf-q") || {}).value || "";
+      if (answer) answer.textContent = "Wolf is reading canonical state.";
+      fetch("/api/owner/ask", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ question: q })
+      }).then((res) => res.json().then((body) => ({ ok: res.ok, body })))
+        .then(({ ok, body }) => {
+          if (!answer) return;
+          if (!ok || !body || body.ok === false) {
+            answer.textContent = (body && (body.message || body.error)) || "Wolf could not answer.";
+            return;
+          }
+          const extra = [body.why, body.what_next].filter(Boolean).join(" ");
+          answer.textContent = body.answer + (extra ? " " + extra : "");
+        })
+        .catch(() => { if (answer) answer.textContent = "Wolf could not answer. Nothing was invented."; });
+    });
+  }
+
+  loadDoor();
+  window.setInterval(loadDoor, 20000);
 })();
 </script>
 </body>
