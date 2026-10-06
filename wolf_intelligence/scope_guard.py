@@ -421,8 +421,14 @@ def check_invocation(
             if p not in bypass_paths:
                 bypass_paths.append(p)
         needs_strict = bypass or (cli == "codex" and "workspace-write" in codex_modes)
+        root_only_bypass = (
+            cwd_path == sandbox_root
+            and all(p == sandbox_root for p in bypass_paths)
+        )
         if needs_strict:
-            if strict_tree is None or not all(
+            if root_only_bypass and not globs:
+                reasons.append("BYPASS_OUTSIDE_SANDBOX")
+            elif strict_tree is None or not all(
                 _strict_worktree(p, strict_tree, sandbox_root, zdotdir_empty)
                 for p in bypass_paths
             ):

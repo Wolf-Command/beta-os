@@ -260,6 +260,32 @@ class ScopeGuardTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("SCOPE_CLI_UNRECOGNIZED", reasons)
 
+    def test_sandbox_root_cwd_and_target_workspace_write_refused(self) -> None:
+        policy = json.loads(json.dumps(self.policy))
+        policy["worker_execution_scope"]["allowed_workspace_globs"] = []
+        ok, reasons = check_invocation(
+            "codex_sub",
+            ["codex", "exec", "-s", "workspace-write", "-C", str(SANDBOX)],
+            str(SANDBOX),
+            ALLOWED_ENV,
+            policy=policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("BYPASS_OUTSIDE_SANDBOX", reasons)
+
+    def test_sandbox_root_cwd_and_target_force_refused(self) -> None:
+        policy = json.loads(json.dumps(self.policy))
+        policy["worker_execution_scope"]["allowed_workspace_globs"] = []
+        ok, reasons = check_invocation(
+            "cursor_sub",
+            ["cursor-agent", "--workspace", str(SANDBOX), "--force"],
+            str(SANDBOX),
+            ALLOWED_ENV,
+            policy=policy,
+        )
+        self.assertFalse(ok)
+        self.assertIn("BYPASS_OUTSIDE_SANDBOX", reasons)
+
     def test_sandbox_root_cwd_with_flag_worktree_refused_on_bypass(self) -> None:
         ws = str(WORKTREE)
         ok, reasons = check_invocation(

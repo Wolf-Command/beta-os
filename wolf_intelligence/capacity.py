@@ -779,11 +779,50 @@ def _observation_records_for_worker(worker_id: str) -> list[dict[str, Any]]:
     return [r for r in _load_seed() if r.get("worker_id") == worker_id]
 
 
+def _weekly_drop_reset_confirmed(
+    worker_id: str,
+    pool: str,
+    drop_at: datetime,
+    obs_reset_at: str | None,
+    now: datetime,
+) -> bool:
+    """Accept a large weekly drop only with explicit reset metadata or at/after reset boundary."""
+    pre_reset_at: datetime | None = None
+    pre_observed: datetime | None = None
+    post_drop_with_reset = 0
+    post_drop_points = 0
+    for rec in _observation_records_for_worker(worker_id):
+        if pool not in (rec.get("included_usage_pct") or {}):
+            continue
+        observed = _record_observed_dt(rec)
+        if observed is None:
+            continue
+        if observed < drop_at:
+            if pre_observed is None or observed > pre_observed:
+                pre_observed = observed
+                pre_reset_at = _parse_dt(rec.get("reset_at"))
+            continue
+        post_drop_points += 1
+        if _parse_dt(rec.get("reset_at")) is not None:
+            post_drop_with_reset += 1
+
+    boundary = pre_reset_at or _parse_dt(obs_reset_at)
+    if boundary is not None and drop_at >= boundary:
+        return True
+    if boundary is not None and now >= boundary and post_drop_points >= 1:
+        return True
+    if post_drop_with_reset >= 1 and post_drop_points >= 2:
+        return True
+    return False
+
+
 def _peak_raw_pct(
     worker_id: str,
     pool: str,
     now: datetime,
     window_hours: float,
+    *,
+    obs_reset_at: str | None = None,
 ) -> float | None:
     pairs = _pool_velocity_pairs(worker_id, pool, now, window_hours)
     if not pairs:
@@ -791,12 +830,13 @@ def _peak_raw_pct(
     segments = _split_pairs_at_drops(pairs)
     active = segments[-1] if segments else pairs
     active_peak = max(p for _, p in active)
-    if len(active) == 1 and len(segments) > 1:
+    if len(segments) > 1:
         prev_peak = max(p for _, p in segments[-2])
         active_t, active_p = active[0]
         drop_span_h = (active_t - segments[-2][-1][0]).total_seconds() / 3600.0
         if drop_span_h < 24.0 and (prev_peak - active_p) >= 5.0:
-            return max(active_peak, prev_peak)
+            if not _weekly_drop_reset_confirmed(worker_id, pool, active_t, obs_reset_at, now):
+                return max(active_peak, prev_peak)
     return active_peak
 
 
@@ -956,7 +996,11 @@ def worker_capacity_record(
 
     effective = _effective_pct(observed_pct, observed_at, now, decay_rate)
     vel_cfg = _velocity_config(policy)
-    peak_raw = _peak_raw_pct(worker_id, pool, now, vel_cfg["window_hours"]) if pool else None
+    peak_raw = (
+        _peak_raw_pct(worker_id, pool, now, vel_cfg["window_hours"], obs_reset_at=obs.get("reset_at"))
+        if pool
+        else None
+    )
     state_pct = max(effective, peak_raw) if peak_raw is not None else effective
     state = _state_from_pct(state_pct, thresholds)
 

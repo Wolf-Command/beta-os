@@ -1062,6 +1062,39 @@ class TestCapacityGovernance(unittest.TestCase):
         self.assertEqual(grok["state"], "NORMAL")
         self.assertIs(grok.get("projected_exhaustion_before_reset"), False)
 
+    def test_drop_no_reset_low_tail_retains_exhausted(self) -> None:
+        policy = self._velocity_policy_fixture(conserve_at=60)
+        if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
+            paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.unlink()
+        with mock.patch.object(capacity, "_load_seed", return_value=[]):
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 96},
+                source="owner_observed",
+                observed_at="2026-10-06T10:00:00+08:00",
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 5},
+                source="owner_observed",
+                observed_at="2026-10-06T11:15:00+08:00",
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 6},
+                source="owner_observed",
+                observed_at="2026-10-06T11:30:00+08:00",
+            )
+            record_observation(
+                worker_id="grok_bot_sub",
+                included_usage_pct={"weekly": 7},
+                source="owner_observed",
+                observed_at="2026-10-06T12:00:00+08:00",
+            )
+            snap = capacity_snapshot("2026-10-06T12:00:00+08:00", policy=policy, policy_mode="ENFORCED")
+        grok = snap["workers"]["grok_bot_sub"]
+        self.assertEqual(grok["state"], "EXHAUSTED")
+
     def test_duplicate_timestamp_takes_conservative_peak(self) -> None:
         policy = self._velocity_policy_fixture(conserve_at=60)
         if paths.GOVERNANCE_CAPACITY_OBSERVATIONS_PATH.exists():
