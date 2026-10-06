@@ -1,0 +1,378 @@
+{
+ "label": "DRAFT - NOT WIRED",
+ "status": "PROPOSED",
+ "wired": false,
+ "active": false,
+ "generated_from": "bench gen2-20261006 (gen2-report.json)",
+ "tie_rule": "Gen-2 statistics and leader selection.\n\nTie rule (defined BEFORE any gen-2 run): two workers' class means are a quality TIE when\n    |mean1 - mean2| <= IMMATERIAL = max(0.05, 2 * sqrt(sd1^2/n1 + sd2^2/n2))\ni.e. within 5 points or within ~2 standard errors of run-to-run variation, whichever is larger.\nOnly inside a TIE may latency be used, and then only as a labelled preference, never as a quality win.\nA run FAILS when it did not complete, produced no gradeable output, hit a critical semantic failure, or scored < 0.5.",
+ "task_classes": {
+  "coding": {
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "gen1_order": [
+    "claude_pro_sub",
+    "gemini_free",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED"
+   ],
+   "gen2_leader": {
+    "leader": null,
+    "confidence": "TIE",
+    "tie_group": [
+     "claude_pro_sub",
+     "codex_sub",
+     "cursor_sub"
+    ],
+    "tied_with": [
+     {
+      "worker": "codex_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     },
+     {
+      "worker": "cursor_sub",
+      "delta": 0.0079,
+      "threshold": 0.05
+     }
+    ],
+    "latency_preference_within_tie": "claude_pro_sub",
+    "reason": "quality difference within immaterial threshold (top-second delta 0.0 <= 0.05)"
+   }
+  },
+  "debugging": {
+   "order": [
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "gen1_order": [
+    "gemini_free",
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED"
+   ],
+   "gen2_leader": {
+    "leader": null,
+    "confidence": "TIE",
+    "tie_group": [
+     "claude_pro_sub",
+     "cursor_sub",
+     "codex_sub"
+    ],
+    "tied_with": [
+     {
+      "worker": "cursor_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     },
+     {
+      "worker": "codex_sub",
+      "delta": 0.025,
+      "threshold": 0.05
+     }
+    ],
+    "latency_preference_within_tie": "claude_pro_sub",
+    "reason": "quality difference within immaterial threshold (top-second delta 0.0 <= 0.05)"
+   }
+  },
+  "security": {
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "gen1_order": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED",
+    "gen2 HIGH confirms claude first"
+   ],
+   "gen2_leader": {
+    "leader": "claude_pro_sub",
+    "confidence": "HIGH",
+    "runner_up": "codex_sub",
+    "margin": 0.1071,
+    "threshold": 0.05,
+    "reason": "mean 1.0 vs 0.8929 (margin 0.1071 > threshold 0.05)"
+   }
+  },
+  "finance": {
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "gen1_order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "gemini_free",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED"
+   ],
+   "gen2_leader": {
+    "leader": null,
+    "confidence": "TIE",
+    "tie_group": [
+     "codex_sub",
+     "claude_pro_sub"
+    ],
+    "tied_with": [
+     {
+      "worker": "claude_pro_sub",
+      "delta": 0.0167,
+      "threshold": 0.05
+     }
+    ],
+    "latency_preference_within_tie": "claude_pro_sub",
+    "reason": "quality difference within immaterial threshold (top-second delta 0.0167 <= 0.05)"
+   }
+  },
+  "ux_product": {
+   "order": [
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "gen1_order": [
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub",
+    "gemini_free",
+    "ollama_local"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED"
+   ],
+   "gen2_leader": {
+    "leader": null,
+    "confidence": "TIE",
+    "tie_group": [
+     "codex_sub",
+     "claude_pro_sub",
+     "cursor_sub"
+    ],
+    "tied_with": [
+     {
+      "worker": "claude_pro_sub",
+      "delta": 0.0206,
+      "threshold": 0.05
+     },
+     {
+      "worker": "cursor_sub",
+      "delta": 0.0386,
+      "threshold": 0.0617
+     }
+    ],
+    "latency_preference_within_tie": "cursor_sub",
+    "reason": "quality difference within immaterial threshold (top-second delta 0.0206 <= 0.05)"
+   }
+  },
+  "large_context": {
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "gen1_order": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED",
+    "gen2 HIGH: claude 1.000 > codex 0.867 > cursor 0.667; ollama UNSUPPORTED"
+   ],
+   "gen2_leader": {
+    "leader": "claude_pro_sub",
+    "confidence": "HIGH",
+    "runner_up": "codex_sub",
+    "margin": 0.1333,
+    "threshold": 0.0666,
+    "reason": "mean 1.0 vs 0.8667 (margin 0.1333 > threshold 0.0666)"
+   }
+  },
+  "vision_document": {
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "gen1_order": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED"
+   ],
+   "gen2_leader": {
+    "leader": null,
+    "confidence": "TIE",
+    "tie_group": [
+     "claude_pro_sub",
+     "codex_sub",
+     "cursor_sub"
+    ],
+    "tied_with": [
+     {
+      "worker": "codex_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     },
+     {
+      "worker": "cursor_sub",
+      "delta": 0.0256,
+      "threshold": 0.0513
+     }
+    ],
+    "latency_preference_within_tie": "claude_pro_sub",
+    "reason": "quality difference within immaterial threshold (top-second delta 0.0 <= 0.05)"
+   }
+  },
+  "structured_extraction": {
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "gen1_order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "gemini_free",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED"
+   ],
+   "gen2_leader": {
+    "leader": null,
+    "confidence": "TIE",
+    "tie_group": [
+     "claude_pro_sub",
+     "codex_sub",
+     "cursor_sub"
+    ],
+    "tied_with": [
+     {
+      "worker": "codex_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     },
+     {
+      "worker": "cursor_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     }
+    ],
+    "latency_preference_within_tie": "claude_pro_sub",
+    "reason": "quality difference within immaterial threshold (top-second delta 0.0 <= 0.05)"
+   }
+  },
+  "reasoning_planning": {
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "gen1_order": [
+    "claude_pro_sub",
+    "gemini_free",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ],
+   "changes": [
+    "gemini removed: DEFERRED BILLING UNVERIFIED"
+   ],
+   "gen2_leader": {
+    "leader": null,
+    "confidence": "TIE",
+    "tie_group": [
+     "claude_pro_sub",
+     "codex_sub",
+     "cursor_sub"
+    ],
+    "tied_with": [
+     {
+      "worker": "codex_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     },
+     {
+      "worker": "cursor_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     }
+    ],
+    "latency_preference_within_tie": "claude_pro_sub",
+    "reason": "quality difference within immaterial threshold (top-second delta 0.0 <= 0.05)"
+   }
+  },
+  "regression_daily_close_extraction": {
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "excluded": {
+    "ollama_local": "3/3 critical: unknown payment methods remapped"
+   },
+   "gen2_leader": {
+    "leader": null,
+    "confidence": "TIE",
+    "tie_group": [
+     "claude_pro_sub",
+     "codex_sub",
+     "cursor_sub"
+    ],
+    "tied_with": [
+     {
+      "worker": "codex_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     },
+     {
+      "worker": "cursor_sub",
+      "delta": 0.0,
+      "threshold": 0.05
+     }
+    ],
+    "latency_preference_within_tie": "claude_pro_sub",
+    "reason": "quality difference within immaterial threshold (top-second delta 0.0 <= 0.05)"
+   },
+   "changes": [
+    "new class; top three TIE; ollama excluded"
+   ]
+  }
+ }
+}
