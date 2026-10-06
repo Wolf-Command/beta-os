@@ -30,6 +30,7 @@ class FailoverTestCase(unittest.TestCase):
             {
                 "claude_paused": False,
                 "worktree_cwd": self.worktree,
+                "allow_fixture_workers": True,
                 "worker_cmds": {
                     "cursor_sub": [
                         "python3",

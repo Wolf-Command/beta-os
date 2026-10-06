@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -399,6 +400,92 @@ def refuse_double_claim(item_id: str, attempt: int) -> bool:
     return bool(lease and lease.get("dispatched"))
 
 
+FIXTURE_WORKER_MARKER = "tests/fixtures"
+VERDICT_RE = re.compile(r"VERDICT:\s*(PASS|FAIL)", re.IGNORECASE)
+
+
+def is_fixture_worker_cmd(argv: list[str]) -> bool:
+    for part in argv:
+        if FIXTURE_WORKER_MARKER in str(part).replace("\\", "/"):
+            return True
+    return False
+
+
+def refuse_fixture_worker(config: dict[str, Any], argv: list[str]) -> bool:
+    """Refuse fixture workers unless explicitly allowed (dry-run / unit tests)."""
+    if config.get("allow_fixture_workers"):
+        return False
+    return is_fixture_worker_cmd(argv)
+
+
+def _runtime_path(item_id: str, attempt: int, suffix: str) -> Path:
+    return ORCH_DIR / "runtime" / f"{item_id}-{attempt}{suffix}"
+
+
+def _review_prompt(item: dict[str, Any]) -> str:
+    parent = (item.get("spec") or {}).get("parent") or item["id"]
+    acceptance = item.get("acceptance") or ""
+    return (
+        f"Review the build for work item {parent}. "
+        f"Acceptance criteria: {acceptance}. "
+        "Respond with a line VERDICT: PASS or VERDICT: FAIL "
+        "followed by a 5-line summary."
+    )
+
+
+def _grade_build(worktree: str, exit_code: int | None) -> tuple[str, str, list[str]]:
+    exceptions: list[str] = []
+    hello = Path(worktree) / "fixture" / "hello.py"
+    if exit_code not in (0, None) and exit_code != 0:
+        return "FAILED", f"cursor-agent exit {exit_code}", exceptions
+    if not hello.is_file():
+        return "FAILED", "fixture/hello.py missing", exceptions
+    try:
+        proc = subprocess.run(
+            ["python3", "-m", "unittest", "discover", "-s", "fixture", "-p", "test_*.py"],
+            cwd=worktree,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return "FAILED", f"unittest error: {type(exc).__name__}", [str(exc)]
+    if proc.returncode != 0:
+        tail = (proc.stderr or proc.stdout or "").strip()[-500:]
+        if tail:
+            exceptions.append(tail)
+        return "FAILED", "unittest failed in fixture worktree", exceptions
+    return "COMPLETED", "fixture/hello.py present and unittest passed", exceptions
+
+
+def _grade_review(output_path: Path, exit_code: int | None) -> tuple[str, str, list[str]]:
+    text = output_path.read_text(encoding="utf-8") if output_path.is_file() else ""
+    verdict = None
+    for line in text.splitlines():
+        match = VERDICT_RE.search(line)
+        if match:
+            verdict = match.group(1).upper()
+            break
+    if exit_code not in (0, None) and exit_code != 0:
+        return "FAILED", f"codex exit {exit_code}", []
+    if verdict == "FAIL":
+        return "FAILED", _truncate_summary(text) or "review verdict FAIL", []
+    if verdict == "PASS":
+        return "COMPLETED", _truncate_summary(text) or "review verdict PASS", []
+    return "FAILED", "no VERDICT line in codex output", []
+
+
+def _executed_by(argv: list[str], *, using_override: bool, worker_id: str) -> str:
+    if not argv:
+        return worker_id
+    binary = Path(argv[0]).name
+    if using_override:
+        return f"{worker_id} {' '.join(str(x) for x in argv[:4])}"
+    resolved = shutil.which(binary) or argv[0]
+    return str(resolved)
+
+
 def reclaim_stale_leases(now: datetime | str | None = None) -> list[str]:
     now_dt = _parse_now(now)
     leases = load_leases()
@@ -439,40 +526,41 @@ def _worker_cmd(worker_id: str, config: dict[str, Any], item: dict[str, Any], wo
             for x in cmd
         ]
     spec = item.get("spec") or {}
-    completion_file = str(ORCH_DIR / "runtime" / f"{item['id']}-{item.get('attempt')}.completion.json")
+    attempt = int(item.get("attempt") or 1)
     if worker_id == "cursor_sub":
         prompt = spec.get("prompt") or json.dumps(spec)
         return [
             "cursor-agent",
-            "--print",
-            "--output-format",
-            "json",
-            "--mode",
-            "ask",
-            "--sandbox",
-            "enabled",
-            "--trust",
-            "--workspace",
-            worktree,
+            "-p",
             "--model",
             str(spec.get("model") or "composer-2.5"),
+            "--trust",
+            "--force",
+            "--sandbox",
+            "enabled",
+            "--workspace",
+            worktree,
+            "--output-format",
+            "text",
             prompt,
         ]
     if worker_id == "codex_sub":
+        out_file = str(_runtime_path(item["id"], attempt, ".codex.out"))
+        prompt = _review_prompt(item) if item.get("kind") == "review" else json.dumps(
+            {"acceptance": item.get("acceptance"), "spec": spec}
+        )
         return [
             "codex",
             "exec",
-            "--json",
-            "--ephemeral",
-            "--skip-git-repo-check",
-            "--ignore-user-config",
+            "-c",
+            "forced_login_method=chatgpt",
             "-s",
             "read-only",
             "-C",
             worktree,
-            "-c",
-            'forced_login_method="chatgpt"',
-            "-",
+            "-o",
+            out_file,
+            prompt,
         ]
     if worker_id == "claude_pro_sub":
         return ["claude", "-p", "--output-format", "json", "--no-session-persistence"]
@@ -528,6 +616,18 @@ def dispatch_item(
     env = scrubbed_env()
     cwd = worktree
     using_override = worker_id in (config.get("worker_cmds") or {})
+    if refuse_fixture_worker(config, argv):
+        return _finish_dispatch(
+            items[item_id],
+            worker_id,
+            status="FAILED",
+            summary="fixture worker refused in non-dry-run path",
+            exceptions=["fixture_worker_refused"],
+            exit_code=None,
+            now=now,
+            argv=argv,
+            using_override=using_override,
+        )
     scope_ok, scope_reasons = (True, []) if using_override else check_invocation(worker_id, argv, cwd, env)
     if not scope_ok:
         return _finish_dispatch(
@@ -538,14 +638,17 @@ def dispatch_item(
             exceptions=scope_reasons,
             exit_code=None,
             now=now,
+            argv=argv,
+            using_override=using_override,
         )
 
     runtime_dir = ORCH_DIR / "runtime"
     runtime_dir.mkdir(parents=True, exist_ok=True)
     completion_path = runtime_dir / f"{item_id}-{attempt}.completion.json"
+    codex_output_path = _runtime_path(item_id, attempt, ".codex.out")
     spec = items[item_id].get("spec") or {}
-    stdin_data = spec.get("stdin")
-    if worker_id == "codex_sub" and stdin_data is None:
+    stdin_data = spec.get("stdin") if using_override else None
+    if using_override and worker_id == "codex_sub" and stdin_data is None:
         stdin_data = json.dumps({"acceptance": items[item_id].get("acceptance"), "spec": spec})
 
     timeout_s = float(items[item_id].get("timeout_s") or 300)
@@ -570,8 +673,11 @@ def dispatch_item(
             exceptions=[type(exc).__name__],
             exit_code=None,
             now=now,
+            argv=argv,
+            using_override=using_override,
         )
 
+    worker_pid = proc.pid
     err_kind = None
     try:
         out, err_txt = proc.communicate(input=stdin_data, timeout=timeout_s)
@@ -585,18 +691,21 @@ def dispatch_item(
     elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
     exit_code = proc.returncode if err_kind is None else None
 
-    if completion_path.exists():
-        try:
-            payload = json.loads(completion_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            payload = {}
-    else:
-        payload = {}
-        if out.strip():
+    payload: dict[str, Any] = {}
+    evidence: list[str] = []
+    if using_override:
+        if completion_path.exists():
+            try:
+                payload = json.loads(completion_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                payload = {}
+        elif out.strip():
             try:
                 payload = json.loads(out.strip().splitlines()[-1])
             except (json.JSONDecodeError, IndexError):
                 payload = {"summary": out.strip()[:500]}
+        if completion_path.exists():
+            evidence.append(str(completion_path))
 
     if err_kind == "TIMEOUT":
         failover.record_availability_from_dispatch(
@@ -613,10 +722,13 @@ def dispatch_item(
             summary=f"timeout after {timeout_s}s",
             exceptions=["TIMEOUT"],
             exit_code=exit_code,
-            evidence=[str(completion_path)] if completion_path.exists() else [],
+            evidence=evidence,
             payload=payload,
             now=now,
             elapsed_ms=elapsed_ms,
+            pid=worker_pid,
+            argv=argv,
+            using_override=using_override,
         )
 
     if exit_code != 0 or err_txt.strip():
@@ -628,31 +740,51 @@ def dispatch_item(
             now=now,
         )
 
-    verdict = str(payload.get("verdict") or payload.get("status") or "").upper()
-    if exit_code != 0:
-        status = "FAILED"
-    elif item["kind"] == "review" and verdict == "FAIL":
-        status = "FAILED"
-    elif item["kind"] == "review" and verdict not in ("PASS", "OK", "SUCCESS", ""):
-        if verdict:
+    exceptions: list[str] = []
+    if using_override:
+        verdict = str(payload.get("verdict") or payload.get("status") or "").upper()
+        if exit_code != 0:
             status = "FAILED"
+        elif item["kind"] == "review" and verdict == "FAIL":
+            status = "FAILED"
+        elif item["kind"] == "review" and verdict not in ("PASS", "OK", "SUCCESS", ""):
+            status = "FAILED" if verdict else "COMPLETED"
         else:
             status = "COMPLETED"
+        summary = str(payload.get("summary") or payload.get("result") or out[:500] or "ok")
+        if err_txt.strip() and status == "FAILED":
+            exceptions.append(err_txt.strip())
+    elif item["kind"] == "build":
+        hello_path = Path(worktree) / "fixture" / "hello.py"
+        status, summary, grade_exc = _grade_build(worktree, exit_code)
+        exceptions.extend(grade_exc)
+        if hello_path.is_file():
+            evidence.append(str(hello_path))
+    elif item["kind"] == "review":
+        status, summary, grade_exc = _grade_review(codex_output_path, exit_code)
+        exceptions.extend(grade_exc)
+        if codex_output_path.is_file():
+            evidence.append(str(codex_output_path))
     else:
-        status = "COMPLETED"
+        status = "COMPLETED" if exit_code == 0 else "FAILED"
+        summary = out[:500] or "ok"
+        if err_txt.strip() and status == "FAILED":
+            exceptions.append(err_txt.strip())
 
-    summary = str(payload.get("summary") or payload.get("result") or out[:500] or "ok")
     return _finish_dispatch(
         items[item_id],
         worker_id,
         status=status,
         summary=summary,
-        exceptions=[err_txt.strip()] if err_txt.strip() and status == "FAILED" else [],
+        exceptions=exceptions,
         exit_code=exit_code,
-        evidence=[str(completion_path)] if completion_path.exists() else [],
+        evidence=evidence,
         payload=payload,
         now=now,
         elapsed_ms=elapsed_ms,
+        pid=worker_pid,
+        argv=argv,
+        using_override=using_override,
     )
 
 
@@ -668,6 +800,9 @@ def _finish_dispatch(
     payload: dict[str, Any] | None = None,
     now: datetime | str | None = None,
     elapsed_ms: float | None = None,
+    pid: int | None = None,
+    argv: list[str] | None = None,
+    using_override: bool = False,
 ) -> dict[str, Any]:
     items = load_items()
     item = items.get(item["id"], item)
@@ -675,13 +810,13 @@ def _finish_dispatch(
     attempt = int(item.get("attempt") or 1)
     owner_action = str((payload or {}).get("owner_action_required") or item.get("owner_action_required") or "")
 
-    cfg = load_config()
-    worktree = str(cfg.get("worktree_cwd") or ".")
-    try:
-        argv = _worker_cmd(worker_id, cfg, item, worktree)
-        cli = " ".join(argv[:4])
-    except ValueError:
-        cli = worker_id
+    if argv is None:
+        cfg = load_config()
+        worktree = str(cfg.get("worktree_cwd") or ".")
+        try:
+            argv = _worker_cmd(worker_id, cfg, item, worktree)
+        except ValueError:
+            argv = [worker_id]
     rec = completion_record(
         work_item_id=item["id"],
         status=status,
@@ -689,7 +824,7 @@ def _finish_dispatch(
         evidence_paths=evidence or [],
         exceptions=exceptions,
         owner_action_required=owner_action,
-        executed_by=f"{worker_id} {cli}",
+        executed_by=_executed_by(argv, using_override=using_override, worker_id=worker_id),
         billing_class=_billing_class(worker_id),
     )
     json_path, md_path = write_completion(rec, attempt)
@@ -744,8 +879,8 @@ def _finish_dispatch(
     item["last_result"] = status
     latest = load_items()
     latest[item["id"]] = item
-    for pid, prec in parent_updates.items():
-        latest[pid] = prec
+    for parent_id, prec in parent_updates.items():
+        latest[parent_id] = prec
     save_items(latest)
 
     key = _lease_key(item["id"], attempt)
@@ -767,6 +902,8 @@ def _finish_dispatch(
         "review_enqueued": review_id,
         "elapsed_ms": elapsed_ms,
         "exit_code": exit_code,
+        "pid": pid,
+        "worker": worker_id,
     }
 
 

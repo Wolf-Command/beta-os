@@ -31,6 +31,7 @@ class OrchestratorTestCase(unittest.TestCase):
             {
                 "claude_paused": True,
                 "worktree_cwd": self.worktree,
+                "allow_fixture_workers": True,
                 "worker_cmds": {
                     "cursor_sub": [
                         "python3",
@@ -228,6 +229,29 @@ class OrchestratorTestCase(unittest.TestCase):
         out = orch.run_until_idle(now="2026-10-06T12:00:01+08:00")
         self.assertEqual(out["pending"], 0)
         self.assertEqual(orch.grok_invocation_count(), 0)
+
+    def test_fixture_worker_refused_without_allow_flag(self) -> None:
+        cfg = orch.load_config()
+        cfg.pop("allow_fixture_workers", None)
+        orch.save_config(cfg)
+        self._submit_build(reviewer_gate=False)
+        out = orch.run_once(now="2026-10-06T12:00:01+08:00")
+        self.assertEqual(out["processed"][0]["status"], "FAILED")
+        self.assertIn("fixture_worker_refused", out["processed"][0]["completion"]["EXCEPTIONS"])
+        comp = list(orch.COMPLETIONS_DIR.glob("wi-build-1-1.json"))[0]
+        rec = json.loads(comp.read_text())
+        self.assertIn(OK_WORKER, rec["EXECUTED_BY"])
+
+    def test_real_worker_cmd_has_no_fixture_path(self) -> None:
+        cfg = {"worktree_cwd": self.worktree}
+        item = {"id": "wi-real-1", "kind": "build", "attempt": 1, "spec": {"prompt": "x", "model": "composer-2.5"}}
+        argv = orch._worker_cmd("cursor_sub", cfg, item, self.worktree)
+        self.assertFalse(orch.is_fixture_worker_cmd(argv))
+        self.assertEqual(argv[0], "cursor-agent")
+        review = {"id": "wi-real-1-review", "kind": "review", "attempt": 1, "spec": {"parent": "wi-real-1"}, "acceptance": "ok"}
+        rargv = orch._worker_cmd("codex_sub", cfg, review, self.worktree)
+        self.assertEqual(rargv[0], "codex")
+        self.assertIn("VERDICT", rargv[-1])
 
 
 if __name__ == "__main__":
