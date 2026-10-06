@@ -479,6 +479,13 @@ def write_completion(rec: dict[str, Any], attempt: int) -> tuple[Path, Path]:
     base = COMPLETIONS_DIR / f"{rec['WORK_ITEM_ID']}-{attempt}"
     json_path = base.with_suffix(".json")
     md_path = base.with_suffix(".md")
+    if json_path.exists():
+        try:
+            existing = json.loads(json_path.read_text(encoding="utf-8"))
+            if existing.get("STATUS") == "COMPLETED" and rec.get("STATUS") != "COMPLETED":
+                return json_path, md_path
+        except (OSError, json.JSONDecodeError):
+            pass
     json_path.write_text(json.dumps(rec, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     md_path.write_text(render_completion_md(rec), encoding="utf-8")
     return json_path, md_path
@@ -810,32 +817,44 @@ def _executed_by(argv: list[str], *, using_override: bool, worker_id: str) -> st
     return str(resolved)
 
 
+def _stale_lease_keys(now: datetime | str | None = None) -> list[str]:
+    now_dt = _parse_now(now)
+    stale: list[str] = []
+    for key, lease in load_leases().items():
+        exp = lease.get("expires_at")
+        if exp and datetime.fromisoformat(exp) <= now_dt:
+            stale.append(key)
+    return stale
+
+
 def reclaim_stale_leases(now: datetime | str | None = None) -> list[str]:
     now_dt = _parse_now(now)
-    leases = load_leases()
-    reclaimed: list[str] = []
-    items = load_items()
-    for key, lease in list(leases.items()):
-        exp = lease.get("expires_at")
-        if not exp:
+    stale_keys = _stale_lease_keys(now_dt)
+    for key in stale_keys:
+        lease = load_leases().get(key) or {}
+        item_id = str(lease.get("work_item_id") or "")
+        attempt = int(lease.get("attempt") or 0)
+        if not item_id or _dispatch_ledger_blocks(item_id, attempt):
             continue
-        if datetime.fromisoformat(exp) > now_dt:
+        item = load_items().get(item_id)
+        if not item or item.get("status") not in ("CLAIMED", "RUNNING"):
             continue
-        item_id = lease.get("work_item_id")
-        item = items.get(item_id or "")
-        if item and item.get("status") in ("CLAIMED", "RUNNING"):
-            before = dict(item)
-            item["status"] = "QUEUED"
-            item["updated_at"] = _now_iso(now_dt)
-            item["version"] = _item_version(item) + 1
-            items[item_id] = item
-            audit_transition(item_id, "lease_reclaimed", before, item, now=now_dt, extra={"lease_key": key})
-        reclaimed.append(key)
-        del leases[key]
-    if reclaimed:
-        save_leases(leases)
-        save_items(items)
-    return reclaimed
+        transition_item(
+            item_id,
+            expected_status=("CLAIMED", "RUNNING"),
+            expected_version=_item_version(item),
+            mutator=lambda rec: {**rec, "status": "QUEUED"},
+            event="lease_reclaimed",
+            now=now_dt,
+            extra={"lease_key": key},
+        )
+    if stale_keys:
+        with _orch_exclusive_lock():
+            leases = load_leases()
+            for key in stale_keys:
+                leases.pop(key, None)
+            save_leases(leases)
+    return stale_keys
 
 
 def _worker_cmd(worker_id: str, config: dict[str, Any], item: dict[str, Any], worktree: str) -> list[str]:
@@ -1296,8 +1315,6 @@ def _finish_dispatch(
         executed_by=_executed_by(argv, using_override=using_override, worker_id=worker_id),
         billing_class=_billing_class(worker_id),
     )
-    json_path, md_path = write_completion(rec, attempt)
-    rec["EVIDENCE_PATHS"] = list(rec["EVIDENCE_PATHS"]) + [str(json_path), str(md_path)]
 
     review_id: str | None = None
     parent_updates: dict[str, dict[str, Any]] = {}
@@ -1373,6 +1390,9 @@ def _finish_dispatch(
             "pid": pid,
             "worker": worker_id,
         }
+
+    json_path, md_path = write_completion(rec, attempt)
+    rec["EVIDENCE_PATHS"] = list(rec["EVIDENCE_PATHS"]) + [str(json_path), str(md_path)]
 
     key = _lease_key(item_id, attempt)
     with _orch_exclusive_lock():
@@ -1544,8 +1564,20 @@ def health(*, now: datetime | str | None = None) -> dict[str, Any]:
             except (OSError, json.JSONDecodeError):
                 issues.append(f"corrupt:{path.name}")
 
-    reclaimed = reclaim_stale_leases(now=now)
-    resumed = reevaluate_waiting_for_capacity(now=now)
+    acquired, lock_fd, _lock_reason = acquire_orchestrator_run_lock()
+    reclaimed: list[str] = []
+    resumed: list[str] = []
+    if acquired:
+        try:
+            reclaimed = reclaim_stale_leases(now=now)
+            resumed = reevaluate_waiting_for_capacity(now=now)
+        finally:
+            release_orchestrator_run_lock(lock_fd)
+    else:
+        stale = _stale_lease_keys(now=now)
+        if stale:
+            issues.append(f"stale_leases_unreclaimed:{len(stale)}")
+        issues.append("orchestrator_lock_held")
     workers = {
         "cursor_sub": shutil.which("cursor-agent"),
         "codex_sub": shutil.which("codex"),
