@@ -177,6 +177,28 @@ def _process_lines() -> list[str]:
     return out.splitlines()
 
 
+def command_is_openclaw(cmd: str) -> bool:
+    """True for an OpenClaw process argv, not a mention inside python -c.
+
+    Matches argv0 basename openclaw / openclaw-gateway, a command that starts
+    with "openclaw ", or a command that contains "openclaw gateway". A python
+    -c line that only contains that substring is not a running OpenClaw.
+    """
+    text = cmd or ""
+    tokens = text.split()
+    first = tokens[0] if tokens else ""
+    base = first.rsplit("/", 1)[-1].lower()
+    low = text.lower()
+    if base in {"openclaw", "openclaw-gateway"} or low.startswith("openclaw "):
+        return True
+    if "openclaw gateway" not in low:
+        return False
+    interp = base
+    if interp.startswith("python") and "-c" in tokens:
+        return False
+    return True
+
+
 def inspect_openclaw() -> dict[str, Any]:
     """Live host check. Repo comments are not proof that a process is running."""
     home = Path.home() / ".openclaw"
@@ -189,10 +211,7 @@ def inspect_openclaw() -> dict[str, Any]:
         if len(cols) < 11:
             continue
         cmd = cols[10]
-        first = (cmd.split() or [""])[0]
-        base = first.rsplit("/", 1)[-1].lower()
-        low = cmd.lower()
-        if base in {"openclaw", "openclaw-gateway"} or low.startswith("openclaw ") or "openclaw gateway" in low:
+        if command_is_openclaw(cmd):
             hits.append(line[:240])
     metered_present = [key for key in METERED_ENV if (os.environ.get(key) or "").strip()]
     missing = []

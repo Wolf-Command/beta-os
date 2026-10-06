@@ -206,6 +206,15 @@ def test_policy(root: Path) -> None:
     check("not a second orchestrator", state.get("parallel_orchestrator") is False)
     check("openclaw not suitable", (state.get("openclaw") or {}).get("suitable_as_overnight_brain") is False)
     check("openclaw not marked running", (state.get("openclaw") or {}).get("running") is False)
+    check(
+        "python -c mention is not openclaw",
+        gate.command_is_openclaw("python3 -c \"print('openclaw gateway')\"") is False,
+    )
+    check("openclaw gateway argv counts", gate.command_is_openclaw("openclaw gateway --port 18789") is True)
+    check(
+        "openclaw-gateway basename counts",
+        gate.command_is_openclaw("/usr/local/bin/openclaw-gateway") is True,
+    )
     check("haiku claim unverified", (state.get("openclaw") or {}).get("haiku_claim") == "UNVERIFIED")
     item = state["items"][0]
     item["status"] = "RUNNING"
