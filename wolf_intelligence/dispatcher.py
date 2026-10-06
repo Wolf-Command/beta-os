@@ -132,3 +132,6 @@ def dispatch(work_item_id: str, *, force_isolated: bool = True) -> dict[str, Any
         "duplicate_expensive_dispatch": False,
         "workers_killed": False,
     }
+
+# REAL worker path (2026-10-06): dispatch_real records to the REAL evidence store, never live state.
+from .real_dispatch import collect_pull, dispatch_real  # noqa: E402,F401

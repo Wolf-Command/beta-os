@@ -1,0 +1,576 @@
+{
+ "label": "DRAFT - NOT WIRED",
+ "status": "DRAFT",
+ "wired": false,
+ "active": false,
+ "generated_at": "2026-10-06T08:47:21+08:00",
+ "evidence_class": "REAL",
+ "source": "records/bench_runs.jsonl (REAL only)",
+ "synthetic_history_used": false,
+ "metered_workers_excluded": [
+  "anthropic_api",
+  "gemini_paid",
+  "openai_api",
+  "xai_api"
+ ],
+ "fallback_to_metered": "NEVER",
+ "task_classes": {
+  "coding": {
+   "ranking": [
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 6448.3,
+     "failure_modes": []
+    },
+    {
+     "worker": "gemini_free",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 10184.9,
+     "failure_modes": []
+    },
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 12162.5,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 25904.1,
+     "failure_modes": []
+    },
+    {
+     "worker": "ollama_local",
+     "mean_quality": 0.167,
+     "n": 1,
+     "median_latency_ms": 2620.9,
+     "failure_modes": [
+      "float_precision_or_tiebreak"
+     ]
+    }
+   ],
+   "unsupported": [],
+   "preferred": null,
+   "tied_top": [
+    "claude_pro_sub",
+    "gemini_free",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "fast_acceptable": [
+    "claude_pro_sub",
+    "gemini_free",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.00)",
+   "order": [
+    "claude_pro_sub",
+    "gemini_free",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ]
+  },
+  "debugging": {
+   "ranking": [
+    {
+     "worker": "gemini_free",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 8341.0,
+     "failure_modes": []
+    },
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 16392.2,
+     "failure_modes": []
+    },
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 20255.7,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 33946.6,
+     "failure_modes": []
+    },
+    {
+     "worker": "ollama_local",
+     "mean_quality": 0.6,
+     "n": 1,
+     "median_latency_ms": 1512.8,
+     "failure_modes": [
+      "incomplete_diagnosis"
+     ]
+    }
+   ],
+   "unsupported": [],
+   "preferred": null,
+   "tied_top": [
+    "gemini_free",
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub"
+   ],
+   "fast_acceptable": [
+    "gemini_free",
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.00)",
+   "order": [
+    "gemini_free",
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub",
+    "ollama_local"
+   ]
+  },
+  "security": {
+   "ranking": [
+    {
+     "worker": "gemini_free",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 11307.5,
+     "failure_modes": []
+    },
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 11557.2,
+     "failure_modes": []
+    },
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 16589.3,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 34946.8,
+     "failure_modes": []
+    },
+    {
+     "worker": "ollama_local",
+     "mean_quality": 0.0,
+     "n": 1,
+     "median_latency_ms": 1931.6,
+     "failure_modes": [
+      "missed_vulns"
+     ]
+    }
+   ],
+   "unsupported": [],
+   "preferred": null,
+   "tied_top": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "fast_acceptable": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.00)",
+   "order": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ]
+  },
+  "finance": {
+   "ranking": [
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 9038.1,
+     "failure_modes": []
+    },
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 10928.6,
+     "failure_modes": []
+    },
+    {
+     "worker": "gemini_free",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 24133.4,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 0.78,
+     "n": 1,
+     "median_latency_ms": 39054.1,
+     "failure_modes": [
+      "entity_separation_error"
+     ]
+    },
+    {
+     "worker": "ollama_local",
+     "mean_quality": 0.11,
+     "n": 1,
+     "median_latency_ms": 1514.0,
+     "failure_modes": [
+      "entity_separation_error"
+     ]
+    }
+   ],
+   "unsupported": [],
+   "preferred": null,
+   "tied_top": [
+    "claude_pro_sub",
+    "codex_sub",
+    "gemini_free"
+   ],
+   "fast_acceptable": [
+    "claude_pro_sub",
+    "codex_sub",
+    "gemini_free"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.00)",
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "gemini_free",
+    "cursor_sub",
+    "ollama_local"
+   ]
+  },
+  "ux_product": {
+   "ranking": [
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 40462.1,
+     "failure_modes": []
+    },
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 0.959,
+     "n": 1,
+     "median_latency_ms": 41791.7,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 0.944,
+     "n": 1,
+     "median_latency_ms": 30531.5,
+     "failure_modes": []
+    },
+    {
+     "worker": "gemini_free",
+     "mean_quality": 0.916,
+     "n": 1,
+     "median_latency_ms": 10543.7,
+     "failure_modes": []
+    },
+    {
+     "worker": "ollama_local",
+     "mean_quality": 0.222,
+     "n": 1,
+     "median_latency_ms": 6285.0,
+     "failure_modes": [
+      "rubric_gaps"
+     ]
+    }
+   ],
+   "unsupported": [],
+   "preferred": null,
+   "tied_top": [
+    "codex_sub",
+    "claude_pro_sub"
+   ],
+   "fast_acceptable": [
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub",
+    "gemini_free"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.04)",
+   "order": [
+    "codex_sub",
+    "claude_pro_sub",
+    "cursor_sub",
+    "gemini_free",
+    "ollama_local"
+   ]
+  },
+  "large_context": {
+   "ranking": [
+    {
+     "worker": "gemini_free",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 9059.0,
+     "failure_modes": []
+    },
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 12956.1,
+     "failure_modes": []
+    },
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 14998.2,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 32066.4,
+     "failure_modes": []
+    },
+    {
+     "worker": "ollama_local",
+     "mean_quality": 0.0,
+     "n": 1,
+     "median_latency_ms": 29821.6,
+     "failure_modes": [
+      "no_json"
+     ]
+    }
+   ],
+   "unsupported": [],
+   "preferred": null,
+   "tied_top": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "fast_acceptable": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.00)",
+   "order": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ]
+  },
+  "vision_document": {
+   "ranking": [
+    {
+     "worker": "gemini_free",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 5041.4,
+     "failure_modes": []
+    },
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 7470.8,
+     "failure_modes": []
+    },
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 10425.2,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 37953.8,
+     "failure_modes": []
+    }
+   ],
+   "unsupported": [
+    "ollama_local"
+   ],
+   "preferred": null,
+   "tied_top": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "fast_acceptable": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.00)",
+   "order": [
+    "gemini_free",
+    "claude_pro_sub",
+    "codex_sub",
+    "cursor_sub"
+   ]
+  },
+  "structured_extraction": {
+   "ranking": [
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 9094.4,
+     "failure_modes": []
+    },
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 9343.4,
+     "failure_modes": []
+    },
+    {
+     "worker": "gemini_free",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 11804.0,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 30444.2,
+     "failure_modes": []
+    },
+    {
+     "worker": "ollama_local",
+     "mean_quality": 0.769,
+     "n": 1,
+     "median_latency_ms": 1399.7,
+     "failure_modes": [
+      "tricky_label_misread"
+     ]
+    }
+   ],
+   "unsupported": [],
+   "preferred": null,
+   "tied_top": [
+    "claude_pro_sub",
+    "codex_sub",
+    "gemini_free",
+    "cursor_sub"
+   ],
+   "fast_acceptable": [
+    "claude_pro_sub",
+    "codex_sub",
+    "gemini_free",
+    "cursor_sub"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.00)",
+   "order": [
+    "claude_pro_sub",
+    "codex_sub",
+    "gemini_free",
+    "cursor_sub",
+    "ollama_local"
+   ]
+  },
+  "reasoning_planning": {
+   "ranking": [
+    {
+     "worker": "claude_pro_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 8540.2,
+     "failure_modes": []
+    },
+    {
+     "worker": "gemini_free",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 10767.1,
+     "failure_modes": []
+    },
+    {
+     "worker": "codex_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 10896.3,
+     "failure_modes": []
+    },
+    {
+     "worker": "cursor_sub",
+     "mean_quality": 1.0,
+     "n": 1,
+     "median_latency_ms": 43292.1,
+     "failure_modes": []
+    },
+    {
+     "worker": "ollama_local",
+     "mean_quality": 0.0,
+     "n": 1,
+     "median_latency_ms": 1815.5,
+     "failure_modes": [
+      "constraint_violation"
+     ]
+    }
+   ],
+   "unsupported": [],
+   "preferred": null,
+   "tied_top": [
+    "claude_pro_sub",
+    "gemini_free",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "fast_acceptable": [
+    "claude_pro_sub",
+    "gemini_free",
+    "codex_sub",
+    "cursor_sub"
+   ],
+   "confidence": "low (n=1 per worker; margin 0.00)",
+   "order": [
+    "claude_pro_sub",
+    "gemini_free",
+    "codex_sub",
+    "cursor_sub",
+    "ollama_local"
+   ]
+  }
+ }
+}
