@@ -349,7 +349,11 @@ class NoUnlimitedPathTests(_Base):
             for adapter in (OpenAIAPIAdapter(), AnthropicAPIAdapter(), GeminiAdapter()):
                 with self.subTest(worker=adapter.worker_id, case="unverified_prices"):
                     result = adapter.submit({"execute": True, "prompt": "tiny"})
-                    self.assertEqual(result.data.get("reason_code"), "price_unverified")
+                    # Gemini is stricter since the 09:39 order: the billing-unverified check in gemini_spend_gate
+                    # fires before the price check, so it reports billing_unverified (still GATED, no call).
+                    want = "billing_unverified" if adapter.worker_id == "gemini" else "price_unverified"
+                    self.assertEqual(result.data.get("reason_code"), want)
+                    self.assertEqual(result.status, "GATED")
             opened.assert_not_called()
 
     def test_live_submit_stays_off_by_default(self) -> None:

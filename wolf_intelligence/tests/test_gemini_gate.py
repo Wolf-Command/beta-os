@@ -7,6 +7,7 @@ No network: urlopen is patched to fail the test if reached.
 """
 from __future__ import annotations
 
+import ast
 import os
 import re
 import shutil
@@ -125,6 +126,90 @@ class GeminiGateTests(unittest.TestCase):
                 gate_pos = src.rfind("gemini_spend_gate(", 0, m.start())
                 self.assertNotEqual(gate_pos, -1, f"{f}: endpoint at offset {m.start()} not preceded by gemini_spend_gate")
         self.assertEqual(sorted(hits), ["gemini.py", "subscription_cli.py"])
+
+    # ---- red-team follow-ups (Cursor review 09:55, evidence b4-1-review/cursor-redteam.txt) ----
+
+    def test_static_audit_gate_in_same_function_before_endpoint(self):
+        """AST check (not text position): the function that builds a Gemini endpoint URL must itself call
+        gemini_spend_gate, return on refusal, and do so on an earlier line than the URL."""
+        checked = 0
+        for f in PKG.rglob("*.py"):
+            if "tests" in f.parts:
+                continue
+            tree = ast.parse(f.read_text(encoding="utf-8"))
+            for fn in ast.walk(tree):
+                if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                url_lines = [n.lineno for n in ast.walk(fn) if isinstance(n, ast.Constant) and isinstance(n.value, str)
+                             and "generativelanguage.googleapis.com" in n.value]
+                if not url_lines:
+                    continue
+                checked += 1
+                gate_lines = [n.lineno for n in ast.walk(fn) if isinstance(n, ast.Call)
+                              and getattr(n.func, "id", getattr(n.func, "attr", "")) == "gemini_spend_gate"]
+                self.assertTrue(gate_lines, f"{f.name}:{fn.name} builds a Gemini URL without calling gemini_spend_gate")
+                self.assertLess(min(gate_lines), min(url_lines), f"{f.name}:{fn.name} gate must precede the URL")
+                returns = [n.lineno for n in ast.walk(fn) if isinstance(n, ast.Return) and min(gate_lines) < n.lineno < min(url_lines)]
+                self.assertTrue(returns, f"{f.name}:{fn.name} has no early return between gate and URL")
+        self.assertEqual(checked, 2)
+
+    def test_gate_denies_even_if_cost_cap_would_allow(self):
+        """A future verified price row (cost cap allows) must not re-open spend while billing is UNVERIFIED."""
+        with mock.patch.object(live_gate, "enforce_cost_cap", return_value=(None, 1.0, 0.01)) as cap:
+            res, c, e = live_gate.gemini_spend_gate({"execute": True}, model_id="gemini-flash-latest", prompt="hi",
+                                                    max_output_tokens=10)
+            self._assert_denied(res)
+            self.assertEqual(res.data["denied_by"], "billing_unverified")
+            self.assertIsNone(c)
+            cap.assert_not_called()
+            self._assert_denied(ADAPTER_REGISTRY["gemini_free"].submit({"execute": True, "prompt": "hi"}))
+            self._assert_denied(GeminiAdapter().submit({"execute": True, "prompt": "hi"}))
+
+    def test_verified_without_evidence_is_still_unverified(self):
+        patched = dict(worker_registry.WORKERS["gemini_free"], billing_status="VERIFIED", billing_status_evidence=None)
+        with mock.patch.dict(worker_registry.WORKERS, {"gemini_free": patched}):
+            self.assertTrue(worker_registry.billing_unverified("gemini_free"))
+            self.assertFalse(worker_registry.gemini_billing_verified())
+            self._assert_denied(ADAPTER_REGISTRY["gemini_free"].submit({"execute": True, "prompt": "hi"}))
+
+    def test_gemini_paid_unverified_and_never_routed(self):
+        self.assertEqual(worker_registry.WORKERS["gemini_paid"]["state"], STATE)
+        self.assertTrue(worker_registry.billing_unverified("gemini_paid"))
+        policy = {"task_classes": {"coding": {"order": ["gemini_paid", "gemini_free", "codex_sub"]}}}
+        registry = {"workers": {w: {"routable": True} for w in ("gemini_paid", "gemini_free", "codex_sub")}}
+        self.assertEqual(routing_policy.route("coding", policy, registry), ["codex_sub"])
+
+    def test_unknown_google_worker_defaults_unverified(self):
+        with mock.patch.dict(worker_registry.WORKERS, {"gemini_new": {"provider_family": "google"}}):
+            self.assertTrue(worker_registry.billing_unverified("gemini_new"))
+
+    def test_legacy_worker_id_dispatch_denied(self):
+        for wid in ("gemini", "gemini_free"):
+            with self.subTest(worker=wid):
+                r = dispatch_real(wid, "hi", purpose="test-legacy-id", task_class="coding")
+                self.assertFalse(r["ok"])
+                self.assertFalse(r.get("provider_called"))
+                self.assertFalse(r.get("fallback_used"))
+                # legacy id has no dispatch path at all (REFUSED unknown worker); the free id is GATED by the spend gate
+                self.assertEqual(r["status"], "REFUSED" if wid == "gemini" else "GATED")
+
+    def test_provider_mock_env_is_not_a_bypass(self):
+        os.environ["WOLF_INTELLIGENCE_PROVIDER_MOCK"] = "1"
+        self._assert_denied(ADAPTER_REGISTRY["gemini_free"].submit({"execute": True, "prompt": "hi"}))
+        self._assert_denied(GeminiAdapter().submit({"execute": True, "prompt": "hi"}))
+
+    def test_real_bench_default_workers_exclude_gemini(self):
+        from wolf_intelligence.real_bench import runner
+        src = Path(runner.__file__).read_text(encoding="utf-8")
+        m = re.search(r'"--workers"[^\n]*default=([^\n]+)', src)
+        self.assertIsNotNone(m)
+        self.assertNotIn("gemini", m.group(1))
+
+    def test_preflight_does_not_authorize(self):
+        pf = ADAPTER_REGISTRY["gemini_free"].preflight()
+        self.assertEqual(pf.data.get("state"), STATE)
+        self.assertTrue(pf.data.get("spend_blocked"))
+        self.assertFalse(pf.data.get("authorizes_calls"))
 
 
 if __name__ == "__main__":

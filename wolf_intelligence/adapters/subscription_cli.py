@@ -423,7 +423,8 @@ class GeminiFreeAdapter(_CliSubAdapter):
                                  "only flash models are allowed; per-response serviceTier is recorded."}
         if not key:
             return AdapterResult(False, "UNAVAILABLE", "no Gemini key configured", facts)
-        facts["state"] = GEMINI_STATE
+        facts.update({"state": GEMINI_STATE, "spend_blocked": True, "authorizes_calls": False,
+                      "note": "preflight reports connectivity only; every call is decided by live_gate.gemini_spend_gate"})
         return AdapterResult(True, "CONNECTED", f"Gemini key present; {GEMINI_STATE}", facts)
 
     def _live(self, job: dict[str, Any]) -> AdapterResult:

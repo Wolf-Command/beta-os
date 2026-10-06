@@ -79,6 +79,8 @@ WORKERS: dict[str, dict[str, Any]] = {
         "provider_family": "google", "execution_path": "generativelanguage (pro/paid models)", "auth_class": "api_key",
         "billing_class": METERED, "cost_class": "metered_per_token", "allowance_visibility": "NONE",
         "gated": True, "adapter": None, "configured_check": "GEMINI_PAID_ENABLED",
+        "state": "CONNECTED / BILLING UNVERIFIED / SPEND BLOCKED", "billing_status": "UNVERIFIED", "billing_status_evidence": None,
+        "billing_gate": "every call passes live_gate.gemini_spend_gate; denied OWNER_ACTION_REQUIRED while unverified",
     },
     "ollama_local": {
         "provider_family": "ollama", "execution_path": "HTTP 127.0.0.1:11434/api/generate", "auth_class": "none_local",
@@ -89,6 +91,20 @@ WORKERS: dict[str, dict[str, Any]] = {
 
 TASK_CLASSES = ("coding", "debugging", "security", "finance", "ux_product", "large_context",
                 "vision_document", "structured_extraction", "reasoning_planning")
+
+
+def billing_unverified(worker_id: str) -> bool:
+    """Fail closed: a Google-family worker is UNVERIFIED unless it says VERIFIED and cites evidence."""
+    d = WORKERS.get(worker_id) or {}
+    if d.get("provider_family") == "google":
+        return not (d.get("billing_status") == "VERIFIED" and d.get("billing_status_evidence"))
+    return d.get("billing_status", "VERIFIED") != "VERIFIED"
+
+
+def gemini_billing_verified() -> bool:
+    """True only when EVERY Google-family registry entry is VERIFIED with evidence (Owner-provided)."""
+    google = [w for w, d in WORKERS.items() if d.get("provider_family") == "google"]
+    return bool(google) and not any(billing_unverified(w) for w in google)
 
 
 def is_metered(worker_id: str) -> bool:
@@ -190,7 +206,7 @@ def build(*, live_preflight: bool = True) -> dict[str, Any]:
             "availability_message": real_evidence.redact(str(avail_msg))[:300],
             "billing_verification": avail_facts,
             "routable": (not d.get("gated")) and d.get("push_dispatchable", True) and avail == "CONNECTED"
-                        and d.get("billing_status", "VERIFIED") != "UNVERIFIED",
+                        and not billing_unverified(wid),
             **derived,
         })
         rec["commissioning_state"] = _commissioning_state(wid, d, avail, derived, configured)

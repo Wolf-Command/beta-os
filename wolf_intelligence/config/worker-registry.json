@@ -1065,7 +1065,11 @@
    "large_context": "UNTESTED",
    "limit_hits": 0,
    "commissioning_state": "NOT_CONFIGURED",
-   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker"
+   "evidence_ref": "records/{connectivity,dispatch,bench_runs}.jsonl filtered by worker",
+   "state": "CONNECTED / BILLING UNVERIFIED / SPEND BLOCKED",
+   "billing_status": "UNVERIFIED",
+   "billing_status_evidence": null,
+   "billing_gate": "every call passes live_gate.gemini_spend_gate; denied OWNER_ACTION_REQUIRED while unverified"
   },
   "ollama_local": {
    "provider_family": "ollama",

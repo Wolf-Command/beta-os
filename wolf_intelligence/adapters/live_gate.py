@@ -321,12 +321,23 @@ def gemini_spend_gate(
     so every call is DENIED with OWNER_ACTION_REQUIRED and no provider call. Retries and fallbacks re-enter
     the adapter and therefore this gate. Returns (refusal, cap, estimate).
     """
+    # 1) Independent billing check (red-team 09:55): the Owner's SPEND BLOCKED state is enforced here directly,
+    #    not only through the price catalogue. Unless the registry carries a VERIFIED billing status WITH evidence,
+    #    deny before the cost cap is even consulted, so a future verified=true price row cannot re-open spend.
+    from .. import worker_registry  # lazy: worker_registry imports the adapters package
+
+    if not worker_registry.gemini_billing_verified():
+        return AdapterResult(False, "GATED", f"OWNER_ACTION_REQUIRED: Gemini {GEMINI_STATE}. No provider call.",
+                             {"provider_called": False, "owner_action_required": True, "gemini_state": GEMINI_STATE,
+                              "gate": "gemini_spend_gate", "denied_by": "billing_unverified", "reason_code": "billing_unverified",
+                              "model_id": model_id}), None, None
+    # 2) The canonical f7c78f2 spend policy, unchanged and with no bypass.
     refusal, cap, estimate = enforce_cost_cap(job, model_id=model_id, prompt=prompt, max_output_tokens=max_output_tokens)
     if refusal is None:
         return None, cap, estimate
     data = dict(refusal.data or {})
     data.update({"provider_called": False, "owner_action_required": True, "gemini_state": GEMINI_STATE,
-                 "gate": "gemini_spend_gate"})
+                 "gate": "gemini_spend_gate", "denied_by": "spend_cap"})
     return AdapterResult(False, "GATED", f"{refusal.message} [Gemini {GEMINI_STATE}]", data), None, None
 
 
