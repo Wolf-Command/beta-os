@@ -1,4 +1,8 @@
 {
+ "label": "DRAFT - NOT WIRED",
+ "status": "DRAFT",
+ "wired": false,
+ "active": false,
  "generated_at": "2026-10-06T08:47:21+08:00",
  "evidence_class": "REAL",
  "source": "records/bench_runs.jsonl (REAL only)",

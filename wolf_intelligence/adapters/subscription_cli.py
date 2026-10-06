@@ -31,7 +31,8 @@ from pathlib import Path
 from typing import Any
 
 from .base import AdapterResult, WorkerAdapter, register
-from .live_gate import env_enabled, execute_requested, live_disabled, safe_excerpt
+from .live_gate import (GEMINI_STATE, env_enabled, execute_requested, gemini_spend_gate, ledger_provider_call,
+                        live_disabled, safe_excerpt)
 
 HOME = Path.home()
 BETA = Path("/Users/wolfterminal/beta-os")
@@ -361,7 +362,7 @@ class CursorSubAdapter(_CliSubAdapter):
             if staged:
                 prompt += "\n\nFiles available in the workspace: " + ", ".join(Path(s).name for s in staged)
             model = str(job.get("model") or "composer-2.5")
-            argv = [b, "--print", "--output-format", "json", "--mode", "ask", "--trust",
+            argv = [b, "--print", "--output-format", "json", "--mode", "ask", "--sandbox", "enabled", "--trust",
                     "--workspace", workspace, "--model", model, prompt]
             rc, out, err_txt, ms, err = _run(argv, env=self.env(), cwd=workspace, timeout=float(job.get("timeout_s") or 300))
             text = ""
@@ -422,13 +423,19 @@ class GeminiFreeAdapter(_CliSubAdapter):
                                  "only flash models are allowed; per-response serviceTier is recorded."}
         if not key:
             return AdapterResult(False, "UNAVAILABLE", "no Gemini key configured", facts)
-        return AdapterResult(True, "CONNECTED", "Gemini key present (free path, flash only)", facts)
+        facts.update({"state": GEMINI_STATE, "spend_blocked": True, "authorizes_calls": False,
+                      "note": "preflight reports connectivity only; every call is decided by live_gate.gemini_spend_gate"})
+        return AdapterResult(True, "CONNECTED", f"Gemini key present; {GEMINI_STATE}", facts)
 
     def _live(self, job: dict[str, Any]) -> AdapterResult:
         key, _src = _gemini_key()
         model = str(job.get("model") or GEMINI_FREE_MODELS[0])
         if model not in GEMINI_FREE_MODELS:
             raise ValueError(f"model {model} not on the Gemini free allowlist")
+        max_out = int(job.get("max_output_tokens") or 8192)
+        gate, cap, estimate = gemini_spend_gate(job, model_id=model, prompt=str(job.get("prompt") or ""), max_output_tokens=max_out)
+        if gate is not None:
+            return gate
         parts: list[dict[str, Any]] = [{"text": str(job.get("prompt") or "")}]
         for f in job.get("files") or []:
             ext = Path(f).suffix.lower()
@@ -436,7 +443,7 @@ class GeminiFreeAdapter(_CliSubAdapter):
             if mime:
                 parts.append({"inline_data": {"mime_type": mime, "data": base64.b64encode(Path(f).read_bytes()).decode()}})
         payload = {"contents": [{"parts": parts}],
-                   "generationConfig": {"maxOutputTokens": int(job.get("max_output_tokens") or 8192), "temperature": 0}}
+                   "generationConfig": {"maxOutputTokens": max_out, "temperature": 0}}
         req = urllib.request.Request(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
             data=json.dumps(payload).encode(), method="POST",
@@ -467,6 +474,12 @@ class GeminiFreeAdapter(_CliSubAdapter):
         if not text:
             data["error_excerpt"] = safe_excerpt(json.dumps(body)[:600], [key])
             return AdapterResult(False, "ERROR", "empty Gemini response", data)
+        if cap is not None:  # allowed only by the f7c78f2 spend cap: count the worst case as metered spend
+            data.update({"billing_class": "metered_capped", "max_cost_usd": cap, "estimated_max_usd": estimate})
+            ledger_provider_call(worker_id="gemini", model_id=model, work_item_id=job.get("work_item_id"), amount_usd=float(estimate or 0),
+                                 metered_usd=float(estimate or 0), note="gemini_free via spend cap (billing unverified): worst-case estimate counted",
+                                 shadow_mode=False, latency_ms=ms, status="LIVE_OK", ok=True, output_excerpt=text[:200],
+                                 label=str(job.get("label") or "LIVE_SUBMIT"))
         return AdapterResult(True, "LIVE_OK", "gemini free path", data)
 
 

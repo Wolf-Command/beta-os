@@ -62,3 +62,44 @@ WOLF_INTELLIGENCE_LIVE_SUBMIT=1 python3 -m wolf_intelligence.real_bench.runner r
 python3 -m wolf_intelligence.real_report --out-dir $R
 python3 -m wolf_intelligence.real_commission approve-metered anthropic_api 1   # Owner, interactive TTY only
 ```
+
+## 2026-10-06 09:39 hardening (Vesper B4-1, Owner order)
+
+- **Gemini = CONNECTED / BILLING UNVERIFIED / SPEND BLOCKED.** Every Gemini execution path passes
+  `adapters/live_gate.gemini_spend_gate`, which is the canonical f7c78f2 spend policy (`enforce_cost_cap`), with no bypass.
+  A registry "free" declaration does not skip it. Path audit (wolf_intelligence/): the only Gemini endpoints are
+  `adapters/gemini.py` (legacy worker `gemini`) and `adapters/subscription_cli.py` (`gemini_free`). Both call the gate
+  before the endpoint, and a static test enforces this. There are no google SDK imports. Dispatch has no fallback.
+  Routing excludes workers with unverified billing. The gen-1 harness no longer uses Gemini as a reviewer.
+  Tests: `tests/test_gemini_gate.py` (adapters, owner caps with unverified prices, registry-free-not-a-bypass, dispatch,
+  retry x3, fallback, harness, static audit).
+- Outside wolf_intelligence (not changed here; they are protected surfaces):
+  - `scripts/llm_orchestrator.py` `call_gemini` is a direct HTTP call. It is used by serve_beta (the Content Engine).
+    Its key is read from beta-os/.env, where GEMINI_API_KEY is EMPTY.
+  - `scripts/core/bzg_close_vision.py` (Daily Close) only names "gemini" in an error filter, and its `call_gemini_vision`
+    delegates to an external model_router.
+  These need an Owner decision.
+- `config/routing-policy-real.json` and `routing_policy.learn()` now carry `label: "DRAFT - NOT WIRED"`, `wired/active: false`.
+- The cursor worker runs with `--sandbox enabled` (live-verified: it can still read a staged workspace file).
+
+## 2026-10-06 10:05 WITA: B4-1 red-team follow-up
+
+An independent red-team pass by Cursor (read-only, ask mode) on the B4-1 diff returned FAIL. The evidence is at
+`bench-gen2-20261006/b4-1-review/cursor-redteam.txt`. This commit fixes the in-scope findings:
+
+- `gemini_spend_gate` now has its own billing check. It returns DENY (`OWNER_ACTION_REQUIRED`, `reason_code=billing_unverified`) unless
+  EVERY Google-family registry entry is `billing_status=VERIFIED` and carries `billing_status_evidence`. This check runs *before*
+  the f7c78f2 cost cap, so a future `verified=true` price row cannot re-open spend on its own.
+- `gemini_paid` is now marked with the exact state string as well: UNVERIFIED and not routable.
+- `worker_registry.billing_unverified()` is the single source of truth for routing. An unknown Google-family worker defaults to UNVERIFIED.
+- The Gemini preflight states `spend_blocked=true, authorizes_calls=false`.
+- New tests cover these paths: an AST same-function gate audit, gate-denies-even-if-cap-allows, VERIFIED-without-evidence, gemini_paid routing,
+  the legacy `gemini` id (REFUSED, because it has no dispatch path), `WOLF_INTELLIGENCE_PROVIDER_MOCK` not being a bypass (it is unused outside tests), and the
+  runner default `--workers` excluding Gemini. Suite: 107/107 OK. Mutation check: when the gate in `adapters/gemini.py` is neutralised,
+  4 runtime tests fail.
+
+Out of scope and NOT changed here, so it goes to the Owner (see GEMINI-BILLING-TRUTH.md):
+- `scripts/llm_orchestrator.py` (Beta content engine, `brand_alignment` -> gemini-1.5-flash) calls Gemini directly. It is a Beta file.
+- `scripts/core/bzg_close_vision.py` -> wolf-system `model_router.py` (Production, outside this repo) routes `vision_extract`,
+  `reasoning`, `long_context` and `bulk_classify` to Gemini first, using **the same key** (fingerprint 05f69655301e). Its cost log
+  shows 99,525 successful Gemini calls since 2026-05-26, the last at 2026-10-06 09:57:56 WITA. WI's SPEND BLOCKED does not cover it.
