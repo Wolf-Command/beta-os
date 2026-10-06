@@ -33,8 +33,15 @@ def main() -> int:
     cfg = ROOT / "wolf_intelligence" / "config"
     workers = json.loads((cfg / "worker-status-phase2.json").read_text())
     score = json.loads((cfg / "model-scorecard.json").read_text())
-    shadow = json.loads((cfg / "shadow-compare-phase6.json").read_text())
-    stats = json.loads((cfg / "stats-summary.json").read_text()) if (cfg / "stats-summary.json").exists() else {}
+    mirror = ROOT / "state" / "wolf-intelligence" / "mirror"
+    shadow_path = mirror / "shadow-compare-phase6.json"
+    if not shadow_path.exists():
+        shadow_path = cfg / "shadow-compare-phase6.json"
+    shadow = json.loads(shadow_path.read_text())
+    stats_path = mirror / "stats-summary.json"
+    if not stats_path.exists():
+        stats_path = cfg / "stats-summary.json"
+    stats = json.loads(stats_path.read_text()) if stats_path.exists() else {}
     decisions = json.loads((cfg / "decisions-needed.json").read_text())
     ollama = workers["workers"].get("ollama", {})
     lines = [

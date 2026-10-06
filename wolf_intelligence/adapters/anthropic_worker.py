@@ -7,7 +7,7 @@ from typing import Any
 
 from .base import AdapterResult, WorkerAdapter, register
 from .live_gate import (
-    cost_cap,
+    enforce_cost_cap,
     env_enabled,
     execute_requested,
     http_json,
@@ -113,16 +113,16 @@ class AnthropicAPIAdapter(WorkerAdapter):
                 "ANTHROPIC_API_KEY absent in env. Refusing to read other credential files. No provider call.",
                 {"provider_called": False},
             )
-        cap = cost_cap(job)
-        if cap is None:
-            return AdapterResult(False, "GATED", "per-call cost cap not configured. No provider call.", {"provider_called": False})
-        if cap == 0:
-            return AdapterResult(False, "GATED", "per-call cost cap is 0. Refusing paid API call.", {"provider_called": False})
         model_id = str(job.get("model") or "claude-3-5-haiku-latest")
         try:
             max_tokens = max(1, min(int(job.get("num_predict") or 64), 128))
         except (TypeError, ValueError):
             max_tokens = 64
+        refusal, cap, estimate = enforce_cost_cap(
+            job, model_id=model_id, prompt=str(job.get("prompt") or ""), max_output_tokens=max_tokens
+        )
+        if refusal is not None:
+            return refusal
         started = time.perf_counter()
         parsed, raw, err = http_json(
             "https://api.anthropic.com/v1/messages",
@@ -152,6 +152,7 @@ class AnthropicAPIAdapter(WorkerAdapter):
             "amount_usd": 0.0,
             "metered_usd": "UNKNOWN",
             "max_cost_usd": cap,
+            "estimated_max_usd": estimate,
             "note": "haiku_is_default_not_best; separate from claude_sub_25",
         }
         ledger_provider_call(

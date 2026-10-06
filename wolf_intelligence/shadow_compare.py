@@ -21,7 +21,7 @@ from . import dispatcher, events, ledger, work_items
 from .adapters import get_adapter
 from .adapters.live_gate import env_enabled, providers_mocked
 from .factory_history import collect_actual_workers
-from .paths import CONFIG_DIR, ensure_dirs
+from .paths import CONFIG_DIR, ensure_dirs, mirror_path, mirror_read_path
 from . import paths
 from .router import recommend
 
@@ -45,7 +45,11 @@ def now_iso() -> str:
 
 
 def _phase6_path():
-    return CONFIG_DIR / "shadow-compare-phase6.json"
+    return mirror_path("shadow-compare-phase6.json")
+
+
+def _phase6_read_path():
+    return mirror_read_path("shadow-compare-phase6.json")
 
 
 def _compare_log():
@@ -215,7 +219,7 @@ def _factory_history_workers(limit: int = 30, *, factory_root=None, config_path=
 
 
 def _read_phase6() -> dict[str, Any]:
-    path = _phase6_path()
+    path = _phase6_read_path()
     if not path.exists():
         return {}
     try:
@@ -236,7 +240,9 @@ def _write_phase6(summary: dict[str, Any], *, real_shadow: dict[str, Any] | None
         }
     summary = dict(summary)
     summary["real_shadow"] = real_shadow
-    _phase6_path().write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    target = _phase6_path()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 
 
 def run_compare(*, samples: int = 12) -> dict[str, Any]:

@@ -2,6 +2,13 @@
 
 Listens on 127.0.0.1:8799 only. Does not touch Production :8787.
 Durable via LaunchAgent com.wolfcommand.wolf-intelligence-owner-ui.
+
+Access rules:
+- No CORS headers. Other origins cannot read responses.
+- Every request needs Host 127.0.0.1:<port> or localhost:<port> (blocks DNS rebinding).
+- A browser Origin header, when sent, must be the same loopback origin.
+- The board API (GET) and every POST need the Owner UI token.
+- The HTML shell and /api/health carry no work data and need no token.
 """
 from __future__ import annotations
 
@@ -57,6 +64,29 @@ def post_authorized(headers) -> bool:
     return token_matches(presented_token(headers), expected)
 
 
+# Board reads use the same token as writes.
+board_authorized = post_authorized
+
+_LOOPBACK_NAMES = ("127.0.0.1", "localhost")
+
+
+def allowed_hosts(port: int) -> frozenset[str]:
+    return frozenset(f"{name}:{port}" for name in _LOOPBACK_NAMES)
+
+
+def host_allowed(headers, port: int) -> bool:
+    host = (headers.get("Host") or "").strip().lower()
+    return host in allowed_hosts(port)
+
+
+def origin_allowed(headers, port: int) -> bool:
+    """No Origin header (curl, same-origin GET) is fine. A sent Origin must be loopback:port."""
+    origin = (headers.get("Origin") or "").strip().lower()
+    if not origin:
+        return True
+    return origin in {f"http://{h}" for h in allowed_hosts(port)}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args) -> None:
         """Log method and path only. Never the headers, so the token is not written."""
@@ -74,12 +104,29 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", content_type)
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Vary", "Authorization, Cookie, X-Wolf-Session")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
+    def _port(self) -> int:
+        return int(self.server.server_address[1])
+
+    def _request_scope_ok(self) -> bool:
+        """Host allowlist + same-origin check. Sends 403 and returns False on failure."""
+        port = self._port()
+        if not host_allowed(self.headers, port):
+            self._send(403, b'{"ok":false,"error":"host_not_allowed"}', "application/json")
+            return False
+        if not origin_allowed(self.headers, port):
+            self._send(403, b'{"ok":false,"error":"origin_not_allowed"}', "application/json")
+            return False
+        return True
+
     def do_GET(self) -> None:  # noqa: N802
+        if not self._request_scope_ok():
+            return
         ensure_dirs()
         path = urlparse(self.path).path
         if path in ("/", "/owner", "/wolf-intelligence", "/owner/intelligence"):
@@ -87,6 +134,9 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, body, "text/html; charset=utf-8")
             return
         if path in ("/api/owner-board", "/api/wolf-intelligence/board"):
+            if not board_authorized(self.headers):
+                self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json")
+                return
             buckets = work_items.by_ui_bucket()
             tech = {"mode": "SHADOW", "production_touched": False, "workers": None, "store": work_items.store_info(), "stats": stats_store.recompute()}
             if WORKER_STATUS_PATH.exists():
@@ -117,7 +167,7 @@ class Handler(BaseHTTPRequestHandler):
                 "port": OWNER_UI_PORT,
                 "pid": os.getpid(),
                 "how_to_open": f"http://{OWNER_UI_HOST}:{OWNER_UI_PORT}/",
-                "beta_path_note": "Also /owner/intelligence on Beta :8788 when route wired",
+                "board_auth": "token",
             }
             self._send(200, json.dumps(payload).encode(), "application/json")
             return
@@ -125,6 +175,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
     def do_POST(self) -> None:  # noqa: N802
+        if not self._request_scope_ok():
+            return
         ensure_dirs()
         path = urlparse(self.path).path
         length = int(self.headers.get("Content-Length") or 0)

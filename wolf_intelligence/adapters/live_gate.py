@@ -1,10 +1,14 @@
 """Live submit gate. Off unless execute=True and WOLF_INTELLIGENCE_LIVE_SUBMIT is set.
 
 Never log secret values. Paid APIs also need a key and a per-call cost cap.
+The cap is a real ceiling: a paid call is refused unless its worst-case
+estimated cost (prompt + max output tokens at config/price-ceilings.json
+prices, times the safety factor) is at or below the cap.
 """
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import urllib.request
@@ -12,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from .. import ledger
-from ..paths import BETA_ROOT, LIVE_SUBMIT_ENV, MAX_COST_ENV, PROVIDER_MOCK_ENV
+from ..paths import BETA_ROOT, CONFIG_DIR, LIVE_SUBMIT_ENV, MAX_COST_ENV, PROVIDER_MOCK_ENV
 from .base import AdapterResult
 
 _TRUTHY = frozenset({"1", "true", "yes", "on"})
@@ -63,6 +67,80 @@ def cost_cap(job: dict[str, Any]) -> float | None:
     if value < 0:
         return None
     return value
+
+
+PRICE_CEILINGS_PATH = CONFIG_DIR / "price-ceilings.json"
+
+
+def price_ceilings() -> dict[str, Any]:
+    try:
+        data = json.loads(PRICE_CEILINGS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def model_price(model_id: str, table: dict[str, Any] | None = None) -> dict[str, float] | None:
+    """Longest-prefix match of model_id against the price table. None means unknown."""
+    table = price_ceilings() if table is None else table
+    models = table.get("models") if isinstance(table.get("models"), dict) else {}
+    mid = (model_id or "").strip().lower()
+    best = None
+    for key, price in models.items():
+        k = str(key).lower()
+        if (mid == k or mid.startswith(k + "-") or mid.startswith(k + "@")) and (best is None or len(k) > len(best[0])):
+            best = (k, price)
+    if best is None:
+        return None
+    try:
+        return {"input": float(best[1]["input"]), "output": float(best[1]["output"])}
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def estimate_call_cost_usd(model_id: str, prompt: str, max_output_tokens: int) -> float | None:
+    """Worst-case cost of one call. None when the model has no price ceiling."""
+    table = price_ceilings()
+    price = model_price(model_id, table)
+    if price is None:
+        return None
+    bytes_per_token = float(table.get("input_bytes_per_token") or 2)
+    overhead = int(table.get("input_overhead_tokens") or 32)
+    safety = float(table.get("safety_factor") or 1.5)
+    input_tokens = math.ceil(len((prompt or "").encode("utf-8")) / max(bytes_per_token, 1.0)) + overhead
+    output_tokens = max(int(max_output_tokens), 1)
+    raw = (input_tokens * price["input"] + output_tokens * price["output"]) / 1_000_000
+    return round(raw * max(safety, 1.0), 8)
+
+
+def enforce_cost_cap(
+    job: dict[str, Any], *, model_id: str, prompt: str, max_output_tokens: int
+) -> tuple[AdapterResult | None, float | None, float | None]:
+    """Return (refusal, cap, estimate). refusal is None only when estimate <= cap."""
+    cap = cost_cap(job)
+    if cap is None:
+        return AdapterResult(False, "GATED", "per-call cost cap not configured. No provider call.", {"provider_called": False}), None, None
+    if cap == 0:
+        return AdapterResult(False, "GATED", "per-call cost cap is 0. Refusing paid API call.", {"provider_called": False}), cap, None
+    estimate = estimate_call_cost_usd(model_id, prompt, max_output_tokens)
+    if estimate is None:
+        return (
+            AdapterResult(False, "GATED", "no price ceiling for this model. No provider call.", {"provider_called": False, "max_cost_usd": cap}),
+            cap,
+            None,
+        )
+    if estimate > cap:
+        return (
+            AdapterResult(
+                False,
+                "GATED",
+                f"estimated worst-case cost {estimate:.6f} USD exceeds per-call cap {cap:.6f} USD. No provider call.",
+                {"provider_called": False, "max_cost_usd": cap, "estimated_max_usd": estimate},
+            ),
+            cap,
+            estimate,
+        )
+    return None, cap, estimate
 
 
 def read_secret(name: str) -> str:

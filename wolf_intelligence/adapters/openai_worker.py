@@ -7,7 +7,7 @@ from typing import Any
 
 from .base import AdapterResult, WorkerAdapter, register
 from .live_gate import (
-    cost_cap,
+    enforce_cost_cap,
     env_enabled,
     execute_requested,
     http_json,
@@ -120,16 +120,16 @@ class OpenAIAPIAdapter(WorkerAdapter):
         key = read_secret("OPENAI_API_KEY")
         if not key:
             return AdapterResult(False, "UNAVAILABLE", "OPENAI_API_KEY absent. No provider call.", {"provider_called": False})
-        cap = cost_cap(job)
-        if cap is None:
-            return AdapterResult(False, "GATED", "per-call cost cap not configured. No provider call.", {"provider_called": False})
-        if cap == 0:
-            return AdapterResult(False, "GATED", "per-call cost cap is 0. Refusing paid API call.", {"provider_called": False})
         model_id = str(job.get("model") or "gpt-4o-mini")
         try:
             max_tokens = max(1, min(int(job.get("num_predict") or 64), 128))
         except (TypeError, ValueError):
             max_tokens = 64
+        refusal, cap, estimate = enforce_cost_cap(
+            job, model_id=model_id, prompt=str(job.get("prompt") or ""), max_output_tokens=max_tokens
+        )
+        if refusal is not None:
+            return refusal
         started = time.perf_counter()
         parsed, raw, err = http_json(
             "https://api.openai.com/v1/chat/completions",
@@ -150,7 +150,7 @@ class OpenAIAPIAdapter(WorkerAdapter):
             output = safe_excerpt(parsed["choices"][0]["message"]["content"] or "", [key])
         except (KeyError, IndexError, TypeError):
             output = safe_excerpt(raw, [key])
-        usage = {"pool_id": "openai_api", "amount_usd": 0.0, "metered_usd": "UNKNOWN", "max_cost_usd": cap}
+        usage = {"pool_id": "openai_api", "amount_usd": 0.0, "metered_usd": "UNKNOWN", "max_cost_usd": cap, "estimated_max_usd": estimate}
         ledger_provider_call(
             worker_id="openai_api",
             model_id=model_id,

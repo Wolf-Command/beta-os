@@ -1,6 +1,26 @@
 """Unit tests for Wolf Intelligence hardening. Provider calls are mocked."""
 from __future__ import annotations
 
+# --- State isolation (Vesper M1) -------------------------------------------
+# Runs before any wolf_intelligence import so paths.STATE_ROOT resolves to a
+# throwaway temp dir. No test can read or write the live Beta WI state.
+import atexit as _atexit
+import os as _os
+import shutil as _shutil
+import sys as _sys
+import tempfile as _tempfile
+
+if not _os.environ.get("WI_TEST_STATE_ISOLATED"):
+    if "wolf_intelligence.paths" in _sys.modules:
+        raise RuntimeError("wolf_intelligence.paths imported before test state isolation")
+    _TEST_STATE_ROOT = _tempfile.mkdtemp(prefix="wi-test-state-")
+    _os.environ["WOLF_INTELLIGENCE_STATE_ROOT"] = _TEST_STATE_ROOT
+    _os.environ["WI_TEST_STATE_ISOLATED"] = _TEST_STATE_ROOT
+    _os.environ.pop("WOLF_INTELLIGENCE_CONFIG_MIRROR", None)
+    _atexit.register(_shutil.rmtree, _TEST_STATE_ROOT, True)
+# ---------------------------------------------------------------------------
+
+import http.client
 import json
 import os
 import re
@@ -14,7 +34,57 @@ from unittest import mock
 
 from wolf_intelligence import factory_history, learning, ledger, paths, shadow_compare, stats_store
 from wolf_intelligence.adapters.base import AdapterResult
-from wolf_intelligence.adapters.live_gate import LIVE_SUBMIT_ENV, MAX_COST_ENV, PROVIDER_MOCK_ENV, cost_cap
+from wolf_intelligence.adapters.live_gate import (
+    LIVE_SUBMIT_ENV,
+    MAX_COST_ENV,
+    PROVIDER_MOCK_ENV,
+    cost_cap,
+    estimate_call_cost_usd,
+    model_price,
+)
+
+_LIVE_BETA_PREFIX = "/Users/wolfterminal/beta-os"
+if paths.STATE_ROOT == paths.LIVE_STATE_ROOT or str(paths.STATE_ROOT).startswith(_LIVE_BETA_PREFIX):
+    raise RuntimeError("refusing to run tests against live Wolf Intelligence state")
+
+
+class StateIsolationTests(unittest.TestCase):
+    def test_every_state_path_is_under_the_temp_root(self) -> None:
+        from wolf_intelligence import events, owner_ui_server, work_items
+        root = Path(os.environ["WOLF_INTELLIGENCE_STATE_ROOT"]).resolve()
+        self.assertEqual(paths.STATE_ROOT, root)
+        self.assertNotEqual(paths.STATE_ROOT, paths.LIVE_STATE_ROOT)
+        self.assertFalse(str(root).startswith(_LIVE_BETA_PREFIX))
+        for p in (
+            paths.WORK_ITEMS_DIR, paths.EVENTS_PATH, paths.AUDIT_DIR, paths.LEDGER_DIR,
+            paths.LEARNING_DIR, paths.SHADOW_DIR, paths.WORKERS_DIR, paths.SQLITE_PATH,
+            paths.MIRROR_DIR, work_items.SQLITE_PATH, work_items.WORK_ITEMS_DIR,
+            events.EVENTS_PATH, events.AUDIT_DIR, learning.OUTCOMES_PATH, learning.WEIGHTS_PATH,
+            stats_store.STATS_PATH, stats_store.SUMMARY_PATH, owner_ui_server.AUDIT_DIR,
+            ledger._ledger_path() if hasattr(ledger, "_ledger_path") else paths.LEDGER_DIR,
+        ):
+            self.assertTrue(Path(p).resolve().is_relative_to(root), str(p))
+
+    def test_work_item_create_lands_in_temp_store(self) -> None:
+        from wolf_intelligence import work_items
+        wi = work_items.create(title="isolation probe", kind="review", isolated_safe=True)
+        self.assertTrue(work_items.SQLITE_PATH.exists())
+        self.assertTrue(work_items.SQLITE_PATH.resolve().is_relative_to(paths.STATE_ROOT))
+        self.assertEqual(work_items.get(wi["id"])["title"], "isolation probe")
+
+    def test_state_root_env_override(self) -> None:
+        with mock.patch.dict(os.environ, {paths.STATE_ROOT_ENV: "/tmp/wi-elsewhere"}):
+            self.assertEqual(paths._state_root(), Path("/tmp/wi-elsewhere").resolve())
+        with mock.patch.dict(os.environ, {paths.STATE_ROOT_ENV: ""}):
+            self.assertEqual(paths._state_root(), paths.LIVE_STATE_ROOT)
+
+    def test_generated_summaries_stay_out_of_config(self) -> None:
+        with mock.patch.dict(os.environ, {paths.CONFIG_MIRROR_ENV: ""}):
+            self.assertEqual(paths.mirror_path("stats-summary.json").parent, paths.MIRROR_DIR)
+        with mock.patch.dict(os.environ, {paths.CONFIG_MIRROR_ENV: "1"}):
+            self.assertEqual(paths.mirror_path("stats-summary.json").parent, paths.CONFIG_DIR)
+        self.assertEqual(stats_store.SUMMARY_PATH.parent, paths.MIRROR_DIR)
+        self.assertEqual(shadow_compare._phase6_path().parent, paths.MIRROR_DIR)
 
 
 class FactoryHistoryTests(unittest.TestCase):
@@ -271,6 +341,67 @@ class AdapterGateTests(unittest.TestCase):
             result = adapter.submit({"execute": True, "prompt": "tiny"})
             self.assertEqual(result.status, "UNSUPPORTED", adapter.worker_id)
             self.assertFalse(result.data.get("provider_called"))
+
+
+    def test_cost_cap_is_a_real_ceiling(self) -> None:
+        from wolf_intelligence.adapters.anthropic_worker import AnthropicAPIAdapter
+        from wolf_intelligence.adapters.gemini import GeminiAdapter
+        from wolf_intelligence.adapters.openai_worker import OpenAIAPIAdapter
+        os.environ[LIVE_SUBMIT_ENV] = "1"
+        os.environ["OPENAI_API_KEY"] = "unit-test-openai-key"
+        os.environ["ANTHROPIC_API_KEY"] = "unit-test-anthropic-key"
+        os.environ["GEMINI_API_KEY"] = "unit-test-gemini-key"
+        with mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen") as opened:
+            tiny_cap = OpenAIAPIAdapter().submit({"execute": True, "max_cost_usd": 0.0000001, "prompt": "tiny"})
+            self.assertEqual(tiny_cap.status, "GATED")
+            self.assertIn("exceeds", tiny_cap.message)
+            self.assertGreater(tiny_cap.data["estimated_max_usd"], tiny_cap.data["max_cost_usd"])
+            big_prompt = AnthropicAPIAdapter().submit(
+                {"execute": True, "max_cost_usd": 0.0005, "prompt": "x" * 20000, "num_predict": 128}
+            )
+            self.assertEqual(big_prompt.status, "GATED")
+            self.assertIn("exceeds", big_prompt.message)
+            unknown = OpenAIAPIAdapter().submit({"execute": True, "max_cost_usd": 5, "model": "gpt-imaginary-9", "prompt": "tiny"})
+            self.assertEqual(unknown.status, "GATED")
+            self.assertIn("no price ceiling", unknown.message)
+            gemini_zero = GeminiAdapter().submit({"execute": True, "max_cost_usd": 0, "prompt": "tiny"})
+            self.assertEqual(gemini_zero.status, "GATED")
+            opened.assert_not_called()
+
+    def test_cost_estimate_is_worst_case_and_matches_model_family(self) -> None:
+        self.assertIsNotNone(model_price("claude-3-5-haiku-latest"))
+        self.assertEqual(model_price("claude-3-5-haiku-20241022"), model_price("claude-3-5-haiku"))
+        self.assertEqual(model_price("gpt-4o-mini"), {"input": 0.15, "output": 0.60})
+        self.assertNotEqual(model_price("gpt-4o-mini"), model_price("gpt-4o"))
+        self.assertIsNone(model_price("unknown-model"))
+        small = estimate_call_cost_usd("gpt-4o-mini", "hi", 1)
+        large = estimate_call_cost_usd("gpt-4o-mini", "x" * 5000, 128)
+        self.assertGreater(small, 0)
+        self.assertGreater(large, small)
+        self.assertIsNone(estimate_call_cost_usd("unknown-model", "hi", 1))
+
+    def test_call_under_cap_proceeds_and_reports_estimate(self) -> None:
+        from wolf_intelligence.adapters.anthropic_worker import AnthropicAPIAdapter
+        os.environ[LIVE_SUBMIT_ENV] = "1"
+        os.environ[PROVIDER_MOCK_ENV] = "1"
+        os.environ["ANTHROPIC_API_KEY"] = "unit-test-anthropic-key"
+        payload = {"content": [{"text": "{\"ok\":true,\"n\":42}"}]}
+
+        class _Resp:
+            def read(self):
+                return json.dumps(payload).encode()
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+
+        with mock.patch("wolf_intelligence.adapters.live_gate.urllib.request.urlopen", return_value=_Resp()) as opened:
+            result = AnthropicAPIAdapter().submit({"execute": True, "max_cost_usd": 0.01, "prompt": "tiny"})
+        self.assertTrue(opened.called)
+        self.assertEqual(result.status, "LIVE_OK")
+        usage = result.data["usage"]
+        self.assertLessEqual(usage["estimated_max_usd"], usage["max_cost_usd"])
+        self.assertNotIn("unit-test-anthropic-key", json.dumps(result.data))
 
 
 class LedgerAndRealShadowTests(unittest.TestCase):
@@ -572,7 +703,88 @@ class OwnerUiAuthTests(unittest.TestCase):
             with urllib.request.urlopen(req, timeout=3) as resp:
                 return resp.status, resp.read()
         except urllib.error.HTTPError as exc:
-            return exc.code, exc.read()
+            with exc:
+                return exc.code, exc.read()
+
+    def _raw(self, method: str, path: str, headers: dict | None = None, body: bytes | None = None):
+        host, port = self.server.server_address
+        conn = http.client.HTTPConnection(host, port, timeout=3)
+        try:
+            conn.request(method, path, body=body, headers=headers or {})
+            resp = conn.getresponse()
+            return resp.status, {k.lower(): v for k, v in resp.getheaders()}, resp.read()
+        finally:
+            conn.close()
+
+    def test_board_get_needs_token(self) -> None:
+        os.environ[paths.UI_TOKEN_ENV] = self.TOKEN
+        for p in ("/api/owner-board", "/api/wolf-intelligence/board"):
+            code, _h, raw = self._raw("GET", p)
+            self.assertEqual(code, 401, p)
+            self.assertNotIn(b"NEEDS_YOU", raw)
+            code, _h, _raw = self._raw("GET", p, {"Authorization": "Bearer wrong-token"})
+            self.assertEqual(code, 401, p)
+        code, _h, raw = self._raw("GET", "/api/owner-board", {"Authorization": "Bearer " + self.TOKEN})
+        self.assertEqual(code, 200, raw)
+        board = json.loads(raw.decode())
+        self.assertIn("_tech", board)
+        code, _h, _raw = self._raw("GET", "/api/owner-board", {"X-Wolf-Session": self.TOKEN})
+        self.assertEqual(code, 200)
+        log = (self.ui.AUDIT_DIR / "owner-ui-access.log").read_text(encoding="utf-8")
+        self.assertNotIn(self.TOKEN, log)
+
+    def test_board_closed_when_token_unset(self) -> None:
+        os.environ.pop(paths.UI_TOKEN_ENV, None)
+        code, _h, _raw = self._raw("GET", "/api/owner-board", {"Authorization": "Bearer anything"})
+        self.assertEqual(code, 401)
+
+    def test_no_wildcard_cors_on_any_response(self) -> None:
+        os.environ[paths.UI_TOKEN_ENV] = self.TOKEN
+        auth = {"Authorization": "Bearer " + self.TOKEN}
+        for method, p, hdrs in (
+            ("GET", "/", {}),
+            ("GET", "/api/health", {}),
+            ("GET", "/api/owner-board", {}),
+            ("GET", "/api/owner-board", auth),
+            ("GET", "/nope", {}),
+            ("POST", "/api/human-decision", {}),
+        ):
+            code, headers, _raw = self._raw(method, p, hdrs, b"{}" if method == "POST" else None)
+            self.assertNotIn("access-control-allow-origin", headers, (method, p, code))
+
+    def test_foreign_host_is_403_even_with_token(self) -> None:
+        os.environ[paths.UI_TOKEN_ENV] = self.TOKEN
+        port = self.server.server_address[1]
+        auth = {"Authorization": "Bearer " + self.TOKEN}
+        for host in (f"evil.example:{port}", "evil.example", f"127.0.0.1:{port + 1}", f"192.168.1.5:{port}"):
+            code, _h, raw = self._raw("GET", "/api/owner-board", {**auth, "Host": host})
+            self.assertEqual(code, 403, host)
+            self.assertNotIn(b"NEEDS_YOU", raw)
+            code, _h, _raw = self._raw("GET", "/api/health", {"Host": host})
+            self.assertEqual(code, 403, host)
+            code, _h, _raw = self._raw(
+                "POST", "/api/human-decision", {**auth, "Host": host},
+                json.dumps({"work_item_id": "wi", "decision": "PASS", "actor": "matt"}).encode(),
+            )
+            self.assertEqual(code, 403, host)
+        code, _h, _raw = self._raw("GET", "/api/owner-board", {**auth, "Host": f"localhost:{port}"})
+        self.assertEqual(code, 200)
+
+    def test_cross_origin_is_403(self) -> None:
+        os.environ[paths.UI_TOKEN_ENV] = self.TOKEN
+        port = self.server.server_address[1]
+        auth = {"Authorization": "Bearer " + self.TOKEN}
+        code, _h, _raw = self._raw("GET", "/api/owner-board", {**auth, "Origin": "http://evil.example"})
+        self.assertEqual(code, 403)
+        code, _h, _raw = self._raw("GET", "/api/owner-board", {**auth, "Origin": "http://127.0.0.1:8788"})
+        self.assertEqual(code, 403)
+        code, _h, _raw = self._raw(
+            "POST", "/api/human-decision", {**auth, "Origin": "http://evil.example"},
+            json.dumps({"work_item_id": "wi", "decision": "PASS", "actor": "matt"}).encode(),
+        )
+        self.assertEqual(code, 403)
+        code, _h, _raw = self._raw("GET", "/api/owner-board", {**auth, "Origin": f"http://127.0.0.1:{port}"})
+        self.assertEqual(code, 200)
 
     def test_no_token_gives_401(self) -> None:
         os.environ.pop(paths.UI_TOKEN_ENV, None)

@@ -7,7 +7,7 @@ from typing import Any
 
 from .base import AdapterResult, WorkerAdapter, register
 from .live_gate import (
-    cost_cap,
+    enforce_cost_cap,
     env_enabled,
     execute_requested,
     http_json,
@@ -84,9 +84,6 @@ class GeminiAdapter(WorkerAdapter):
         key = read_secret("GEMINI_API_KEY") or read_secret("GOOGLE_API_KEY")
         if not key:
             return AdapterResult(False, "UNAVAILABLE", "GEMINI_API_KEY absent. No provider call.", {"provider_called": False})
-        cap = cost_cap(job)
-        if cap is None:
-            return AdapterResult(False, "GATED", "per-call cost cap not configured. No provider call.", {"provider_called": False})
         model_id = str(job.get("model") or "gemini-2.0-flash")
         if any(token in model_id.lower() for token in ("pro", "ultra", "paid")):
             return AdapterResult(False, "GATED", "paid Gemini model blocked", {"provider_called": False})
@@ -94,6 +91,12 @@ class GeminiAdapter(WorkerAdapter):
             max_tokens = max(1, min(int(job.get("num_predict") or 64), 128))
         except (TypeError, ValueError):
             max_tokens = 64
+        # Free tier is expected, but a billed key would be charged: the cap still applies.
+        refusal, cap, estimate = enforce_cost_cap(
+            job, model_id=model_id, prompt=str(job.get("prompt") or ""), max_output_tokens=max_tokens
+        )
+        if refusal is not None:
+            return refusal
         started = time.perf_counter()
         parsed, raw, err = http_json(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent",
@@ -113,7 +116,7 @@ class GeminiAdapter(WorkerAdapter):
             output = safe_excerpt(parsed["candidates"][0]["content"]["parts"][0]["text"] or "", [key])
         except (KeyError, IndexError, TypeError):
             output = safe_excerpt(raw, [key])
-        usage = {"pool_id": "gemini_free", "amount_usd": 0.0, "metered_usd": 0.0, "max_cost_usd": cap}
+        usage = {"pool_id": "gemini_free", "amount_usd": 0.0, "metered_usd": 0.0, "max_cost_usd": cap, "estimated_max_usd": estimate}
         ledger_provider_call(
             worker_id="gemini",
             model_id=model_id,
