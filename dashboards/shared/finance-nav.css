@@ -1,0 +1,60 @@
+/* Shared Finance primary navigation. Ten areas, then the functions for that area. */
+.wolf-finance-nav {
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid var(--border, #1e3f44);
+  border-radius: 14px;
+  background: var(--panel, #0e2125);
+  color: var(--text, #eaf3f2);
+}
+.wolf-finance-nav .wfn-company {
+  margin: 0 0 8px;
+  color: var(--muted, #8aa6a6);
+  font-size: 0.92rem;
+}
+.wolf-finance-nav .wfn-primary,
+.wolf-finance-nav .wfn-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wolf-finance-nav button,
+.wolf-finance-nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--border, #1e3f44);
+  background: var(--panel-2, #123036);
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  padding: 8px 12px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.wolf-finance-nav button[aria-current="true"],
+.wolf-finance-nav a[aria-current="page"] {
+  border-color: var(--gold, #d4af6a);
+  color: var(--gold, #d4af6a);
+}
+.wolf-finance-nav .wfn-secondary {
+  margin-top: 8px;
+}
+.wolf-finance-nav .wfn-note {
+  margin: 8px 0 0;
+  color: var(--muted, #8aa6a6);
+  font-size: 0.88rem;
+}
+body.wolf-finance-unified .legacy-finance-tabs {
+  display: none !important;
+}
+@media (max-width: 720px) {
+  .wolf-finance-nav button,
+  .wolf-finance-nav a {
+    flex: 1 1 46%;
+  }
+}

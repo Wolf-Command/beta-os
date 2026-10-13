@@ -358,6 +358,43 @@ def main() -> int:
             "cloudflare without a seat is not an accountant",
             rbac.can("PERS-CF-ONLY", "finance.records.read", {"entity_id": "ENT-GGV"}, conn=conn) is False,
         )
+        from core import finance_nav
+
+        nav = finance_nav.for_person(person_id, "ENT-GGV", conn)
+        check(
+            "shared finance labels",
+            [area["label"] for area in nav["areas"]] == list(finance_nav.PRIMARY_LABELS),
+        )
+        item_ids = [item["id"] for area in nav["areas"] for item in area["items"]]
+        check("ila sees september exceptions", "ggv-september-exceptions" in item_ids)
+        check(
+            "ila nav stays inside ggv",
+            all(
+                "/amg/" not in item["href"] and "/bzg/" not in item["href"] and not item["href"].startswith("/uma-")
+                for area in nav["areas"]
+                for item in area["items"]
+            ),
+        )
+        check("nav does not merge books or pay", nav["books_merged"] is False and nav["payment_execute"] is False)
+        check(
+            "ila can load the shared nav",
+            nota.accountant_must_deny(person_id, "/api/finance/nav", conn) is False
+            and nota.accountant_must_deny(person_id, "/shared/finance-nav.js", conn) is False,
+        )
+        check(
+            "ila still cannot open AMG finance",
+            nota.accountant_must_deny(person_id, "/amg/finance", conn) is True,
+        )
+        try:
+            finance_nav.for_person(person_id, "ENT-AMG", conn)
+            check("ila nav blocks AMG", False)
+        except finance_nav.FinanceNavError as exc:
+            check("ila nav blocks AMG", exc.http_status == 403)
+        try:
+            finance_nav.for_person(person_id, "ENT-BZG", conn)
+            check("ila nav blocks BZG", False)
+        except finance_nav.FinanceNavError as exc:
+            check("ila nav blocks BZG", exc.http_status == 403)
 
         before_date = conn.execute("SELECT nota_date FROM ggv_notas WHERE nota_id='NOTA-AUG'").fetchone()[0]
         invoice_count = conn.execute("SELECT COUNT(*) FROM ggv_invoices").fetchone()[0]

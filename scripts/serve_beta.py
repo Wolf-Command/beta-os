@@ -17417,7 +17417,7 @@ class BetaHandler(SimpleHTTPRequestHandler):
         if path.startswith("/dashboards/shared/"):
             self.path = path[len("/dashboards") :]
             return False
-        if path not in {"/finance", "/api/finance/entities"}:
+        if path not in {"/finance", "/api/finance/entities", "/api/finance/nav"}:
             return False
         identity = self._resolve_identity(emit_audit=False)
         if not identity.get("ok") or not identity.get("person_id"):
@@ -17437,6 +17437,27 @@ class BetaHandler(SimpleHTTPRequestHandler):
                         "human_commissioned": False,
                     }
                 )
+                return True
+            if path == "/api/finance/nav":
+                from core import finance_nav as _finance_nav
+
+                nav_qs = parse_qs(parsed.query)
+                wanted = (nav_qs.get("entity") or ["ENT-GGV"])[0]
+                try:
+                    payload = _finance_nav.for_person(person_id, wanted, conn)
+                except _finance_nav.FinanceNavError as exc:
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "error": exc.code,
+                            "message": str(exc),
+                            "staff_ready": False,
+                            "human_commissioned": False,
+                        },
+                        status=exc.http_status,
+                    )
+                    return True
+                self._send_json(payload)
                 return True
             qs = parse_qs(parsed.query)
             prefer = (qs.get("entity") or [""])[0].strip()

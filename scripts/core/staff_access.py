@@ -621,9 +621,16 @@ def officer_must_deny(person_id: str | None, path: str, conn: sqlite3.Connection
     base = raw.rstrip("/") or "/"
     if base in ATRIUM_PAGE_PATHS or raw in ATRIUM_PAGE_PATHS:
         return False
-    if base in {"/finance", "/finance.html", "/api/finance/entities"}:
-        return False
-    if base in {"/shared/finance-switcher.js", "/shared/finance-switcher.css"}:
+    if base in {
+        "/finance",
+        "/finance.html",
+        "/api/finance/entities",
+        "/api/finance/nav",
+        "/shared/finance-switcher.js",
+        "/shared/finance-switcher.css",
+        "/shared/finance-nav.js",
+        "/shared/finance-nav.css",
+    }:
         return False
     if ".." not in base and (
         base.startswith("/amg/finance/")
