@@ -15,9 +15,11 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 import sqlite3
 import zipfile
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from xml.sax.saxutils import escape as xml_escape
 
@@ -76,34 +78,55 @@ TAX_CODES: tuple[dict[str, str], ...] = (
     {"code": "FS", "label": "Financial statements and supporting schedules"},
 )
 
-# Open September review work. Amounts are never stored here.
-# Live counts are calculated on read and are not written back.
-SEPTEMBER_ITEMS: tuple[dict[str, str], ...] = (
+# September bank reconciliation exceptions. These are the five unresolved
+# GGV bank items. Missing invoices, unposted journals, and tax setup are
+# preparation tasks and are not members of this list.
+SEPTEMBER_ITEMS: tuple[dict[str, Any], ...] = (
     {
         "item_id": "GGV-2026-09-EX-01",
-        "title": "Bank reconciliation is not closed",
-        "kind": "reconciliation",
+        "counterparty": "Alfamart",
+        "amount_idr": 64000,
+        "title": "Alfamart Rp64,000",
+        "kind": "bank_exception",
+        "match_terms": ("ALFAMART",),
     },
     {
         "item_id": "GGV-2026-09-EX-02",
-        "title": "Transactions awaiting classification",
-        "kind": "classification",
+        "counterparty": "Blu Zone",
+        "amount_idr": 15000000,
+        "title": "Blu Zone Rp15,000,000",
+        "kind": "bank_exception",
+        "match_terms": ("BLU ZONE", "BLUZONE"),
     },
     {
         "item_id": "GGV-2026-09-EX-03",
-        "title": "Customer invoices missing original PDF",
-        "kind": "missing_invoice_pdf",
+        "counterparty": "Keen Eye",
+        "amount_idr": 24875000,
+        "title": "Keen Eye Rp24,875,000",
+        "kind": "bank_exception",
+        "match_terms": ("KEEN EYE", "KEENEYE"),
     },
     {
         "item_id": "GGV-2026-09-EX-04",
-        "title": "No posted journals — ledger is not final",
-        "kind": "unposted_books",
+        "counterparty": "Canva",
+        "amount_idr": 390000,
+        "title": "Canva Rp390,000",
+        "kind": "bank_exception",
+        "match_terms": ("CANVA",),
     },
     {
         "item_id": "GGV-2026-09-EX-05",
-        "title": "Missing evidence before filing",
-        "kind": "missing_evidence",
+        "counterparty": "ATM",
+        "amount_idr": 2500000,
+        "title": "ATM Rp2,500,000",
+        "kind": "bank_exception",
+        "match_terms": ("ATM",),
     },
+)
+
+REIMBURSEMENT_PEOPLE: tuple[dict[str, Any], ...] = (
+    {"person_id": "PERS-MATT", "name": "Matt", "terms": ("MATT", "MATTHEW")},
+    {"person_id": "PERS-AMANDA", "name": "Amanda", "terms": ("AMANDA",)},
 )
 
 EXPORTS: tuple[dict[str, str], ...] = (
@@ -433,14 +456,14 @@ def _preserve_september(conn: sqlite3.Connection, actor: str) -> None:
             (
                 SEPTEMBER,
                 ENTITY,
-                "September 2026 is ready for ILA review. Five open finance exceptions stay unresolved until a recorded decision.",
+                "September 2026 is ready for ILA review. Five bank exceptions stay unresolved until a recorded decision.",
                 ts,
                 actor,
             ),
         )
     for item in SEPTEMBER_ITEMS:
         found = conn.execute(
-            "SELECT item_id, status FROM ggv_accountant_review_items WHERE item_id=?",
+            "SELECT item_id, title, kind, status FROM ggv_accountant_review_items WHERE item_id=?",
             (item["item_id"],),
         ).fetchone()
         if found is None:
@@ -451,6 +474,22 @@ def _preserve_september(conn: sqlite3.Connection, actor: str) -> None:
                 ) VALUES (?, ?, ?, ?, ?, 'OPEN', ?)
                 """,
                 (item["item_id"], ENTITY, SEPTEMBER, item["title"], item["kind"], ts),
+            )
+            continue
+        decided = conn.execute(
+            "SELECT COUNT(*) FROM ggv_accountant_decisions WHERE item_id=? AND entity_id=?",
+            (item["item_id"], ENTITY),
+        ).fetchone()[0]
+        if decided or str(found["status"]) != "OPEN":
+            continue
+        if found["title"] != item["title"] or found["kind"] != item["kind"]:
+            conn.execute(
+                """
+                UPDATE ggv_accountant_review_items
+                SET title=?, kind=?
+                WHERE item_id=? AND entity_id=? AND status='OPEN'
+                """,
+                (item["title"], item["kind"], item["item_id"], ENTITY),
             )
 
 
@@ -688,25 +727,316 @@ def link_original_invoice_pdfs(conn: sqlite3.Connection, period: str = SEPTEMBER
     }
 
 
-def _item_live(kind: str, snap: dict[str, Any], books: dict[str, Any]) -> str:
-    if kind == "reconciliation":
-        return f"{snap['bank_rows_unreconciled']} bank rows in this period are still unreconciled."
-    if kind == "classification":
-        return f"{snap['transactions_awaiting_classification']} source rows are still awaiting classification."
-    if kind == "missing_invoice_pdf":
-        return (
-            f"{snap['customer_invoices_missing_original_pdf']} of {snap['customer_invoices']} "
-            "customer invoices in this period have no original PDF. No invoice was invented."
+def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    if not _table(conn, table):
+        return set()
+    return {str(row[1]) for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+
+
+def _as_amount(value: Any) -> float:
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _spec_for(item_id: str) -> dict[str, Any] | None:
+    for item in SEPTEMBER_ITEMS:
+        if item["item_id"] == item_id:
+            return item
+    return None
+
+
+def _public_bank(row: sqlite3.Row) -> dict[str, Any]:
+    return {
+        "txn_id": row["txn_id"],
+        "txn_date": row["txn_date"],
+        "value_date": row["value_date"],
+        "description": row["description"],
+        "reference": row["reference"],
+        "debit": row["debit"],
+        "credit": row["credit"],
+        "recon_status": row["recon_status"],
+        "matched_receipt_ref": row["matched_receipt_ref"],
+        "match_confidence": row["match_confidence"],
+        "match_proposed": bool(row["match_proposed"]),
+        "human_confirmed": bool(row["human_confirmed"]),
+        "notes": row["notes"],
+        "bank_account": row["bank_account"],
+        "entity_id": ENTITY,
+    }
+
+
+def _match_bank_exception(conn: sqlite3.Connection, spec: dict[str, Any], period: str) -> dict[str, Any]:
+    """Attach one stored GGV September bank row. Never invent a row and never read AMG or BZG."""
+    empty = {
+        "status": "not_stored",
+        "match_basis": None,
+        "bank_transaction": None,
+        "candidate_count": 0,
+        "bank_row_invented": False,
+        "note": (
+            f"No {period} GGV bank row stores Rp{int(spec['amount_idr']):,} for {spec['counterparty']}. "
+            "The transaction was not created for this review."
+        ),
+    }
+    if not _table(conn, "ggv_bank_transactions"):
+        empty["status"] = "bank_table_absent"
+        return empty
+    rows = conn.execute(
+        """
+        SELECT txn_id, txn_date, value_date, description, reference, debit, credit,
+               recon_status, matched_receipt_ref, match_confidence, match_proposed,
+               human_confirmed, notes, bank_account, entity_id
+        FROM ggv_bank_transactions
+        WHERE entity_id=?
+        """,
+        (ENTITY,),
+    ).fetchall()
+    target = float(spec["amount_idr"])
+    september = []
+    for row in rows:
+        if str(row["entity_id"]) != ENTITY:
+            continue
+        debit = _as_amount(row["debit"])
+        credit = _as_amount(row["credit"])
+        if abs(debit - target) >= 1 and abs(credit - target) >= 1:
+            continue
+        if str(row["txn_date"] or "").startswith(period):
+            september.append(row)
+    if not september:
+        return empty
+    if len(september) == 1:
+        return {
+            "status": "matched",
+            "match_basis": "amount_unique",
+            "bank_transaction": _public_bank(september[0]),
+            "candidate_count": 1,
+            "bank_row_invented": False,
+            "note": "One September GGV bank row matches this amount.",
+        }
+    return {
+        "status": "ambiguous",
+        "match_basis": None,
+        "bank_transaction": None,
+        "candidate_count": len(september),
+        "bank_row_invented": False,
+        "note": (
+            f"{len(september)} September GGV bank rows share Rp{int(target):,}. "
+            "None was selected."
+        ),
+    }
+
+
+def _evidence_for(conn: sqlite3.Connection, bank: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not bank or not bank.get("matched_receipt_ref"):
+        return [
+            {
+                "kind": "supporting_evidence",
+                "original_present": False,
+                "missing_evidence": True,
+                "note": "No supporting receipt or invoice is linked on the GGV bank row.",
+                "manufactured": False,
+            }
+        ]
+    ref = str(bank["matched_receipt_ref"])
+    found: list[dict[str, Any]] = []
+    if _table(conn, "ggv_receipt_accounting"):
+        row = conn.execute(
+            """
+            SELECT receipt_key, vault_filename, vault_path, missing_evidence
+            FROM ggv_receipt_accounting
+            WHERE entity_id=? AND (receipt_key=? OR vault_filename=?)
+            """,
+            (ENTITY, ref, ref),
+        ).fetchone()
+        if row is not None:
+            path = Path(str(row["vault_path"] or ""))
+            present = path.is_file()
+            found.append(
+                {
+                    "kind": "receipt_photograph",
+                    "source_id": row["receipt_key"],
+                    "filename": row["vault_filename"],
+                    "original_present": present,
+                    "missing_evidence": bool(row["missing_evidence"]) or not present,
+                    "entity_id": ENTITY,
+                    "open_path": (
+                        f"/api/ggv/finance/accounting/receipts/{row['receipt_key']}/image"
+                        if present
+                        else None
+                    ),
+                    "manufactured": False,
+                }
+            )
+    if _table(conn, "ggv_nota_files") and _table(conn, "ggv_notas"):
+        cols = _columns(conn, "ggv_nota_files")
+        name_col = "original_filename" if "original_filename" in cols else "filename"
+        if name_col in cols or "filename" in cols:
+            file_rows = conn.execute(
+                f"""
+                SELECT f.file_id, f.filename, f.rel_path, f.{name_col} AS original_name
+                FROM ggv_nota_files f
+                JOIN ggv_notas n ON n.nota_id = f.nota_id
+                WHERE n.entity_id=? AND (f.file_id=? OR f.filename=? OR f.{name_col}=?)
+                """,
+                (ENTITY, ref, ref, ref),
+            ).fetchall()
+            for file_row in file_rows:
+                path = Path(str(file_row["rel_path"] or ""))
+                present = path.is_file()
+                found.append(
+                    {
+                        "kind": "nota_file",
+                        "source_id": file_row["file_id"],
+                        "filename": file_row["original_name"] or file_row["filename"],
+                        "original_present": present,
+                        "missing_evidence": not present,
+                        "entity_id": ENTITY,
+                        "manufactured": False,
+                    }
+                )
+    if found:
+        return found
+    return [
+        {
+            "kind": "supporting_evidence",
+            "source_id": ref,
+            "original_present": False,
+            "missing_evidence": True,
+            "note": "The bank row names evidence that is not stored on a GGV receipt or nota.",
+            "manufactured": False,
+        }
+    ]
+
+
+def _allocation_history(bank: dict[str, Any] | None) -> dict[str, Any]:
+    if not bank:
+        return {
+            "entries": [],
+            "invented": False,
+            "note": "No GGV bank row is stored, so there is no allocation history to open.",
+        }
+    return {
+        "entries": [
+            {
+                "source": "ggv_bank_transactions",
+                "txn_id": bank["txn_id"],
+                "recon_status": bank["recon_status"],
+                "matched_receipt_ref": bank["matched_receipt_ref"],
+                "match_confidence": bank["match_confidence"],
+                "match_proposed": bank["match_proposed"],
+                "human_confirmed": bank["human_confirmed"],
+                "notes": bank["notes"],
+            }
+        ],
+        "invented": False,
+        "note": (
+            "Allocation history is the match fields on this GGV bank row. "
+            "A separate allocation ledger is not stored."
+        ),
+    }
+
+
+def _proposed_treatment(spec: dict[str, Any], bank: dict[str, Any] | None) -> dict[str, Any]:
+    if not bank:
+        return {
+            "lines": [],
+            "posted": False,
+            "balanced": False,
+            "bank_row_invented": False,
+            "memo": (
+                f"Direction for {spec['counterparty']} is not on a stored GGV bank row. "
+                "No debit or credit line was proposed."
+            ),
+        }
+    debit = _as_amount(bank.get("debit"))
+    credit = _as_amount(bank.get("credit"))
+    if debit > 0 and credit > 0:
+        return {
+            "lines": [],
+            "posted": False,
+            "balanced": False,
+            "bank_row_invented": False,
+            "memo": "The stored bank row has both a debit and a credit. No treatment was chosen.",
+        }
+    amount = int(round(debit if debit > 0 else credit))
+    name = spec["counterparty"]
+    if debit > 0:
+        lines = [
+            {"side": "debit", "account": f"Unclassified — {name}", "amount_idr": amount},
+            {"side": "credit", "account": "GGV bank", "amount_idr": amount},
+        ]
+        memo = f"Bank debit. Proposed only. Not posted. {spec['title']}."
+    else:
+        lines = [
+            {"side": "debit", "account": "GGV bank", "amount_idr": amount},
+            {"side": "credit", "account": f"Unclassified receipt — {name}", "amount_idr": amount},
+        ]
+        memo = f"Bank credit. Proposed only. Not posted. {spec['title']}."
+    return {
+        "lines": lines,
+        "posted": False,
+        "balanced": True,
+        "bank_row_invented": False,
+        "status": "PROPOSED_NOT_POSTED",
+        "memo": memo,
+    }
+
+
+def _exception_detail(conn: sqlite3.Connection, row: sqlite3.Row, period: str) -> dict[str, Any]:
+    spec = _spec_for(str(row["item_id"])) or {
+        "item_id": row["item_id"],
+        "counterparty": row["title"],
+        "amount_idr": 0,
+        "title": row["title"],
+        "kind": row["kind"],
+    }
+    match = _match_bank_exception(conn, spec, period) if _spec_for(str(row["item_id"])) else {
+        "status": "not_a_bank_exception",
+        "bank_transaction": None,
+        "bank_row_invented": False,
+        "match_basis": None,
+        "candidate_count": 0,
+        "note": "This row is not one of the five September bank exceptions.",
+    }
+    bank = match.get("bank_transaction")
+    evidence = _evidence_for(conn, bank)
+    treatment = _proposed_treatment(spec, bank)
+    if bank:
+        live = (
+            f"{spec['title']} opens bank {bank['txn_id']} "
+            f"({bank['txn_date'] or 'no date'}). Posted: false."
         )
-    if kind == "unposted_books":
-        posted = books.get("journals_posted")
-        if posted is None:
-            return books.get("note") or "Books were not opened."
-        return f"{posted} posted journals. The ledger is not final."
-    return (
-        f"{snap['notas_missing_file']} notas are missing a file. "
-        f"{snap['open_document_requests']} document requests are open."
-    )
+    else:
+        live = match.get("note") or spec["title"]
+    return {
+        "item_id": row["item_id"],
+        "title": row["title"],
+        "kind": "bank_exception",
+        "counterparty": spec.get("counterparty"),
+        "amount_idr": spec.get("amount_idr"),
+        "recognition_terms": list(spec.get("match_terms") or []),
+        "currency": CURRENCY,
+        "status": row["status"],
+        "period": period,
+        "entity_id": ENTITY,
+        "is_bank_exception": True,
+        "bank_match": {
+            "status": match.get("status"),
+            "match_basis": match.get("match_basis"),
+            "candidate_count": match.get("candidate_count"),
+            "bank_row_invented": False,
+            "note": match.get("note"),
+        },
+        "bank_transaction": bank,
+        "evidence": evidence,
+        "allocation_history": _allocation_history(bank),
+        "proposed_treatment": treatment,
+        "live_evidence": live,
+        "decisions": _decisions(conn, row["item_id"]),
+        "amounts_invented": False,
+    }
 
 
 def _decisions(conn: sqlite3.Connection, item_id: str) -> list[dict[str, Any]]:
@@ -765,33 +1095,189 @@ def _periods(conn: sqlite3.Connection) -> list[dict[str, Any]]:
 
 
 def _review_queue(conn: sqlite3.Connection, period: str, books: dict[str, Any]) -> list[dict[str, Any]]:
-    snap = _live_snapshot(conn, period)
-    rows = conn.execute(
-        """
-        SELECT item_id, title, kind, status, created_at
-        FROM ggv_accountant_review_items
-        WHERE entity_id=? AND period_id=?
-        ORDER BY item_id
-        """,
-        (ENTITY, period),
-    ).fetchall()
+    del books
+    if period != SEPTEMBER:
+        return []
+    wanted = [item["item_id"] for item in SEPTEMBER_ITEMS]
+    rows = {
+        str(row["item_id"]): row
+        for row in conn.execute(
+            """
+            SELECT item_id, title, kind, status, created_at
+            FROM ggv_accountant_review_items
+            WHERE entity_id=? AND period_id=? AND item_id IN ({})
+            """.format(",".join("?" for _ in wanted)),
+            (ENTITY, period, *wanted),
+        ).fetchall()
+    }
     items = []
-    for row in rows:
-        decisions = _decisions(conn, row["item_id"])
-        items.append(
+    for item_id in wanted:
+        row = rows.get(item_id)
+        if row is None:
+            continue
+        items.append(_exception_detail(conn, row, period))
+    return items
+
+
+def _names_person(text: str, terms: tuple[str, ...]) -> bool:
+    blob = (text or "").upper()
+    for term in terms:
+        if re.search(rf"(?<![A-Z]){re.escape(term)}(?![A-Z])", blob):
+            return True
+    return False
+
+
+def _reimbursement_schedules(conn: sqlite3.Connection) -> dict[str, Any]:
+    """Matt and Amanda rows already stored on GGV notas or GGV bank text. No invented amounts."""
+    schedules = []
+    for person in REIMBURSEMENT_PEOPLE:
+        lines: list[dict[str, Any]] = []
+        if _table(conn, "ggv_notas"):
+            for row in conn.execute(
+                """
+                SELECT nota_id, invoice_no, nota_date, amount, notes, workflow_state
+                FROM ggv_notas
+                WHERE entity_id=? AND created_by_person_id=?
+                ORDER BY nota_date
+                """,
+                (ENTITY, person["person_id"]),
+            ).fetchall():
+                lines.append(
+                    {
+                        "source": "nota",
+                        "source_id": row["nota_id"],
+                        "date": row["nota_date"],
+                        "description": row["invoice_no"] or row["notes"] or row["nota_id"],
+                        "amount_idr": row["amount"],
+                        "workflow_state": row["workflow_state"],
+                        "entity_id": ENTITY,
+                        "manufactured": False,
+                    }
+                )
+        if _table(conn, "ggv_bank_transactions"):
+            for row in conn.execute(
+                """
+                SELECT txn_id, txn_date, description, reference, debit, credit
+                FROM ggv_bank_transactions
+                WHERE entity_id=?
+                ORDER BY txn_date
+                """,
+                (ENTITY,),
+            ).fetchall():
+                blob = f"{row['description'] or ''} {row['reference'] or ''}"
+                if not _names_person(blob, tuple(person["terms"])):
+                    continue
+                amount = row["debit"] if _as_amount(row["debit"]) > 0 else row["credit"]
+                lines.append(
+                    {
+                        "source": "bank",
+                        "source_id": row["txn_id"],
+                        "date": row["txn_date"],
+                        "description": row["description"],
+                        "amount_idr": amount,
+                        "entity_id": ENTITY,
+                        "manufactured": False,
+                    }
+                )
+        schedules.append(
             {
-                "item_id": row["item_id"],
-                "title": row["title"],
-                "kind": row["kind"],
-                "status": row["status"],
-                "period": period,
-                "entity_id": ENTITY,
-                "live_evidence": _item_live(row["kind"], snap, books),
-                "decisions": decisions,
-                "amounts_invented": False,
+                "person_id": person["person_id"],
+                "name": person["name"],
+                "lines": lines,
+                "line_count": len(lines),
+                "manufactured": False,
+                "complete": False,
+                "note": (
+                    f"{len(lines)} stored GGV rows name {person['name']}."
+                    if lines
+                    else f"No stored GGV nota or bank row names {person['name']}. None was manufactured."
+                ),
             }
         )
-    return items
+    return {
+        "schedules": schedules,
+        "manufactured": False,
+        "complete": False,
+        "note": "Reimbursement schedules are incomplete. Empty people stay empty.",
+    }
+
+
+def _preparation_tasks(conn: sqlite3.Connection, books: dict[str, Any], period: str = SEPTEMBER) -> list[dict[str, Any]]:
+    """Invoices, unposted journals, and tax setup. These are not bank exceptions."""
+    snap = _live_snapshot(conn, period)
+    missing: list[dict[str, Any]] = []
+    if _table(conn, "ggv_invoices"):
+        for row in conn.execute(
+            """
+            SELECT invoice_id, invoice_number
+            FROM ggv_invoices
+            WHERE entity_id=? AND COALESCE(invoice_date, created_at, '') LIKE ?
+            """,
+            (ENTITY, period + "%"),
+        ).fetchall():
+            has_pdf = False
+            if _table(conn, "ggv_invoice_documents"):
+                has_pdf = (
+                    conn.execute(
+                        "SELECT 1 FROM ggv_invoice_documents WHERE invoice_id=?",
+                        (row["invoice_id"],),
+                    ).fetchone()
+                    is not None
+                )
+            if not has_pdf:
+                missing.append(
+                    {
+                        "invoice_id": row["invoice_id"],
+                        "invoice_number": row["invoice_number"],
+                        "original_pdf": False,
+                    }
+                )
+    profile = None
+    if _table(conn, "ggv_tax_profile"):
+        profile = conn.execute(
+            "SELECT npwp, pkp_status FROM ggv_tax_profile WHERE entity_id=?",
+            (ENTITY,),
+        ).fetchone()
+    outstanding = []
+    if profile is None or not profile["npwp"]:
+        outstanding.append("NPWP is not verified.")
+    if profile is None or str(profile["pkp_status"] or "UNKNOWN") == "UNKNOWN":
+        outstanding.append("PKP status is unknown.")
+    outstanding.append("Which of PPh 21, PPh 23, PPh 4(2), PPh 25, and PPN apply is not verified.")
+    outstanding.append("The filing calendar is not stored.")
+    outstanding.append("DJP/Coretax format has not been tested.")
+    return [
+        {
+            "task_id": "PREP-MISSING-INVOICE-PDF",
+            "kind": "missing_invoice_pdf",
+            "title": "Customer invoices missing an original PDF",
+            "period": period,
+            "count": len(missing) or snap["customer_invoices_missing_original_pdf"],
+            "items": missing,
+            "is_bank_exception": False,
+            "note": "Missing PDFs stay missing. No invoice was created.",
+        },
+        {
+            "task_id": "PREP-UNPOSTED-JOURNALS",
+            "kind": "unposted_journals",
+            "title": "Journals are not posted. The books are not final.",
+            "period": period,
+            "journals_posted": books.get("journals_posted"),
+            "books_final": False,
+            "is_bank_exception": False,
+            "note": books.get("note"),
+        },
+        {
+            "task_id": "PREP-TAX-SETUP",
+            "kind": "tax_setup",
+            "title": "Tax setup is not verified",
+            "period": period,
+            "outstanding": outstanding,
+            "blocks_filing": True,
+            "is_bank_exception": False,
+            "government_submitted_by_wolf": False,
+        },
+    ]
 
 
 def _tax_workspace(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -907,10 +1393,7 @@ def _accounting_status(conn: sqlite3.Connection, books: dict[str, Any]) -> dict[
         )
         if _table(conn, "ggv_notas")
         else 0,
-        "reimbursements": {
-            "schedule_available": False,
-            "note": "No reimbursement schedule is stored. None was manufactured.",
-        },
+        "reimbursements": _reimbursement_schedules(conn),
         "missing_documents": snap["notas_missing_file"] + snap["open_document_requests"],
         "journal_preparation": {
             "proposals_unposted": proposals,
@@ -921,6 +1404,64 @@ def _accounting_status(conn: sqlite3.Connection, books: dict[str, Any]) -> dict[
             "books_final": False,
         },
         "books": books,
+    }
+
+
+def _review_history(conn: sqlite3.Connection) -> dict[str, Any]:
+    decisions = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT d.decision_id, d.item_id, d.decision, d.note, d.actor_person_id, d.created_at,
+                   i.title, i.status AS item_status
+            FROM ggv_accountant_decisions d
+            LEFT JOIN ggv_accountant_review_items i
+              ON i.item_id = d.item_id AND i.entity_id = d.entity_id
+            WHERE d.entity_id=?
+            ORDER BY d.created_at
+            """,
+            (ENTITY,),
+        ).fetchall()
+    ]
+    proposals = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT proposal_id, period_id, memo, status, posted, proposed_by, created_at
+            FROM ggv_accountant_journal_proposals
+            WHERE entity_id=?
+            ORDER BY created_at
+            """,
+            (ENTITY,),
+        ).fetchall()
+    ]
+    return {
+        "decisions": decisions,
+        "journal_proposals": proposals,
+        "september_approved": False,
+        "journals_posted": False,
+        "note": "A review decision does not approve September and does not post a journal.",
+    }
+
+
+def _filing_history(conn: sqlite3.Connection) -> dict[str, Any]:
+    filings = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT filing_id, tax_code, period_id, preparation_status, submission_reference,
+                   acknowledgement_note, evidence_ref, recorded_by, created_at
+            FROM ggv_accountant_filings
+            WHERE entity_id=?
+            ORDER BY created_at
+            """,
+            (ENTITY,),
+        ).fetchall()
+    ]
+    return {
+        "filings": filings,
+        "government_submitted_by_wolf": False,
+        "note": "A filing row records evidence ILA already holds. Wolf does not submit a return.",
     }
 
 
@@ -948,6 +1489,20 @@ def dashboard(person_id: str, conn: sqlite3.Connection, qs: dict[str, list[str]]
     books = _books_status()
     queue = _review_queue(conn, SEPTEMBER, books)
     unresolved = [item for item in queue if item["status"] == "OPEN"]
+    preparations = _preparation_tasks(conn, books, SEPTEMBER)
+    requests = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT request_id, period_id, missing_item, reason, responsible_label,
+                   status, requested_by, created_at, updated_at
+            FROM ggv_accountant_doc_requests
+            WHERE entity_id=?
+            ORDER BY created_at
+            """,
+            (ENTITY,),
+        ).fetchall()
+    ]
     return nota.public_payload(
         {
             "ok": True,
@@ -962,8 +1517,14 @@ def dashboard(person_id: str, conn: sqlite3.Connection, qs: dict[str, list[str]]
                 "status": "READY_FOR_REVIEW",
                 "exceptions": queue,
                 "unresolved_count": len(unresolved),
+                "approved": False,
                 "evidence_pack": "/api/ggv/finance/export/month?year=2026&month=09&entity=ENT-GGV",
             },
+            "preparation_tasks": preparations,
+            "reimbursements": _reimbursement_schedules(conn),
+            "document_requests": requests,
+            "review_history": _review_history(conn),
+            "filing_history": _filing_history(conn),
             "tax_compliance": _tax_workspace(conn),
             "exports": list(EXPORTS),
             "original_invoice_pdfs": links,
@@ -1134,12 +1695,51 @@ def request_document(person_id: str, body: dict[str, Any], conn: sqlite3.Connect
     )
 
 
+def _balanced_journal_lines(lines: Any) -> list[dict[str, Any]]:
+    if not isinstance(lines, list) or not lines:
+        raise nota.FinanceNotaError(
+            "A proposal needs debit and credit lines.",
+            code="missing_fields",
+        )
+    parsed: list[dict[str, Any]] = []
+    debit = 0.0
+    credit = 0.0
+    for line in lines:
+        if not isinstance(line, dict):
+            raise nota.FinanceNotaError(
+                "Each line needs a debit or credit, an account, and an amount.",
+                code="unbalanced",
+            )
+        side = str(line.get("side") or "").strip().lower()
+        account = str(line.get("account") or "").strip()
+        try:
+            amount = float(line.get("amount_idr"))
+        except (TypeError, ValueError):
+            amount = 0.0
+        if side not in {"debit", "credit"} or not account or amount <= 0:
+            raise nota.FinanceNotaError(
+                "Each line needs a debit or credit, an account, and an amount.",
+                code="unbalanced",
+            )
+        if side == "debit":
+            debit += amount
+        else:
+            credit += amount
+        parsed.append({"side": side, "account": account, "amount_idr": round(amount, 2)})
+    if abs(debit - credit) > 0.5:
+        raise nota.FinanceNotaError(
+            "Debit and credit lines must balance. Nothing was posted.",
+            code="unbalanced",
+        )
+    return parsed
+
+
 def propose_journal(person_id: str, body: dict[str, Any], conn: sqlite3.Connection) -> dict[str, Any]:
     _reject_other_entity(None, body)
     _require(conn, person_id, "finance.journal.propose")
     memo = str(body.get("memo") or "").strip()
-    lines = body.get("lines")
-    if not memo or not isinstance(lines, list) or not lines:
+    lines = _balanced_journal_lines(body.get("lines"))
+    if not memo:
         raise nota.FinanceNotaError("A proposal needs a memo and lines.", code="missing_fields")
     ts = _now()
     proposal_id = nota._mint("JPR")
@@ -1175,7 +1775,108 @@ def propose_journal(person_id: str, body: dict[str, Any], conn: sqlite3.Connecti
             "proposal_id": proposal_id,
             "status": "AWAITING_MANAGEMENT",
             "posted": False,
+            "balanced": True,
+            "lines": lines,
             "message": "GGV management must approve this adjustment. It was not posted.",
+        }
+    )
+
+
+def update_document_request(
+    person_id: str,
+    request_id: str,
+    body: dict[str, Any],
+    conn: sqlite3.Connection,
+) -> dict[str, Any]:
+    _reject_other_entity(None, body)
+    _require(conn, person_id, "finance.document.request")
+    status = str(body.get("status") or "").strip().upper()
+    if status not in {"OPEN", "FULFILLED", "CANCELLED"}:
+        raise nota.FinanceNotaError("Status must be OPEN, FULFILLED, or CANCELLED.", code="bad_status")
+    row = conn.execute(
+        """
+        SELECT request_id FROM ggv_accountant_doc_requests
+        WHERE request_id=? AND entity_id=?
+        """,
+        (request_id, ENTITY),
+    ).fetchone()
+    if row is None:
+        raise nota.FinanceNotaError("That document request was not found.", code="not_found", http_status=404)
+    ts = _now()
+    conn.execute(
+        """
+        UPDATE ggv_accountant_doc_requests
+        SET status=?, updated_at=?
+        WHERE request_id=? AND entity_id=?
+        """,
+        (status, ts, request_id, ENTITY),
+    )
+    nota._audit(
+        conn,
+        person_id=person_id,
+        action="ggv.accountant.document_request_status",
+        resource_type="ggv_accountant_doc_request",
+        resource_id=request_id,
+        metadata={"entity_id": ENTITY, "status": status},
+    )
+    conn.commit()
+    return nota.public_payload(
+        {
+            "ok": True,
+            "request_id": request_id,
+            "status": status,
+            "document_created": False,
+            "note": "Marking a request fulfilled does not create a document.",
+        }
+    )
+
+
+def review_item(person_id: str, item_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
+    _require(conn, person_id, "finance.records.read")
+    if _spec_for(item_id) is None:
+        raise nota.FinanceNotaError(
+            "That item is not one of the five September bank exceptions.",
+            code="not_found",
+            http_status=404,
+        )
+    row = conn.execute(
+        """
+        SELECT item_id, title, kind, status, created_at
+        FROM ggv_accountant_review_items
+        WHERE item_id=? AND entity_id=? AND period_id=?
+        """,
+        (item_id, ENTITY, SEPTEMBER),
+    ).fetchone()
+    if row is None:
+        raise nota.FinanceNotaError("That exception is not stored.", code="not_found", http_status=404)
+    detail = _exception_detail(conn, row, SEPTEMBER)
+    detail["ok"] = True
+    return nota.public_payload(detail)
+
+
+def accountant_history(person_id: str, conn: sqlite3.Connection) -> dict[str, Any]:
+    _require(conn, person_id, "finance.history.read")
+    return nota.public_payload(
+        {
+            "ok": True,
+            "entity_id": ENTITY,
+            "review_history": _review_history(conn),
+            "filing_history": _filing_history(conn),
+            "document_requests": [
+                dict(row)
+                for row in conn.execute(
+                    """
+                    SELECT request_id, period_id, missing_item, status, created_at, updated_at
+                    FROM ggv_accountant_doc_requests
+                    WHERE entity_id=?
+                    ORDER BY created_at
+                    """,
+                    (ENTITY,),
+                ).fetchall()
+            ],
+            "september_approved": False,
+            "journals_posted": False,
+            "tax_filed": False,
         }
     )
 
@@ -1398,11 +2099,46 @@ def _rows_for(conn: sqlite3.Connection, kind: str, period: str) -> tuple[list[st
             status = "GAP"
         return headers, rows, status
     if kind == "reimbursements":
-        return (
-            ["gap", "detail"],
-            [["not_available", "No reimbursement or staff liability schedule is stored. None was manufactured."]],
-            "GAP",
-        )
+        headers = [
+            "person",
+            "source",
+            "source_id",
+            "date",
+            "description",
+            "amount_idr",
+            "complete",
+            "manufactured",
+        ]
+        rows = []
+        for schedule in _reimbursement_schedules(conn)["schedules"]:
+            if not schedule["lines"]:
+                rows.append(
+                    [
+                        schedule["name"],
+                        "",
+                        "",
+                        "",
+                        schedule["note"],
+                        "",
+                        "false",
+                        "false",
+                    ]
+                )
+                continue
+            for line in schedule["lines"]:
+                rows.append(
+                    [
+                        schedule["name"],
+                        line["source"],
+                        line["source_id"],
+                        line.get("date"),
+                        line.get("description"),
+                        line.get("amount_idr"),
+                        "false",
+                        "false",
+                    ]
+                )
+        return headers, rows, "INCOMPLETE"
     if kind == "withholding":
         return (
             ["tax_code", "certificates_on_record", "liability", "detail"],
@@ -1437,7 +2173,9 @@ def _rows_for(conn: sqlite3.Connection, kind: str, period: str) -> tuple[list[st
     headers = ["kind", "detail", "entity_id"]
     rows = []
     for item in _review_queue(conn, period, books):
-        rows.append([item["item_id"], f"{item['status']}: {item['live_evidence']}", ENTITY])
+        rows.append([item["item_id"], f"bank_exception {item['status']}: {item['live_evidence']}", ENTITY])
+    for task in _preparation_tasks(conn, books, period):
+        rows.append([task["task_id"], f"preparation_task: {task['title']}", ENTITY])
     for req in conn.execute(
         """
         SELECT request_id, missing_item, status FROM ggv_accountant_doc_requests
@@ -1629,11 +2367,17 @@ def http(
             return home(person_id or "", conn)
         if method == "GET" and rest == "/accountant/dashboard":
             return dashboard(person_id or "", conn, qs)
-        if method == "POST" and rest.startswith("/accountant/review/"):
+        if method == "GET" and rest == "/accountant/history":
+            return accountant_history(person_id or "", conn)
+        if method == "GET" and rest.startswith("/accountant/review/") and rest.count("/") == 3:
+            return review_item(person_id or "", rest.split("/")[3], conn)
+        if method == "POST" and rest.startswith("/accountant/review/") and rest.count("/") == 3:
             item_id = rest.split("/")[3]
             return decide_review(person_id or "", item_id, body, conn)
         if method == "POST" and rest == "/accountant/document-requests":
             return request_document(person_id or "", body, conn)
+        if method == "POST" and rest.startswith("/accountant/document-requests/") and rest.count("/") == 3:
+            return update_document_request(person_id or "", rest.split("/")[3], body, conn)
         if method == "POST" and rest == "/accountant/journal-proposals":
             return propose_journal(person_id or "", body, conn)
         if method == "POST" and rest in {

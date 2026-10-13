@@ -359,9 +359,15 @@
     <div class="grid" id="acct-status"></div>
     <h2>Periods</h2>
     <div id="acct-periods"></div>
-    <h2>September review queue</h2>
+    <h2>September bank exceptions</h2>
     <p class="note" id="acct-queue-note"></p>
     <div id="acct-queue"></div>
+    <h2>Preparation tasks</h2>
+    <p class="note">Missing invoices, unposted journals, and tax setup. These are not bank reconciliation exceptions.</p>
+    <div id="acct-prep"></div>
+    <h2>Reimbursements</h2>
+    <p class="note" id="acct-reimburse-note">Matt and Amanda schedules use stored GGV rows only. An empty schedule was not filled in.</p>
+    <div id="acct-reimburse"></div>
     <h2>Tax compliance</h2>
     <p class="note">Wolf prepares records. ILA verifies NPWP, PKP, and what must be filed. No tax figure on this page is a government liability.</p>
     <div id="acct-tax"></div>
@@ -376,9 +382,12 @@
     <h2>Journal proposal</h2>
     <p class="note">A proposal waits for GGV management. It is not posted and it does not pay.</p>
     <label>Memo<textarea id="j-memo"></textarea></label>
-    <label>Lines (one description per line)<textarea id="j-lines"></textarea></label>
+    <label>Lines (debit or credit | account | amount)<textarea id="j-lines" placeholder="debit | Unclassified — Alfamart | 64000&#10;credit | GGV bank | 64000"></textarea></label>
     <button type="button" class="secondary" id="j-save">Prepare adjustment</button>
     <p id="j-msg" class="note"></p>
+    <h2>Review and filing history</h2>
+    <p class="note">A decision does not approve September, post a journal, or file a return.</p>
+    <div id="acct-history"></div>
     <h2>Exports</h2>
     <div id="acct-exports"></div>
   </section>
@@ -919,11 +928,54 @@ async function loadIlaDesk() {
   const items = queue.exceptions || [];
   $("acct-queue-note").textContent =
     "September 2026 · " + (queue.status || "") + " · " + (queue.unresolved_count || 0) + " unresolved. Evidence pack stays a download copy.";
+  function money(amount) {
+    if (amount == null || amount === "") return "—";
+    return "Rp" + Number(amount).toLocaleString("en-US");
+  }
+  function bankBlock(item) {
+    const bank = item.bank_transaction;
+    if (!bank) {
+      const terms = (item.recognition_terms || []).join(", ");
+      return `<p class="bad">${esc((item.bank_match || {}).note || "Original bank transaction is not stored.")}${terms ? "<br>Statement text to look for: " + esc(terms) : ""}</p>`;
+    }
+    return `<p><strong>Bank transaction</strong> ${esc(bank.txn_id)} · ${esc(bank.txn_date || "")}<br>
+      ${esc(bank.description || "")} ${esc(bank.reference || "")}<br>
+      Debit ${esc(money(bank.debit))} · Credit ${esc(money(bank.credit))} · ${esc(bank.recon_status || "")}<br>
+      <span class="meta">${esc(bank.bank_account || "")} · ${esc(bank.notes || "")}</span></p>`;
+  }
+  function evidenceBlock(item) {
+    const rows = item.evidence || [];
+    if (!rows.length) return `<p>No supporting evidence is linked.</p>`;
+    return `<p><strong>Supporting evidence</strong><br>${rows.map((row) => {
+      const label = row.original_present ? "Original file is on record" : "Original file is not on record";
+      const open = row.open_path ? ` · <a href="${esc(row.open_path)}">Open original</a>` : "";
+      return `${esc(row.kind)} ${esc(row.filename || row.source_id || "")} · ${esc(label)}${open}`;
+    }).join("<br>")}</p>`;
+  }
+  function allocationBlock(item) {
+    const history = item.allocation_history || {};
+    const entries = history.entries || [];
+    if (!entries.length) return `<p>${esc(history.note || "No allocation history.")}</p>`;
+    return `<p><strong>Allocation history</strong><br>${esc(history.note || "")}<br>${entries.map((row) =>
+      `${esc(row.recon_status || "")} · proposed ${row.match_proposed ? "yes" : "no"} · confirmed ${row.human_confirmed ? "yes" : "no"} · ${esc(row.matched_receipt_ref || "no receipt ref")}`
+    ).join("<br>")}</p>`;
+  }
+  function proposalBlock(item) {
+    const proposal = item.proposed_treatment || {};
+    const lines = proposal.lines || [];
+    const body = lines.length
+      ? lines.map((line) => `${esc(line.side)} · ${esc(line.account)} · ${esc(money(line.amount_idr))}`).join("<br>")
+      : esc(proposal.memo || "No debit and credit lines.");
+    return `<p><strong>Proposed treatment</strong> · not posted<br>${body}</p>`;
+  }
   $("acct-queue").innerHTML = items.map((item) => `
     <article class="card" data-item="${esc(item.item_id)}">
       <strong>${esc(item.title)}</strong><br>
-      <span class="meta">${esc(item.status)}</span>
-      <p>${esc(item.live_evidence || "")}</p>
+      <span class="meta">${esc(item.status)} · ${esc(money(item.amount_idr))}</span>
+      ${bankBlock(item)}
+      ${evidenceBlock(item)}
+      ${allocationBlock(item)}
+      ${proposalBlock(item)}
       <p class="meta">${(item.decisions || []).map((d) => esc(d.created_at) + " · " + esc(d.actor_person_id) + " · " + esc(d.decision)).join("<br>")}</p>
       <label>Decision note<textarea class="dec-note"></textarea></label>
       <button type="button" class="secondary dec" data-decision="approve" data-item="${esc(item.item_id)}">Approve</button>
@@ -953,10 +1005,47 @@ async function loadIlaDesk() {
     + (tax.missing_information_blocking_filing || []).map((row) =>
       `<article class="card bad">${esc(row.missing_item)} · ${esc(row.status)}</article>`
     ).join("");
-  const requests = tax.missing_information_blocking_filing || [];
+  const prep = data.preparation_tasks || [];
+  $("acct-prep").innerHTML = prep.map((task) => {
+    const extra = task.kind === "missing_invoice_pdf"
+      ? (task.items || []).map((row) => esc(row.invoice_number || row.invoice_id)).join(", ")
+      : task.kind === "tax_setup"
+        ? (task.outstanding || []).map((row) => esc(row)).join("<br>")
+        : esc(task.note || "");
+    return `<article class="card"><strong>${esc(task.title)}</strong><br><span class="meta">Preparation task · not a bank exception</span><p>${extra}</p></article>`;
+  }).join("") || `<p class="note">No preparation tasks.</p>`;
+  const people = ((data.reimbursements || {}).schedules) || [];
+  $("acct-reimburse").innerHTML = people.map((person) => {
+    const lines = person.lines || [];
+    const body = lines.length
+      ? lines.map((line) => `${esc(line.date || "")} · ${esc(line.source)} · ${esc(line.description || line.source_id)} · ${esc(money(line.amount_idr))}`).join("<br>")
+      : esc(person.note || "No stored rows.");
+    return `<article class="card"><strong>${esc(person.name)}</strong> · incomplete<br>${body}</article>`;
+  }).join("");
+  const review = (data.review_history || {}).decisions || [];
+  const filings = (data.filing_history || {}).filings || [];
+  $("acct-history").innerHTML = (review.length ? review.map((row) =>
+    `<article class="card">${esc(row.created_at)} · ${esc(row.title || row.item_id)} · ${esc(row.decision)} · ${esc(row.actor_person_id)}</article>`
+  ).join("") : `<p class="note">No review decisions yet. September is not approved.</p>`)
+    + (filings.length ? filings.map((row) =>
+      `<article class="card">${esc(row.created_at)} · ${esc(row.tax_code)} · ${esc(row.preparation_status)} · not submitted by Wolf</article>`
+    ).join("") : `<p class="note">No filing evidence recorded. Nothing has been submitted.</p>`);
+  const requests = data.document_requests || tax.missing_information_blocking_filing || [];
   $("acct-requests").innerHTML = requests.length
-    ? requests.map((row) => `<article class="card">${esc(row.period_id || "")} · ${esc(row.missing_item)} · ${esc(row.responsible_label || "")}</article>`).join("")
-    : `<p class="note">No open document requests.</p>`;
+    ? requests.map((row) => `<article class="card">${esc(row.period_id || "")} · ${esc(row.missing_item)} · ${esc(row.status || "OPEN")}
+        <button type="button" class="secondary doc-status" data-request="${esc(row.request_id)}" data-status="FULFILLED">Mark fulfilled</button>
+        <button type="button" class="secondary doc-status" data-request="${esc(row.request_id)}" data-status="CANCELLED">Cancel</button>
+      </article>`).join("")
+    : `<p class="note">No document requests.</p>`;
+  document.querySelectorAll(".doc-status").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await api("/api/ggv/finance/accountant/document-requests/" + encodeURIComponent(btn.dataset.request), {
+        method: "POST",
+        body: JSON.stringify({ status: btn.dataset.status }),
+      });
+      loadIlaDesk();
+    });
+  });
   $("acct-exports").innerHTML = (data.exports || []).map((item) =>
     `<button type="button" class="secondary acct-export" data-export="${esc(item.id)}">${esc(item.label)} (${esc(item.formats)})</button>`
   ).join("");
@@ -1004,7 +1093,14 @@ if ($("doc-send")) {
 }
 if ($("j-save")) {
   $("j-save").addEventListener("click", async () => {
-    const lines = ($("j-lines").value || "").split("\n").map((line) => line.trim()).filter(Boolean).map((line) => ({ description: line }));
+    const lines = ($("j-lines").value || "").split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+      const parts = line.split("|").map((part) => part.trim());
+      return {
+        side: (parts[0] || "").toLowerCase(),
+        account: parts[1] || "",
+        amount_idr: Number(String(parts[2] || "").replace(/[^0-9.]/g, "")),
+      };
+    });
     try {
       const data = await api("/api/ggv/finance/accountant/journal-proposals", {
         method: "POST",

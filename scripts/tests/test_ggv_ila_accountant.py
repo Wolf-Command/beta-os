@@ -175,6 +175,115 @@ def bootstrap() -> None:
             """,
             (ts, ts),
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS ggv_bank_statement_imports (
+              import_id TEXT PRIMARY KEY,
+              entity_id TEXT NOT NULL,
+              bank_label TEXT NOT NULL,
+              account_label TEXT NULL,
+              original_filename TEXT NOT NULL,
+              original_path TEXT NOT NULL,
+              content_sha256 TEXT NOT NULL,
+              uploaded_by_person_id TEXT NOT NULL,
+              uploaded_at TEXT NOT NULL,
+              period_start TEXT NULL,
+              period_end TEXT NULL,
+              txn_count INTEGER NOT NULL DEFAULT 0,
+              parse_status TEXT NOT NULL,
+              parse_notes TEXT NULL
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS ggv_bank_transactions (
+              txn_id TEXT PRIMARY KEY,
+              import_id TEXT NOT NULL,
+              entity_id TEXT NOT NULL,
+              txn_date TEXT NULL,
+              value_date TEXT NULL,
+              description TEXT NULL,
+              reference TEXT NULL,
+              debit REAL NOT NULL DEFAULT 0,
+              credit REAL NOT NULL DEFAULT 0,
+              running_balance REAL NULL,
+              bank_account TEXT NULL,
+              raw_json TEXT NULL,
+              recon_status TEXT NOT NULL DEFAULT 'UNIDENTIFIED',
+              matched_receipt_ref TEXT NULL,
+              match_confidence TEXT NULL,
+              match_proposed INTEGER NOT NULL DEFAULT 0,
+              human_confirmed INTEGER NOT NULL DEFAULT 0,
+              notes TEXT NULL,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (import_id) REFERENCES ggv_bank_statement_imports(import_id)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS ggv_receipt_accounting (
+              receipt_key TEXT PRIMARY KEY,
+              entity_id TEXT NOT NULL,
+              vault_filename TEXT NOT NULL,
+              vault_queue TEXT NOT NULL,
+              vault_path TEXT NOT NULL,
+              content_sha256 TEXT NULL,
+              accounting_queue TEXT NOT NULL,
+              extraction_json TEXT NULL,
+              human_confirmed_json TEXT NULL,
+              duplicate_of TEXT NULL,
+              missing_evidence INTEGER NOT NULL DEFAULT 0,
+              bank_match_proposed TEXT NULL,
+              bank_match_confirmed INTEGER NOT NULL DEFAULT 0,
+              confirmed_by_person_id TEXT NULL,
+              confirmed_at TEXT NULL,
+              upload_date TEXT NULL,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            )
+            """
+        )
+        photo = DB.parent / "receipt-alfa.jpg"
+        photo.write_bytes(b"\xff\xd8\xff original-photo")
+        conn.execute(
+            """
+            INSERT INTO ggv_bank_statement_imports (
+              import_id, entity_id, bank_label, original_filename, original_path,
+              content_sha256, uploaded_by_person_id, uploaded_at, txn_count, parse_status
+            ) VALUES
+              ('IMP-GGV', 'ENT-GGV', 'Mandiri', 'sept.csv', '/tmp/sept.csv', 'sha-ggv', 'PERS-MATT', ?, 2, 'parsed'),
+              ('IMP-AMG', 'ENT-AMG', 'Mandiri', 'amg.csv', '/tmp/amg.csv', 'sha-amg', 'PERS-MATT', ?, 1, 'parsed')
+            """,
+            (ts, ts),
+        )
+        conn.execute(
+            """
+            INSERT INTO ggv_bank_transactions (
+              txn_id, import_id, entity_id, txn_date, value_date, description, reference,
+              debit, credit, bank_account, recon_status, matched_receipt_ref, match_confidence,
+              match_proposed, human_confirmed, notes, created_at, raw_json
+            ) VALUES
+              ('TXN-ALFA', 'IMP-GGV', 'ENT-GGV', '2026-09-03', '2026-09-03', 'ALFAMART POS', 'REF-ALFA',
+               64000, 0, 'GGV-IDR', 'NEEDS_REVIEW', 'receipt-alfa.jpg', 'PROPOSE MATCH', 1, 0,
+               'proposed only', ?, '{"secret":"do-not-export"}'),
+              ('TXN-CANVA', 'IMP-GGV', 'ENT-GGV', '2026-09-08', '2026-09-08', 'CANVA PTY', 'REF-CANVA',
+               390000, 0, 'GGV-IDR', 'UNIDENTIFIED', NULL, NULL, 0, 0, NULL, ?, NULL),
+              ('TXN-AMG-ALFA', 'IMP-AMG', 'ENT-AMG', '2026-09-03', '2026-09-03', 'ALFAMART POS', 'REF-AMG',
+               64000, 0, 'AMG-IDR', 'NEEDS_REVIEW', 'amg-secret.jpg', NULL, 0, 0, 'amg only', ?, NULL)
+            """,
+            (ts, ts, ts),
+        )
+        conn.execute(
+            """
+            INSERT INTO ggv_receipt_accounting (
+              receipt_key, entity_id, vault_filename, vault_queue, vault_path,
+              accounting_queue, missing_evidence, created_at, updated_at
+            ) VALUES ('receipt-alfa.jpg', 'ENT-GGV', 'receipt-alfa.jpg', 'inbox', ?, 'needs_review', 0, ?, ?)
+            """,
+            (str(photo), ts, ts),
+        )
         conn.commit()
     finally:
         conn.close()
@@ -191,6 +300,9 @@ def main() -> int:
     check("viewport", 'name="viewport"' in html)
     check("no table layout on accountant", "<table" not in html)
     check("accountant path", "/ggv/finance/accountant" in html)
+    check("exception heading", "September bank exceptions" in html)
+    check("prep is labeled apart from exceptions", "not a bank exception" in html)
+    check("journal lines are debit and credit", "debit or credit | account | amount" in html)
 
     conn = connect()
     try:
@@ -256,6 +368,76 @@ def main() -> int:
         queue = desk["finance_review_queue"]
         check("september ready", queue["status"] == "READY_FOR_REVIEW" and queue["period"] == "2026-09")
         check("five exceptions", len(queue["exceptions"]) == 5 and queue["unresolved_count"] == 5, str(queue["unresolved_count"]))
+        named = [(item["title"], item["amount_idr"]) for item in queue["exceptions"]]
+        check(
+            "named september exceptions",
+            named
+            == [
+                ("Alfamart Rp64,000", 64000),
+                ("Blu Zone Rp15,000,000", 15000000),
+                ("Keen Eye Rp24,875,000", 24875000),
+                ("Canva Rp390,000", 390000),
+                ("ATM Rp2,500,000", 2500000),
+            ],
+            str(named),
+        )
+        check(
+            "exceptions are bank items",
+            all(item["kind"] == "bank_exception" and item["is_bank_exception"] is True for item in queue["exceptions"]),
+        )
+        prep_ids = {task["task_id"] for task in desk["preparation_tasks"]}
+        check(
+            "preparation tasks stay out of the exception list",
+            prep_ids.isdisjoint({item["item_id"] for item in queue["exceptions"]})
+            and {"missing_invoice_pdf", "unposted_journals", "tax_setup"}
+            <= {task["kind"] for task in desk["preparation_tasks"]},
+        )
+        alfa = queue["exceptions"][0]
+        check(
+            "alfamart opens the GGV bank row",
+            alfa["bank_transaction"]["txn_id"] == "TXN-ALFA"
+            and alfa["bank_transaction"]["entity_id"] == "ENT-GGV"
+            and alfa["bank_match"]["match_basis"] == "amount_unique",
+        )
+        dumped = json.dumps(desk)
+        check("AMG bank row stays out", "TXN-AMG-ALFA" not in dumped and "amg-secret" not in dumped and "do-not-export" not in dumped)
+        check(
+            "alfamart evidence is the stored photo",
+            any(row.get("kind") == "receipt_photograph" and row.get("original_present") is True for row in alfa["evidence"]),
+        )
+        treatment = alfa["proposed_treatment"]
+        check(
+            "alfamart proposal is balanced and unposted",
+            treatment["posted"] is False
+            and [line["side"] for line in treatment["lines"]] == ["debit", "credit"]
+            and treatment["lines"][0]["amount_idr"] == 64000
+            and treatment["lines"][1]["account"] == "GGV bank",
+        )
+        keen = queue["exceptions"][2]
+        check(
+            "missing bank row is not invented",
+            keen["bank_transaction"] is None
+            and keen["bank_match"]["bank_row_invented"] is False
+            and keen["proposed_treatment"]["lines"] == [],
+        )
+        opened = ila.review_item(person_id, "GGV-2026-09-EX-01", conn)
+        check("review detail opens the same bank row", opened["bank_transaction"]["txn_id"] == "TXN-ALFA")
+        conn.execute(
+            """
+            UPDATE ggv_accountant_review_items
+            SET title='Unreconciled rows', kind='reconciliation'
+            WHERE item_id='GGV-2026-09-EX-02'
+            """
+        )
+        ila._preserve_september(conn, person_id)
+        conn.commit()
+        retitled = conn.execute(
+            "SELECT title, kind FROM ggv_accountant_review_items WHERE item_id='GGV-2026-09-EX-02'"
+        ).fetchone()
+        check(
+            "open exception uses the bank title",
+            retitled["title"] == "Blu Zone Rp15,000,000" and retitled["kind"] == "bank_exception",
+        )
         periods = {row["period"]: row["status"] for row in desk["accounting_status"]["periods"]}
         check("september period stored", periods.get("2026-09") == "READY_FOR_REVIEW")
         check("august is visible", "2026-08" in periods)
@@ -321,6 +503,19 @@ def main() -> int:
             "SELECT status FROM ggv_accountant_review_items WHERE item_id='GGV-2026-09-EX-01'"
         ).fetchone()[0]
         check("decision not rewritten", kept == "APPROVED")
+        conn.execute(
+            """
+            UPDATE ggv_accountant_review_items
+            SET title='Do not rewrite'
+            WHERE item_id='GGV-2026-09-EX-01'
+            """
+        )
+        ila._preserve_september(conn, person_id)
+        conn.commit()
+        kept_title = conn.execute(
+            "SELECT title FROM ggv_accountant_review_items WHERE item_id='GGV-2026-09-EX-01'"
+        ).fetchone()[0]
+        check("approved exception title stays", kept_title == "Do not rewrite")
         period = conn.execute(
             "SELECT status FROM ggv_accountant_periods WHERE period_id='2026-09'"
         ).fetchone()[0]
@@ -341,12 +536,87 @@ def main() -> int:
             conn,
         )
         check("document request open", requested["status"] == "OPEN" and requested["entity_id"] == "ENT-GGV")
-        proposed = ila.propose_journal(
+        invoices_before = conn.execute("SELECT COUNT(*) FROM ggv_invoices").fetchone()[0]
+        fulfilled = ila.update_document_request(
             person_id,
-            {"memo": "Accrual to review", "lines": [{"description": "Debit expense"}], "period": "2026-09"},
+            requested["request_id"],
+            {"status": "FULFILLED"},
             conn,
         )
-        check("proposal not posted", proposed["posted"] is False and proposed["status"] == "AWAITING_MANAGEMENT")
+        check(
+            "fulfilled request creates no document",
+            fulfilled["status"] == "FULFILLED"
+            and fulfilled["document_created"] is False
+            and conn.execute("SELECT COUNT(*) FROM ggv_invoices").fetchone()[0] == invoices_before,
+        )
+        try:
+            ila.propose_journal(
+                person_id,
+                {
+                    "memo": "One sided",
+                    "lines": [{"side": "debit", "account": "Expense", "amount_idr": 64000}],
+                    "period": "2026-09",
+                },
+                conn,
+            )
+            check("unbalanced journal rejected", False)
+        except nota.FinanceNotaError as exc:
+            check("unbalanced journal rejected", exc.code == "unbalanced", exc.code)
+        proposed = ila.propose_journal(
+            person_id,
+            {
+                "memo": "Accrual to review",
+                "lines": [
+                    {"side": "debit", "account": "Unclassified — Alfamart", "amount_idr": 64000},
+                    {"side": "credit", "account": "GGV bank", "amount_idr": 64000},
+                ],
+                "period": "2026-09",
+            },
+            conn,
+        )
+        stored_posted = conn.execute(
+            "SELECT posted FROM ggv_accountant_journal_proposals WHERE proposal_id=?",
+            (proposed["proposal_id"],),
+        ).fetchone()[0]
+        check(
+            "proposal not posted",
+            proposed["posted"] is False
+            and proposed["status"] == "AWAITING_MANAGEMENT"
+            and stored_posted == 0,
+        )
+        conn.execute(
+            """
+            INSERT INTO ggv_bank_transactions (
+              txn_id, import_id, entity_id, txn_date, description, debit, credit,
+              recon_status, match_proposed, human_confirmed, created_at
+            ) VALUES (
+              'TXN-CANVA-2', 'IMP-GGV', 'ENT-GGV', '2026-09-18', 'OTHER CARD', 390000, 0,
+              'UNIDENTIFIED', 0, 0, '2026-10-13T00:00:00Z'
+            )
+            """
+        )
+        ambiguous = ila._match_bank_exception(conn, ila.SEPTEMBER_ITEMS[3], "2026-09")
+        check(
+            "ambiguous amount is not picked",
+            ambiguous["status"] == "ambiguous" and ambiguous["bank_transaction"] is None,
+            str(ambiguous["status"]),
+        )
+        reimb = ila.export_register(
+            person_id,
+            "reimbursements",
+            {"period": ["2026-09"], "format": ["csv"]},
+            conn,
+        )
+        reimb_text = reimb["_file"]["data"].decode("utf-8")
+        check("reimbursement names Matt and Amanda", "Matt" in reimb_text and "Amanda" in reimb_text)
+        check("reimbursement does not invent Amanda", "None was manufactured" in reimb_text)
+        check("reimbursement uses Matt's stored nota", "NOTA-AUG" in reimb_text)
+        check("reimbursement hides AMG", "TXN-AMG-ALFA" not in reimb_text and "ENT-AMG" not in reimb_text)
+        history = ila.accountant_history(person_id, conn)
+        check(
+            "history does not approve september",
+            history["september_approved"] is False and history["tax_filed"] is False and history["journals_posted"] is False,
+        )
         try:
             ila.record_filing(person_id, {"tax_code": "PPh23", "file_now": True}, conn)
             check("government filing refused", False)
