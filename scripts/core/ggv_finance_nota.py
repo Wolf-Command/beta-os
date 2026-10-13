@@ -229,6 +229,11 @@ SHELL_CHROME_PATHS = frozenset(
         "/assets/wolf-truth.css",
         "/assets/wolf-truth.js",
         "/api/dashboard-truth/stamp",
+        "/api/finance/nav",
+        "/shared/finance-nav.js",
+        "/shared/finance-nav.css",
+        "/shared/finance-switcher.js",
+        "/shared/finance-switcher.css",
     }
 )
 
