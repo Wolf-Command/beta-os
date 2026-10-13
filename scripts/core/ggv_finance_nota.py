@@ -165,6 +165,7 @@ PAGE_PATHS = frozenset(
         "/ggv/finance/reconciliation",
         "/ggv/finance/missing-evidence",
         "/ggv/finance/audit",
+        "/ggv/finance/accountant",
         "/ggv-finance",
         "/ggv-finance.html",
         "/dashboards/ggv-finance.html",
@@ -3076,6 +3077,10 @@ def dispatch(method: str, path: str, qs: dict[str, list[str]], body: dict | None
         return search_vendors(person_id, ((qs.get("q") or [""])[0]))
     if method == "GET" and rest in {"/history", "/search"}:
         return search_history(person_id, qs)
+    if rest == "/accountant/home" or rest.startswith("/accountant/"):
+        from core import ggv_ila_accountant as _ila
+
+        return _ila.http(method, rest, qs, body, person_id)
     if method == "GET" and rest == "/accountant":
         return accountant_desk(person_id)
     if method == "GET" and rest == "/receipts":

@@ -689,7 +689,7 @@ HUMAN_PAGE_BY_ROLE: dict[str, str] = {
     "ROLE-BZG-EXTERNAL-ACCOUNTANT": "/bzg/finance",
     "ROLE-GGV-FINANCE-OPERATOR": GGV_FINANCE_HREF,
     "ROLE-GGV-FINANCIAL-CONTROLLER": GGV_FINANCE_HREF,
-    "ROLE-GGV-EXTERNAL-ACCOUNTANT": GGV_FINANCE_HREF,
+    "ROLE-GGV-EXTERNAL-ACCOUNTANT": "/ggv/finance/accountant",
 }
 
 HUMAN_PAGE_LABEL: dict[str, str] = {
@@ -698,6 +698,7 @@ HUMAN_PAGE_LABEL: dict[str, str] = {
     "/bzg/uma-blu": "Uma Blu",
     "/bzg/finance": "BZG Finance",
     "/ggv/finance": "GGV Finance",
+    "/ggv/finance/accountant": "GGV Accountant",
     "/ggv-ops-pack": "GGV",
     "/wolf": "Owner",
     "/amg-ops-pack": "Atrium",
