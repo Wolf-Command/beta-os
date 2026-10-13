@@ -100,6 +100,7 @@
   </div>
   <nav class="tabs" aria-label="Finance">
     <button type="button" data-tab="overview" class="active">Overview</button>
+    <button type="button" data-tab="accountant">Accountant</button>
     <button type="button" data-tab="banking">Banking</button>
     <button type="button" data-tab="transactions">Transactions</button>
     <button type="button" data-tab="notas">Receipts/Notas</button>
@@ -351,6 +352,37 @@
     <div id="audit-list"></div>
   </section>
 
+  <section id="accountant" class="hidden">
+    <p class="note" id="acct-home-note">PT Goss Group Ventures only. Cloudflare sign-in does not grant this workspace.</p>
+    <p class="note" id="acct-books-note">No final general ledger. Posted journals are shown only when the books file has them.</p>
+    <h2>Accounting status</h2>
+    <div class="grid" id="acct-status"></div>
+    <h2>Periods</h2>
+    <div id="acct-periods"></div>
+    <h2>September review queue</h2>
+    <p class="note" id="acct-queue-note"></p>
+    <div id="acct-queue"></div>
+    <h2>Tax compliance</h2>
+    <p class="note">Wolf prepares records. ILA verifies NPWP, PKP, and what must be filed. No tax figure on this page is a government liability.</p>
+    <div id="acct-tax"></div>
+    <h2>Request documents</h2>
+    <label>Missing item<input id="doc-item" /></label>
+    <label>Period<input id="doc-period" value="2026-09" /></label>
+    <label>Reason<textarea id="doc-reason"></textarea></label>
+    <label>Responsible person<input id="doc-who" placeholder="GGV Finance" /></label>
+    <button type="button" class="primary" id="doc-send">Request documents</button>
+    <p id="doc-msg" class="note"></p>
+    <div id="acct-requests"></div>
+    <h2>Journal proposal</h2>
+    <p class="note">A proposal waits for GGV management. It is not posted and it does not pay.</p>
+    <label>Memo<textarea id="j-memo"></textarea></label>
+    <label>Lines (one description per line)<textarea id="j-lines"></textarea></label>
+    <button type="button" class="secondary" id="j-save">Prepare adjustment</button>
+    <p id="j-msg" class="note"></p>
+    <h2>Exports</h2>
+    <div id="acct-exports"></div>
+  </section>
+
   <section id="reports" class="hidden">
     <p class="note">Accountant evidence stays in Reports. Cash, profit, ageing, margin, and tax position are not on this page.</p>
     <p class="note" id="acct-note">No accounting total. The books are not complete on this screen.</p>
@@ -370,12 +402,13 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const tabs = [
-  "overview", "banking", "transactions", "notas", "bills", "invoices",
+  "overview", "accountant", "banking", "transactions", "notas", "bills", "invoices",
   "reconciliation", "vendors", "missing_evidence", "reports", "audit",
   "customers", "history", "receipts"
 ];
 const pathTab = {
   "/ggv/finance": "overview",
+  "/ggv/finance/accountant": "accountant",
   "/ggv/finance/banking": "banking",
   "/ggv/finance/statements": "banking",
   "/ggv/finance/transactions": "transactions",
@@ -425,6 +458,7 @@ function showTab(name) {
   if (name === "missing_evidence") loadMissingEvidence();
   if (name === "audit") loadAudit();
   if (name === "reports") loadAccountant();
+  if (name === "accountant") loadIlaDesk();
 }
 document.querySelectorAll("nav.tabs button").forEach((btn) => {
   btn.addEventListener("click", () => showTab(btn.dataset.tab));
@@ -853,6 +887,135 @@ async function loadAccountant() {
 }
 
 $("acct-export").addEventListener("click", () => downloadPack($("acct-year").value, $("acct-month").value, $("acct-note")));
+
+async function loadIlaDesk() {
+  let data;
+  try {
+    data = await api("/api/ggv/finance/accountant/dashboard");
+  } catch (err) {
+    $("acct-home-note").textContent = err.message || "This workspace is for the GGV accountant.";
+    return;
+  }
+  const books = (data.accounting_status && data.accounting_status.books) || {};
+  $("acct-books-note").textContent = books.note || "Books are not final.";
+  const status = data.accounting_status || {};
+  const live = status.current_period_live || {};
+  const cards = [
+    ["Current period", status.current_period || ""],
+    ["September", "READY FOR REVIEW"],
+    ["Unreconciled", live.bank_rows_unreconciled],
+    ["Awaiting classification", live.transactions_awaiting_classification],
+    ["Invoices missing PDF", (status.invoices || {}).missing_original_pdf],
+    ["Open proposals", ((status.journal_preparation || {}).proposals_unposted)],
+  ];
+  $("acct-status").innerHTML = cards.map(([label, count]) =>
+    `<article class="card"><p class="meta">${esc(label)}</p><p class="count">${esc(count == null ? "—" : count)}</p></article>`
+  ).join("");
+  const periods = status.periods || [];
+  $("acct-periods").innerHTML = periods.map((row) =>
+    `<article class="card"><strong>${esc(row.period)}</strong> · ${esc(row.status)}</article>`
+  ).join("");
+  const queue = (data.finance_review_queue || {});
+  const items = queue.exceptions || [];
+  $("acct-queue-note").textContent =
+    "September 2026 · " + (queue.status || "") + " · " + (queue.unresolved_count || 0) + " unresolved. Evidence pack stays a download copy.";
+  $("acct-queue").innerHTML = items.map((item) => `
+    <article class="card" data-item="${esc(item.item_id)}">
+      <strong>${esc(item.title)}</strong><br>
+      <span class="meta">${esc(item.status)}</span>
+      <p>${esc(item.live_evidence || "")}</p>
+      <p class="meta">${(item.decisions || []).map((d) => esc(d.created_at) + " · " + esc(d.actor_person_id) + " · " + esc(d.decision)).join("<br>")}</p>
+      <label>Decision note<textarea class="dec-note"></textarea></label>
+      <button type="button" class="secondary dec" data-decision="approve" data-item="${esc(item.item_id)}">Approve</button>
+      <button type="button" class="secondary dec" data-decision="return" data-item="${esc(item.item_id)}">Return</button>
+      <button type="button" class="secondary dec" data-decision="request_information" data-item="${esc(item.item_id)}">Request information</button>
+    </article>`).join("");
+  document.querySelectorAll("#acct-queue .dec").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const card = btn.closest("article");
+      const note = card.querySelector(".dec-note").value;
+      await api("/api/ggv/finance/accountant/review/" + encodeURIComponent(btn.dataset.item), {
+        method: "POST",
+        body: JSON.stringify({ decision: btn.dataset.decision, note: note, responsible_label: "GGV Finance" }),
+      });
+      loadIlaDesk();
+    });
+  });
+  const tax = data.tax_compliance || {};
+  const profile = tax.profile || {};
+  $("acct-tax").innerHTML = `<article class="card"><p>NPWP: ${esc(profile.npwp || "Not verified")}</p><p>PKP: ${esc(profile.pkp_status || "UNKNOWN")}</p><p class="meta">${esc(profile.note || "")}</p></article>`
+    + (tax.obligations || []).map((row) => `
+      <article class="card">
+        <strong>${esc(row.label)}</strong><br>
+        ${esc(row.preparation_status)} · liability not calculated<br>
+        <span class="meta">${esc(row.deadline_note || "")}</span>
+      </article>`).join("")
+    + (tax.missing_information_blocking_filing || []).map((row) =>
+      `<article class="card bad">${esc(row.missing_item)} · ${esc(row.status)}</article>`
+    ).join("");
+  const requests = tax.missing_information_blocking_filing || [];
+  $("acct-requests").innerHTML = requests.length
+    ? requests.map((row) => `<article class="card">${esc(row.period_id || "")} · ${esc(row.missing_item)} · ${esc(row.responsible_label || "")}</article>`).join("")
+    : `<p class="note">No open document requests.</p>`;
+  $("acct-exports").innerHTML = (data.exports || []).map((item) =>
+    `<button type="button" class="secondary acct-export" data-export="${esc(item.id)}">${esc(item.label)} (${esc(item.formats)})</button>`
+  ).join("");
+  document.querySelectorAll(".acct-export").forEach((btn) => {
+    btn.addEventListener("click", () => downloadAccountantExport(btn.dataset.export));
+  });
+}
+
+async function downloadAccountantExport(kind) {
+  const format = kind === "evidence-pack" ? "" : "csv";
+  const path = "/api/ggv/finance/accountant/exports/" + encodeURIComponent(kind)
+    + "?period=2026-09&entity=ENT-GGV" + (format ? "&format=" + format : "");
+  const res = await fetch(path, { credentials: "same-origin" });
+  if (!res.ok) {
+    $("acct-books-note").textContent = "Could not download that export.";
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = kind === "evidence-pack" ? "ggv-month-evidence-2026-09.zip" : "ggv-" + kind + "-2026-09.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+if ($("doc-send")) {
+  $("doc-send").addEventListener("click", async () => {
+    try {
+      await api("/api/ggv/finance/accountant/document-requests", {
+        method: "POST",
+        body: JSON.stringify({
+          missing_item: $("doc-item").value,
+          period: $("doc-period").value,
+          reason: $("doc-reason").value,
+          responsible_label: $("doc-who").value,
+        }),
+      });
+      $("doc-msg").textContent = "Request recorded. It does not file anything.";
+      loadIlaDesk();
+    } catch (err) {
+      $("doc-msg").textContent = err.message || String(err);
+    }
+  });
+}
+if ($("j-save")) {
+  $("j-save").addEventListener("click", async () => {
+    const lines = ($("j-lines").value || "").split("\n").map((line) => line.trim()).filter(Boolean).map((line) => ({ description: line }));
+    try {
+      const data = await api("/api/ggv/finance/accountant/journal-proposals", {
+        method: "POST",
+        body: JSON.stringify({ memo: $("j-memo").value, lines: lines, period: "2026-09" }),
+      });
+      $("j-msg").textContent = data.message || "Proposal saved. It was not posted.";
+    } catch (err) {
+      $("j-msg").textContent = err.message || String(err);
+    }
+  });
+}
 
 let rxSelectedKey = null;
 
@@ -1390,9 +1553,15 @@ async function searchCustomers() {
     : `<p class="note">No matching customer.</p>`;
 }
 
-loadOverview().then(function () {
+loadOverview().then(async function () {
   const tab = pathTab[location.pathname.replace(/\/$/, "")] || "overview";
   if (tab !== "overview") showTab(tab);
+  else {
+    try {
+      const home = await api("/api/ggv/finance/accountant/home");
+      if (home.force_accountant_home) showTab("accountant");
+    } catch (err) { /* operators stay on the overview */ }
+  }
   document.body.setAttribute("data-ready", "1");
   var over = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
   document.body.setAttribute("data-overflow", over ? "yes" : "no");

@@ -2639,7 +2639,7 @@ _ROLE_HREF: dict[str, str] = {
     "ROLE-BZG-EXTERNAL-ACCOUNTANT": "/bzg/finance",
     "ROLE-GGV-FINANCE-OPERATOR": "/ggv/finance",
     "ROLE-GGV-FINANCIAL-CONTROLLER": "/ggv/finance",
-    "ROLE-GGV-EXTERNAL-ACCOUNTANT": "/ggv/finance",
+    "ROLE-GGV-EXTERNAL-ACCOUNTANT": "/ggv/finance/accountant",
 }
 
 
